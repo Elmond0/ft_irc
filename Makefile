@@ -4,35 +4,37 @@ NAME = ircserv
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+
+INC_DIR = inc
 
 OBJ_DIR = obj
 
 SRC_DIR = src
 
-SRCS = 
+SRCS = $(SRC_DIR)/main.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 all: $(NAME)
 
-$(NAME) : $(OBJS)
-	@$(CXX) $(CXXFLAGS) $^ -o $@
+$(NAME) : $(OBJ_DIR) $(OBJS)
+	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@
 	@echo "\033[32m$(NAME) created!\033[0m"
 
 $(OBJ_DIR) :
 	@mkdir -p obj
 
-$(OBJ_DIR)/.o : $(SRC_DIR)/.cpp
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS) $< -o $@
+	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
 	@echo -e "\033[90m$< compiled\033[0m"
 
 clean :
 	@rm -rf $(OBJ_DIR)
 
 fclean : clean
-	rm -f $(NAME)
+	@rm -f $(NAME)
 
 re : fclean all
 
