@@ -12,15 +12,21 @@ OBJ_DIR = obj
 
 SRC_DIR = src
 
-SRCS = $(SRC_DIR)/main.cpp
+SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+
+GREEN := $(shell tput setaf 2)
+RED := $(shell tput setaf 1)
+YELLOW := $(shell tput setaf 3)
+GRAY := $(shell tput setaf 8)
+RESET := $(shell tput sgr0)
 
 all: $(NAME)
 
 $(NAME) : $(OBJ_DIR) $(OBJS)
 	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@
-	@echo "\033[32m$(NAME) created!\033[0m"
+	@echo " $(GREEN) ✔ $(NAME) created!$(RESET)"
 
 $(OBJ_DIR) :
 	@mkdir -p obj
@@ -28,13 +34,17 @@ $(OBJ_DIR) :
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
-	@echo -e "\033[90m$< compiled\033[0m"
+	@echo -e " $(GRAY) ● $< compiled$(RESET)"
 
 clean :
+	@for f in $(OBJS); do \
+		[ -f $$f ] && rm -f $$f && echo " $(YELLOW) ✘ $$f removed$(RESET)" || true; \
+	done
 	@rm -rf $(OBJ_DIR)
 
 fclean : clean
 	@rm -f $(NAME)
+	@echo -e " $(RED) ✘ $(NAME) wiped$(RESET)"
 
 re : fclean all
 

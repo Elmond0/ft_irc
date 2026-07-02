@@ -1,20 +1,30 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: miricci <miricci@student.42firenze.it>     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/08 17:12:57 by miricci           #+#    #+#             */
-/*   Updated: 2026/06/08 17:27:22 by miricci          ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "ircserv.h"
 
-int	main( int ac, char **av ) {
-	(void)av;
-	if ( ac != 3 )
-		throw std::runtime_error("Usage: ./ircserv <port> <password>");
-	return 0;
+void	parse_args(int argc, char **argv, int& port, std::string& password) {
+	if (argc != 3)
+		throw std::invalid_argument("Usage: ./ircserv <port> <password>");
+	std::stringstream iss(argv[1]);
+	char	leftover;
+	iss >> port;	iss >> leftover;
+	if (leftover)
+		throw std::invalid_argument("Usage: ./ircserv <port> <password>");
+	password = argv[2];	
+}
+
+int main(int argc, char **argv)
+{
+	int	port;
+	std::string password;
+	try
+	{
+		parse_args(argc, argv, port, password);
+		// std::cout << "port : " << port << " password: " << password << std::endl;
+    	Server server(port, password);
+	    server.run();
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+    return 0;
 }
