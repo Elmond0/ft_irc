@@ -54,9 +54,15 @@ void	Server::run( void ) {
 
 				std::cout << _clients[newClient.fd] << std::endl;
 			}
-			// else if () {
-
-			// }
+			for (int i = 1; i < static_cast<int>(fds.size()); i++) {
+				if (fds[i].revents & POLLIN) {
+					// std::cout << "client " << i << " is POLLIN" << std::endl;
+					char buffer[512];
+					if (recv(fds[i].fd, &buffer, 512, 0) == -1)
+				    	std::cerr << strerror(errno) << std::endl;
+					std::cout << buffer << std::endl;
+				}
+			}
 		}
 	}
 	
