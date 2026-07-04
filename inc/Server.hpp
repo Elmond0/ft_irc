@@ -24,6 +24,9 @@ class Server
 		std::map<int, Client> _clients;
 		std::string _password;
 
+		void	addNewClient( std::vector<pollfd>& fds );
+		std::string	readBuffer( pollfd pfd );
+
 	public:
 		Server( void );
 		Server( int port, std::string );

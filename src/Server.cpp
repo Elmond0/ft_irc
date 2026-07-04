@@ -17,6 +17,26 @@ Server& Server::operator=( Server const & other ) {
 
 Server::~Server( void ) {}
 
+std::string	Server::readBuffer( pollfd pfd ) {
+	char buffer[512];
+	if (recv(pfd.fd, &buffer, 512, 0) == -1)
+		std::cerr << strerror(errno) << std::endl;
+	std::cout << buffer << std::endl;
+	std::string res(buffer);
+	return (res);
+}
+
+void	Server::addNewClient( std::vector<pollfd>& fds ) {
+	sockaddr_in	clientAddress;
+	socklen_t len = sizeof(clientAddress);
+	pollfd newClient;
+	newClient.fd = accept(_listenSock_fd, (struct sockaddr*)&clientAddress, &len);
+	newClient.events = POLLIN | POLLOUT;
+	fds.push_back(newClient);
+	_clients[newClient.fd] = Client(newClient.fd, clientAddress);
+	std::cout << _clients[newClient.fd] << std::endl;
+}
+ 
 void	Server::run( void ) {
 	if (_password != IRCPASS )
 		throw WrongPassword();
@@ -30,7 +50,7 @@ void	Server::run( void ) {
 	std::cout << _port << std::endl;
 	std::cout << serverAddress.sin_port << std::endl;
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	// bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, (void *)1, sizeof(SO_REUSEADDR));
 	if (bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
     	std::cerr << strerror(errno) << std::endl;
 	listen(_listenSock_fd, 5);
@@ -44,28 +64,20 @@ void	Server::run( void ) {
 		if (poll(fds.data(), fds.size(), 1000)) {
 			// std::cout << "polla" << std::endl;
 			if (fds[0].revents == POLLIN) {
-				sockaddr_in	clientAddress;
-				socklen_t len = sizeof(clientAddress);
-				pollfd newClient;
-				newClient.fd = accept(_listenSock_fd, (struct sockaddr*)&clientAddress, &len);
-				newClient.events = POLLIN | POLLOUT;
-				fds.push_back(newClient);
-				_clients[newClient.fd] = Client(newClient.fd, clientAddress);
-
-				std::cout << _clients[newClient.fd] << std::endl;
+				addNewClient(fds);
 			}
 			for (int i = 1; i < static_cast<int>(fds.size()); i++) {
 				if (fds[i].revents & POLLIN) {
-					// std::cout << "client " << i << " is POLLIN" << std::endl;
-					char buffer[512];
-					if (recv(fds[i].fd, &buffer, 512, 0) == -1)
-				    	std::cerr << strerror(errno) << std::endl;
-					std::cout << buffer << std::endl;
+					readBuffer(fds[i]);
+					// @elia qui ci metti il parsing
 				}
+				if (fds[i].revents & POLLOUT) {
+					std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+				}
+				// if (fds[i].revents &
 			}
 		}
 	}
-	
 }
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }
