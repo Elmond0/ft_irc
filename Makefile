@@ -12,7 +12,9 @@ OBJ_DIR = obj
 
 SRC_DIR = src
 
-SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp
+SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
+       $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp $(SRC_DIR)/utils.cpp \
+       $(SRC_DIR)/handle_PASS.cpp $(SRC_DIR)/handle_NICK.cpp $(SRC_DIR)/handle_USER.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 

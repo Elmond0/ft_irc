@@ -36,6 +36,11 @@ class Server
 
 		void	run( void );
 
+		// interfaccia per i comandi - @elia
+		const std::string&		getPassword( void ) const;
+		std::map<int, Client>&	getClients( void );
+		void					sendToClient( int fd, const std::string& msg );
+
 		class WrongPassword : public std::exception
 		{
 			public:

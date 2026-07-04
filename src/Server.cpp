@@ -1,4 +1,6 @@
 #include "Server.hpp"
+#include "Parser.hpp"
+#include "dispatch.hpp"
 
 Server::Server( void ) {}
 
@@ -68,16 +70,29 @@ void	Server::run( void ) {
 			}
 			for (int i = 1; i < static_cast<int>(fds.size()); i++) {
 				if (fds[i].revents & POLLIN) {
-					readBuffer(fds[i]);
-					// @elia qui ci metti il parsing
+					std::string raw = readBuffer(fds[i]);
+					IrcMessage msg = parseMessage(raw);
+					Dispatcher dispatcher(*this);
+					dispatcher.dispatch(_clients[fds[i].fd], msg);
 				}
 				if (fds[i].revents & POLLOUT) {
-					std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
 				// if (fds[i].revents &
 			}
 		}
 	}
+}
+
+// interfaccia per i comandi - @elia
+
+const std::string&	Server::getPassword( void ) const { return _password; }
+
+std::map<int, Client>&	Server::getClients( void ) { return _clients; }
+
+void	Server::sendToClient( int fd, const std::string& msg ) {
+	if (send(fd, msg.c_str(), msg.size(), 0) == -1)
+		std::cerr << strerror(errno) << std::endl;
 }
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }

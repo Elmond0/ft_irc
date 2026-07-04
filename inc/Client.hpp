@@ -17,6 +17,14 @@ class Client
 		bool _isOp;
 		bool _isChanOp;
 
+		// registrazione (PASS/NICK/USER) - @elia
+		std::string	_nick;
+		std::string	_user;
+		std::string	_realname;
+		bool		_passOk;
+		bool		_nickOk;
+		bool		_userOk;
+
 	public:
 		Client( void );
 		Client( int sock_fd, sockaddr_in clientAddress );
@@ -26,6 +34,19 @@ class Client
 
 		int	getSockFd( void ) const;
 		sockaddr_in getAddr( void ) const;
+
+		// interfaccia registrazione - @elia
+		int					getFd( void ) const;
+		const std::string&	getNick( void ) const;
+		const std::string&	getUser( void ) const;
+		const std::string&	getRealname( void ) const;
+		void				setNick( const std::string& nick );
+		void				setUser( const std::string& user );
+		void				setRealname( const std::string& realname );
+		void				setPassOk( bool ok );
+		void				setNickOk( bool ok );
+		void				setUserOk( bool ok );
+		bool				isRegistered( void ) const;
 };
 
 std::ostream& operator<<( std::ostream& o, Client const & c );
