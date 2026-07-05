@@ -1,0 +1,688 @@
+================================================================================
+                     FT_IRC — ROAD MAP E STUDIO DEI COMANDI
+                          Progetto 42 — IRC Server in C++98
+================================================================================
+
+LEGENDA STATO:
+  [X] = implementato
+  [~] = parzialmente implementato
+  [ ] = da fare
+
+================================================================================
+                        FASE 1 — REGISTRAZIONE (già avviata)
+================================================================================
+
+[X] PASS
+------------------------------------------------------------
+DESCRIZIONE:
+  Il comando PASS è il primo che un client invia al server IRC non appena
+  stabilisce la connessione TCP. Serve a fornire la "connection password",
+  ovvero la password configurata all'avvio del server. Senza una PASS corretta,
+  il client non può procedere con la registrazione.
+
+  Secondo l'RFC 1459 e l'RFC 2812, PASS deve essere inviata PRIMA di NICK e
+  USER. Se un client invia PASS dopo che la registrazione è già avvenuta,
+  il server deve rispondere con l'errore 462 (ERR_ALREADYREGISTERED).
+
+FORMATO:
+  PASS <password>
+
+CODICI DI RISPOSTA:
+  461 ERR_NEEDMOREPARAMS  — nessun parametro fornito
+  462 ERR_ALREADYREGISTERED — client già registrato
+  464 ERR_PASSWDMISMATCH  — password sbagliata
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.1.1 — Password message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.1
+  - RFC 2812, Section 3.1.1 — Password message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.1
+  - Modern IRC (guida pratica aggiornata)
+    https://modern.ircdocs.horse/#pass-message
+  - Lista codici numerici IRC
+    https://www.alien.net.au/irc/irc2numerics.html
+
+--------------------------------------------------------------------------------
+
+[X] NICK
+------------------------------------------------------------
+DESCRIZIONE:
+  NICK permette a un client di scegliere (o cambiare) il proprio nickname,
+  ovvero il nome con cui appare agli altri utenti nel server. È il secondo
+  step della registrazione, dopo PASS.
+
+  Un nickname valido deve rispettare regole precise: non può iniziare con
+  un numero o un carattere speciale, ha lunghezza massima di 9 caratteri
+  (RFC 1459) o più nei server moderni, e non può essere già in uso da un
+  altro client. Se il nick è già preso, il server risponde con 433.
+
+  NICK può essere inviato anche dopo la registrazione, per cambiare il
+  proprio nickname a runtime.
+
+FORMATO:
+  NICK <nickname>
+
+CODICI DI RISPOSTA:
+  431 ERR_NONICKNAMEGIVEN — nessun nick fornito
+  432 ERR_ERRONEUSNICKNAME — nick con caratteri non validi
+  433 ERR_NICKNAMEINUSE   — nick già in uso
+  436 ERR_NICKCOLLISION   — collisione nick tra server (non rilevante per noi)
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.1.2 — Nick message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.2
+  - RFC 2812, Section 3.1.2 — Nick message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.2
+  - Modern IRC — NICK
+    https://modern.ircdocs.horse/#nick-message
+  - Regex valida per i nickname IRC
+    https://www.rfc-editor.org/rfc/rfc2812#section-2.3.1
+
+--------------------------------------------------------------------------------
+
+[X] USER
+------------------------------------------------------------
+DESCRIZIONE:
+  USER è il terzo e ultimo step della registrazione. Fornisce al server le
+  informazioni "anagrafiche" del client: username, modalità utente, hostname
+  (ignorato dal server in favore dell'IP reale), e realname.
+
+  Il realname è il nome completo dell'utente, visibile tramite WHOIS. È
+  l'unico parametro che può contenere spazi, per questo è preceduto da ':'
+  nella sintassi IRC.
+
+  Quando il server riceve USER valido e tutti gli altri step (PASS, NICK)
+  sono già stati completati, invia i messaggi di benvenuto: 001, 002, 003,
+  004 (la "welcome sequence").
+
+FORMATO:
+  USER <username> <mode> <unused> :<realname>
+
+  Esempio: USER mario 0 * :Mario Rossi
+
+CODICI DI RISPOSTA:
+  461 ERR_NEEDMOREPARAMS  — parametri insufficienti
+  462 ERR_ALREADYREGISTERED — già registrato
+
+MESSAGGI DI BENVENUTO (dopo registrazione completa):
+  001 RPL_WELCOME   — "Welcome to the IRC network, <nick>"
+  002 RPL_YOURHOST  — "Your host is <server>, running version <ver>"
+  003 RPL_CREATED   — "This server was created <date>"
+  004 RPL_MYINFO    — informazioni sul server
+  005 RPL_ISUPPORT  — (opzionale) feature supportate
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.1.3 — User message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.3
+  - RFC 2812, Section 3.1.3 — User message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.3
+  - Modern IRC — USER
+    https://modern.ircdocs.horse/#user-message
+  - Welcome sequence (001-004)
+    https://modern.ircdocs.horse/#connection-registration
+
+================================================================================
+                        FASE 2 — CHAT BASE
+================================================================================
+
+[ ] JOIN
+------------------------------------------------------------
+DESCRIZIONE:
+  JOIN permette a un client registrato di entrare in un canale IRC. Se il
+  canale non esiste, viene creato automaticamente e il client diventa
+  automaticamente channel operator (op) del nuovo canale.
+
+  Un canale IRC ha sempre un nome che inizia con '#' (canali pubblici) o
+  '&' (canali locali, meno comuni). Nella maggior parte delle implementazioni
+  ft_irc si supporta solo '#'.
+
+  Quando un client fa JOIN con successo, il server deve:
+  1. Notificare tutti gli utenti nel canale con il messaggio JOIN
+  2. Inviare al nuovo utente il topic attuale (332 o 331 se assente)
+  3. Inviare la lista degli utenti nel canale (353 RPL_NAMREPLY + 366 RPL_ENDOFNAMES)
+
+  JOIN supporta anche una password (key) se il canale ha il mode +k attivo.
+
+FORMATO:
+  JOIN <#canale> [<password>]
+  JOIN <#canale1,#canale2> [<pass1,pass2>]   (join multiplo)
+  JOIN 0   (esce da tutti i canali, equivale a PART)
+
+CODICI DI RISPOSTA:
+  331 RPL_NOTOPIC      — canale senza topic
+  332 RPL_TOPIC        — topic del canale
+  353 RPL_NAMREPLY     — lista utenti nel canale
+  366 RPL_ENDOFNAMES   — fine lista utenti
+  403 ERR_NOSUCHCHANNEL — nome canale non valido
+  405 ERR_TOOMANYCHANNELS — troppi canali per questo client
+  471 ERR_CHANNELISFULL — canale pieno (mode +l)
+  473 ERR_INVITEONLYCHAN — canale invite-only (mode +i)
+  474 ERR_BANNEDFROMCHAN — client bannato
+  475 ERR_BADCHANNELKEY — password errata (mode +k)
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.2.1 — Join message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.2.1
+  - RFC 2812, Section 3.2.1 — Join message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.1
+  - Modern IRC — JOIN
+    https://modern.ircdocs.horse/#join-message
+  - Tutorial pratico IRC channels
+    https://chi.protocol.website/docs/irc/channels
+
+--------------------------------------------------------------------------------
+
+[ ] PRIVMSG
+------------------------------------------------------------
+DESCRIZIONE:
+  PRIVMSG è il comando principale per inviare messaggi in IRC. Può essere
+  usato sia per inviare messaggi a un singolo utente (private message) sia
+  per inviare messaggi a un intero canale.
+
+  Quando il destinatario è un canale (es. #general), il server deve
+  inoltrare il messaggio a TUTTI gli utenti iscritti a quel canale, tranne
+  il mittente stesso.
+
+  Quando il destinatario è un nickname, il server consegna il messaggio
+  solo a quel client specifico.
+
+  PRIVMSG è anche la base per i comandi CTCP (Client-To-Client Protocol),
+  come /me (ACTION), ping client-to-client, ecc. — ma quelli sono opzionali.
+
+FORMATO:
+  PRIVMSG <destinatario> :<testo>
+
+  Esempi:
+    PRIVMSG #general :Ciao a tutti!
+    PRIVMSG mario :Ciao Mario, messaggio privato
+
+CODICI DI RISPOSTA:
+  401 ERR_NOSUCHNICK    — nick/canale non trovato
+  404 ERR_CANNOTSENDTOCHAN — non puoi mandare messaggi in questo canale
+  411 ERR_NORECIPIENT   — nessun destinatario specificato
+  412 ERR_NOTEXTTOSEND  — nessun testo nel messaggio
+  407 ERR_TOOMANYTARGETS — troppi destinatari
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.4.1 — Private messages
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.4.1
+  - RFC 2812, Section 3.3.1 — Private messages
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.3.1
+  - Modern IRC — PRIVMSG
+    https://modern.ircdocs.horse/#privmsg-message
+  - CTCP (opzionale, per capire come funziona /me)
+    https://modern.ircdocs.horse/ctcp.html
+
+================================================================================
+                   FASE 3 — COMANDI DA CHANNEL OPERATOR
+================================================================================
+
+[ ] KICK
+------------------------------------------------------------
+DESCRIZIONE:
+  KICK espelle forzatamente un utente da un canale. Solo un channel operator
+  può usare questo comando. L'utente espulso viene rimosso dal canale e
+  riceve un messaggio di notifica. Può rientrare nel canale successivamente
+  (a meno che non venga anche bannato, ma il ban non è richiesto dal subject).
+
+  Il server deve verificare che chi esegue KICK sia effettivamente un
+  operator del canale specificato, e che l'utente da espellere sia
+  effettivamente in quel canale.
+
+FORMATO:
+  KICK <#canale> <nickname> [:<motivo>]
+
+  Esempio: KICK #general mario :Comportamento scorretto
+
+CODICI DI RISPOSTA:
+  403 ERR_NOSUCHCHANNEL — canale non esiste
+  441 ERR_USERNOTINCHANNEL — utente non è nel canale
+  442 ERR_NOTONCHANNEL — chi esegue KICK non è nel canale
+  482 ERR_CHANOPRIVSNEEDED — non sei un operator
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.2.8 — Kick command
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.2.8
+  - RFC 2812, Section 3.2.8 — Kick command
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.8
+  - Modern IRC — KICK
+    https://modern.ircdocs.horse/#kick-message
+
+--------------------------------------------------------------------------------
+
+[ ] INVITE
+------------------------------------------------------------
+DESCRIZIONE:
+  INVITE invita un utente a entrare in un canale. È particolarmente
+  importante quando il canale ha il mode +i (invite-only): senza un invito
+  esplicito da parte di un operator, nessun utente esterno può fare JOIN.
+
+  Chi esegue INVITE deve essere nel canale. L'utente invitato riceve
+  una notifica e può poi fare JOIN anche se il canale è +i.
+
+  Il server deve tenere traccia degli inviti pendenti (lista degli utenti
+  invitati) e controllare questa lista quando qualcuno tenta di fare JOIN
+  in un canale invite-only.
+
+FORMATO:
+  INVITE <nickname> <#canale>
+
+  Esempio: INVITE mario #segreto
+
+CODICI DI RISPOSTA:
+  341 RPL_INVITING      — conferma dell'invito
+  401 ERR_NOSUCHNICK    — nick non trovato
+  442 ERR_NOTONCHANNEL  — chi invita non è nel canale
+  443 ERR_USERONCHANNEL — l'utente è già nel canale
+  482 ERR_CHANOPRIVSNEEDED — serve essere operator (se il canale è +i)
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.2.7 — Invite message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.2.7
+  - RFC 2812, Section 3.2.7 — Invite message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.7
+  - Modern IRC — INVITE
+    https://modern.ircdocs.horse/#invite-message
+
+--------------------------------------------------------------------------------
+
+[ ] TOPIC
+------------------------------------------------------------
+DESCRIZIONE:
+  TOPIC permette di vedere o cambiare il "topic" di un canale, ovvero il
+  messaggio descrittivo che appare in cima al canale quando un utente fa JOIN.
+
+  Se usato senza argomento, mostra il topic attuale. Se usato con un
+  argomento, cambia il topic.
+
+  Il mode +t (topic restricted) limita la modifica del topic ai soli
+  channel operator. Se +t è attivo, un utente normale che tenta di
+  cambiare il topic riceve l'errore 482.
+
+FORMATO:
+  TOPIC <#canale>          — visualizza il topic
+  TOPIC <#canale> :<testo> — cambia il topic
+  TOPIC <#canale> :        — rimuove il topic (topic vuoto)
+
+CODICI DI RISPOSTA:
+  331 RPL_NOTOPIC         — canale senza topic
+  332 RPL_TOPIC           — topic attuale
+  333 RPL_TOPICWHOTIME    — chi ha impostato il topic e quando (opzionale)
+  403 ERR_NOSUCHCHANNEL   — canale non esiste
+  442 ERR_NOTONCHANNEL    — non sei nel canale
+  482 ERR_CHANOPRIVSNEEDED — serve essere operator (se mode +t attivo)
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.2.4 — Topic message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.2.4
+  - RFC 2812, Section 3.2.4 — Topic message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.4
+  - Modern IRC — TOPIC
+    https://modern.ircdocs.horse/#topic-message
+
+--------------------------------------------------------------------------------
+
+[ ] MODE
+------------------------------------------------------------
+DESCRIZIONE:
+  MODE è il comando più complesso dell'intero progetto. Permette di cambiare
+  le "modalità" (modes) di un canale o di un utente. Per ft_irc devi
+  implementare solo i mode di canale richiesti dal subject.
+
+  Un mode si attiva con '+' e si disattiva con '-'. Più mode possono essere
+  combinati in una sola stringa (es. "+itk password").
+
+  -----------------------------------------------------------------------
+  MODE +i / -i  (Invite-only)
+  -----------------------------------------------------------------------
+  Quando attivo, il canale accetta solo utenti esplicitamente invitati
+  tramite INVITE. Chiunque tenti JOIN senza invito riceve ERR_INVITEONLYCHAN.
+
+  -----------------------------------------------------------------------
+  MODE +t / -t  (Topic restricted)
+  -----------------------------------------------------------------------
+  Quando attivo, solo i channel operator possono modificare il topic.
+  Gli utenti normali ricevono ERR_CHANOPRIVSNEEDED se tentano di cambiare
+  il topic con TOPIC.
+
+  -----------------------------------------------------------------------
+  MODE +k / -k  (Channel key / password)
+  -----------------------------------------------------------------------
+  Imposta una password sul canale. Chi vuole fare JOIN deve fornire la
+  password corretta come secondo parametro: JOIN #canale password
+  Se la password è sbagliata: ERR_BADCHANNELKEY (475).
+  Per rimuovere la key: MODE #canale -k (alcuni client mandano -k *)
+
+  -----------------------------------------------------------------------
+  MODE +o / -o  (Channel operator)
+  -----------------------------------------------------------------------
+  Dà o toglie i privilegi di channel operator a un utente nel canale.
+  Solo un operator può usare questo mode su altri utenti.
+  Esempio: MODE #canale +o mario   → mario diventa operator
+           MODE #canale -o mario   → mario perde i privilegi
+
+  -----------------------------------------------------------------------
+  MODE +l / -l  (User limit)
+  -----------------------------------------------------------------------
+  Imposta un limite massimo di utenti nel canale. Se il canale è pieno
+  e un altro utente tenta JOIN: ERR_CHANNELISFULL (471).
+  Esempio: MODE #canale +l 10   → massimo 10 utenti
+           MODE #canale -l      → rimuove il limite
+
+FORMATO GENERALE:
+  MODE <#canale> <+/-><flag(s)> [parametri]
+
+  Esempi:
+    MODE #general +i
+    MODE #general +k segretissima
+    MODE #general +o mario
+    MODE #general +l 20
+    MODE #general -i
+    MODE #general +itk password   (più mode insieme)
+
+CODICI DI RISPOSTA:
+  324 RPL_CHANNELMODEIS  — mode attuali del canale (risposta a MODE senza args)
+  403 ERR_NOSUCHCHANNEL  — canale non esiste
+  441 ERR_USERNOTINCHANNEL — utente non è nel canale (per +o/-o)
+  461 ERR_NEEDMOREPARAMS — parametri mancanti
+  467 ERR_KEYSET         — key già impostata
+  472 ERR_UNKNOWNMODE    — mode non riconosciuto
+  482 ERR_CHANOPRIVSNEEDED — non sei operator
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.2.3 — Mode message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.2.3
+  - RFC 2812, Section 3.2.3 — Mode message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.3
+  - Modern IRC — MODE (channel)
+    https://modern.ircdocs.horse/#mode-message
+  - Lista completa di tutti i channel modes IRC
+    https://www.alien.net.au/irc/chanmodes.html
+
+================================================================================
+                     FASE 4 — EXTRA (quasi universali)
+================================================================================
+
+[ ] QUIT
+------------------------------------------------------------
+DESCRIZIONE:
+  QUIT disconnette il client dal server in modo pulito. Il client manda
+  QUIT con un messaggio opzionale, e il server notifica tutti i canali
+  dove il client era presente, poi chiude la connessione TCP.
+
+  Questo è fondamentale per gestire correttamente la pulizia delle risorse:
+  il server deve rimuovere il client da tutti i canali in cui era presente
+  e liberare il nickname.
+
+FORMATO:
+  QUIT [:<messaggio>]
+
+  Esempio: QUIT :Arrivederci!
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.1.6 — Quit message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.6
+  - RFC 2812, Section 3.1.7 — Quit message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.7
+  - Modern IRC — QUIT
+    https://modern.ircdocs.horse/#quit-message
+
+--------------------------------------------------------------------------------
+
+[ ] PING / PONG
+------------------------------------------------------------
+DESCRIZIONE:
+  PING e PONG sono il meccanismo di keepalive del protocollo IRC.
+  I client IRC moderni (HexChat, irssi, WeeChat) inviano periodicamente
+  un PING al server per verificare che la connessione sia ancora attiva.
+  Il server DEVE rispondere con PONG entro un certo timeout, altrimenti
+  il client si disconnette automaticamente.
+
+  ATTENZIONE: anche se non citati esplicitamente nel subject, PING/PONG
+  sono INDISPENSABILI nella pratica. Senza di essi il client si disconnette
+  dopo 30-120 secondi a seconda del client usato come riferimento.
+
+  Il server può anche mandare PING al client per verificare che sia ancora
+  attivo (keepalive dal lato server).
+
+FORMATO:
+  Client → Server:  PING :<token>
+  Server → Client:  PONG <server> :<token>
+
+  Il token è tipicamente un timestamp o una stringa arbitraria che il
+  server deve rispecchiare nella risposta PONG.
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.6.2 e 4.6.3 — Ping/Pong
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.6.2
+  - RFC 2812, Section 3.7.2 e 3.7.3 — Ping/Pong
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.7.2
+  - Modern IRC — PING e PONG
+    https://modern.ircdocs.horse/#ping-message
+    https://modern.ircdocs.horse/#pong-message
+
+--------------------------------------------------------------------------------
+
+[ ] PART
+------------------------------------------------------------
+DESCRIZIONE:
+  PART permette a un client di uscire da uno o più canali senza
+  disconnettersi dal server (a differenza di QUIT che chiude tutto).
+
+  Quando un client fa PART, il server notifica tutti gli altri utenti
+  nel canale e rimuove il client dalla lista membri del canale.
+
+FORMATO:
+  PART <#canale> [:<messaggio>]
+  PART <#canale1,#canale2> [:<messaggio>]   (uscita multipla)
+
+  Esempio: PART #general :Torno dopo
+
+CODICI DI RISPOSTA:
+  403 ERR_NOSUCHCHANNEL  — canale non esiste
+  442 ERR_NOTONCHANNEL   — non sei nel canale
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.2.2 — Part message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.2.2
+  - RFC 2812, Section 3.2.2 — Part message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.2
+  - Modern IRC — PART
+    https://modern.ircdocs.horse/#part-message
+
+--------------------------------------------------------------------------------
+
+[ ] NOTICE
+------------------------------------------------------------
+DESCRIZIONE:
+  NOTICE è quasi identico a PRIVMSG ma con una differenza fondamentale:
+  il destinatario NON deve mai rispondere automaticamente a un NOTICE.
+  Questo evita i loop infiniti tra bot/servizi IRC.
+
+  Viene usato tipicamente da servizi automatici (NickServ, ChanServ, bot)
+  per mandare notifiche senza aspettarsi risposta. Il server stesso usa
+  NOTICE per alcuni messaggi di sistema.
+
+FORMATO:
+  NOTICE <destinatario> :<testo>
+
+FONTI E RIFERIMENTI:
+  - RFC 1459, Section 4.4.2 — Notice message
+    https://datatracker.ietf.org/doc/html/rfc1459#section-4.4.2
+  - RFC 2812, Section 3.3.2 — Notice message
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.3.2
+  - Modern IRC — NOTICE
+    https://modern.ircdocs.horse/#notice-message
+
+================================================================================
+                      FASE 5 — EXTRA COMUNI (opzionali)
+================================================================================
+
+[ ] NAMES
+------------------------------------------------------------
+DESCRIZIONE:
+  Restituisce la lista degli utenti presenti in un canale, con indicazione
+  del loro status (@ = operator, + = voice). Viene già inviato automaticamente
+  dopo un JOIN, ma i client possono richiederlo esplicitamente.
+
+FORMATO:
+  NAMES [<#canale>]
+
+CODICI DI RISPOSTA:
+  353 RPL_NAMREPLY
+  366 RPL_ENDOFNAMES
+
+FONTI:
+  - RFC 2812, Section 3.2.5
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.5
+  - Modern IRC — NAMES
+    https://modern.ircdocs.horse/#names-message
+
+--------------------------------------------------------------------------------
+
+[ ] LIST
+------------------------------------------------------------
+DESCRIZIONE:
+  Restituisce la lista di tutti i canali sul server con topic e numero
+  di utenti. I client moderni usano questo comando per mostrare la
+  "channel list" all'utente.
+
+FORMATO:
+  LIST [<#canale>]
+
+CODICI DI RISPOSTA:
+  321 RPL_LISTSTART
+  322 RPL_LIST
+  323 RPL_LISTEND
+
+FONTI:
+  - RFC 2812, Section 3.2.6
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.6
+  - Modern IRC — LIST
+    https://modern.ircdocs.horse/#list-message
+
+--------------------------------------------------------------------------------
+
+[ ] WHO
+------------------------------------------------------------
+DESCRIZIONE:
+  Restituisce informazioni sugli utenti in un canale o che corrispondono
+  a una maschera di ricerca. Usato dai client per costruire la lista
+  utenti con informazioni extra (hostname, realname, ecc.).
+
+FORMATO:
+  WHO [<maschera>]
+
+CODICI DI RISPOSTA:
+  352 RPL_WHOREPLY
+  315 RPL_ENDOFWHO
+
+FONTI:
+  - RFC 2812, Section 3.6.1
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.6.1
+  - Modern IRC — WHO
+    https://modern.ircdocs.horse/#who-message
+
+--------------------------------------------------------------------------------
+
+[ ] WHOIS
+------------------------------------------------------------
+DESCRIZIONE:
+  Mostra informazioni dettagliate su un utente specifico: nickname,
+  username, hostname, realname, canali in cui si trova, e se è operator.
+  Usato per "spiare" le informazioni pubbliche di un altro utente.
+
+FORMATO:
+  WHOIS <nickname>
+
+CODICI DI RISPOSTA:
+  311 RPL_WHOISUSER
+  312 RPL_WHOISSERVER
+  313 RPL_WHOISOPERATOR
+  317 RPL_WHOISIDLE
+  318 RPL_ENDOFWHOIS
+  319 RPL_WHOISCHANNELS
+  401 ERR_NOSUCHNICK
+
+FONTI:
+  - RFC 2812, Section 3.6.2
+    https://datatracker.ietf.org/doc/html/rfc2812#section-3.6.2
+  - Modern IRC — WHOIS
+    https://modern.ircdocs.horse/#whois-message
+
+================================================================================
+                            RISORSE GENERALI DI STUDIO
+================================================================================
+
+RFC (documenti ufficiali del protocollo IRC):
+  - RFC 1459 — il documento originale del 1993, base di tutto
+    https://datatracker.ietf.org/doc/html/rfc1459
+  - RFC 2812 — aggiornamento del 2000, più completo
+    https://datatracker.ietf.org/doc/html/rfc2812
+  - RFC 2813 — server-to-server (non serve per ft_irc)
+    https://datatracker.ietf.org/doc/html/rfc2813
+
+Guide pratiche e moderne:
+  - Modern IRC (guida pratica aggiornata, molto leggibile)
+    https://modern.ircdocs.horse/
+  - IRC Numerics completi
+    https://www.alien.net.au/irc/irc2numerics.html
+  - IRCv3 specifications (avanzato, per capire i client moderni)
+    https://ircv3.net/irc/
+
+Tutorial e articoli:
+  - "Building an IRC Server" (Medium, Ahmed Fatir — studente 42)
+    https://medium.com/@afatir.ahmedfatir/small-irc-server-ft-irc-42-network-7cee848de6f9
+  - "Writing an IRC server" (Beej's Guide spirit)
+    https://beej.us/guide/bgnet/
+
+Repository di riferimento (studenti 42 che hanno fatto bene):
+  - mcombeau/ft_irc — molto pulito e documentato
+    https://github.com/mcombeau/ft_irc
+  - marineks/Ft_irc — buona struttura
+    https://github.com/marineks/Ft_irc
+  - annafenzl/42-ft_irc — ottima gestione dei mode
+    https://github.com/annafenzl/42-ft_irc
+
+Tool per testare il server:
+  - nc (netcat) — test raw dal terminale
+    nc -C 127.0.0.1 6667
+  - HexChat — client IRC grafico (quello più usato come riferimento a 42)
+    https://hexchat.github.io/
+  - irssi — client IRC da terminale
+    https://irssi.org/
+  - WeeChat — client IRC da terminale alternativo
+    https://weechat.org/
+
+================================================================================
+                              RIEPILOGO ROAD MAP
+================================================================================
+
+FASE 1 — Registrazione:
+  [X] PASS
+  [X] NICK
+  [X] USER
+
+FASE 2 — Chat base:
+  [ ] JOIN
+  [ ] PRIVMSG
+
+FASE 3 — Channel operator (obbligatori subject):
+  [ ] KICK
+  [ ] INVITE
+  [ ] TOPIC
+  [ ] MODE (+i, +t, +k, +o, +l)
+
+FASE 4 — Extra quasi universali (fortemente consigliati):
+  [ ] QUIT
+  [ ] PING / PONG
+  [ ] PART
+  [ ] NOTICE
+
+FASE 5 — Extra comuni (opzionali):
+  [ ] NAMES
+  [ ] LIST
+  [ ] WHO
+  [ ] WHOIS
+
+================================================================================
