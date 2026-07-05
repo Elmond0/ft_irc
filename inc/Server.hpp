@@ -5,11 +5,13 @@
 # include <string>
 # include <cstring>
 # include <map>
+# include <list>
 # include <vector>
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <poll.h>
 # include <cerrno>
+# include <algorithm>
 
 # include "Client.hpp"
 
@@ -24,7 +26,8 @@ class Server
 		std::map<int, Client> _clients;
 		std::string _password;
 
-		void	addNewClient( std::vector<pollfd>& fds );
+		void	addNewClient( std::list<pollfd>& fds );
+		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
 		std::string	readBuffer( pollfd pfd );
 
 	public:
@@ -48,6 +51,11 @@ class Server
 		};
 
 		class PortNotValid : public std::exception
+		{
+			public:
+				const char *what() const throw();
+		};
+		class Timeout : public std::exception
 		{
 			public:
 				const char *what() const throw();
