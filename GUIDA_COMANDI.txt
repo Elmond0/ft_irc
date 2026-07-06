@@ -1,0 +1,732 @@
+================================================================================
+              GUIDA DIDATTICA AI COMANDI IRC IMPLEMENTATI IN cmd/
+                     ft_irc — spiegazione passo-passo, da zero
+================================================================================
+
+Questa guida spiega TUTTI i comandi implementati nella cartella cmd/ come se
+fosse una lezione universitaria: prima i concetti di base del protocollo,
+poi ogni comando nel dettaglio, con il codice reale del progetto, esempi di
+dialogo client/server presi dai test, e le fonti dove approfondire.
+
+Prerequisiti: sapere cosa sono un socket TCP, recv() e send(). Se non li
+conosci, parti da Beej's Guide to Network Programming:
+    https://beej.us/guide/bgnet/
+
+
+================================================================================
+PARTE 0 — LE FONDAMENTA DEL PROTOCOLLO IRC
+================================================================================
+
+0.1 — Cos'e' IRC
+------------------------------------------------------------
+IRC (Internet Relay Chat) e' un protocollo di chat testuale del 1988,
+standardizzato nel 1993 con l'RFC 1459 e aggiornato nel 2000 con l'RFC 2812.
+"RFC" (Request For Comments) sono i documenti ufficiali che definiscono i
+protocolli di Internet: sono LA fonte primaria, tutto il resto e' derivato.
+
+    RFC 1459 (originale, 1993): https://datatracker.ietf.org/doc/html/rfc1459
+    RFC 2812 (client protocol): https://datatracker.ietf.org/doc/html/rfc2812
+    Modern IRC (guida moderna, molto piu' leggibile degli RFC):
+        https://modern.ircdocs.horse/
+
+Il modello e' client-server: tanti client si connettono via TCP a un server,
+che smista i messaggi. Il server non "capisce" le conversazioni: fa da
+centralino. Tutta l'intelligenza del protocollo sta nel FORMATO dei messaggi
+e nelle REGOLE su chi puo' fare cosa.
+
+0.2 — Il formato di ogni messaggio
+------------------------------------------------------------
+OGNI riga scambiata tra client e server, in entrambe le direzioni, ha questa
+forma (RFC 2812, sezione 2.3):
+
+    [:prefix] COMANDO [param1] [param2] ... [:trailing]\r\n
+
+- prefix (opzionale): chi ha generato il messaggio. Il client di solito NON
+  lo manda; il SERVER lo aggiunge quando inoltra un messaggio, cosi' il
+  destinatario sa da chi arriva. Formato tipico: nick!user@host
+- COMANDO: una parola (PRIVMSG, JOIN...) oppure un numero di 3 cifre.
+- parametri: separati da spazi, quindi NON possono contenere spazi.
+- trailing: l'ULTIMO parametro, preceduto da ':'. E' l'unico che puo'
+  contenere spazi. Ecco perche' i messaggi di chat sono sempre trailing.
+- \r\n: OGNI messaggio termina con carriage-return + line-feed. Sempre.
+
+Nel nostro progetto questo formato e' rappresentato dalla struct IrcMessage
+(inc/IrcMessage.hpp) riempita da parseMessage (src/Parser.cpp):
+
+    struct IrcMessage {
+        std::string              prefix;
+        std::string              command;
+        std::vector<std::string> params;
+        std::string              trailing;
+    };
+
+Esempio concreto: la riga  "PRIVMSG #test :ciao a tutti\r\n"  diventa
+    command  = "PRIVMSG"
+    params   = ["#test"]
+    trailing = "ciao a tutti"
+
+0.3 — Le risposte numeriche (numerics)
+------------------------------------------------------------
+Il server risponde spesso con "numerics": comandi il cui nome e' un numero
+di 3 cifre. Ogni numero ha un significato fisso definito dagli RFC:
+1xx-3xx sono risposte informative/di successo, 4xx-5xx sono errori.
+Formato:
+
+    :<server> <numero> <nick del destinatario> [param...] :<testo>
+
+Esempio dal nostro server (preso da un test reale):
+
+    :ircserv 433 * anna :Nickname is already in use
+     ^^^^^^^ ^^^ ^ ^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     server  err |  |    testo leggibile per l'umano
+                 |  il nick che ha causato l'errore
+                 destinatario ("*" se il client non ha ancora un nick)
+
+Il client NON legge il testo: legge il NUMERO e decide da solo cosa
+mostrare. Per questo i numeri devono essere giusti, il testo e' libero.
+Lista completa dei numerics: https://modern.ircdocs.horse/#numerics
+(storica: https://www.alien.net.au/irc/irc2numerics.html)
+
+Nel nostro codice ogni risposta e' costruita cosi' (pattern identico
+ovunque, es. cmd/handle_PASS.cpp):
+
+    std::string reply = std::string(":") + SERVER_NAME + " 464 " +
+        nickOrStar(client) + " :Password incorrect\r\n";
+    server.sendToClient(client.getFd(), reply);
+
+nickOrStar (src/utils.cpp) restituisce il nick, oppure "*" se il client non
+ne ha ancora uno: e' la convenzione IRC per "utente senza identita'".
+
+0.4 — Il prefisso utente: nick!user@host
+------------------------------------------------------------
+Quando il server INOLTRA un messaggio di un utente ad altri utenti, ci mette
+davanti il prefisso di chi l'ha generato. Nel nostro codice lo costruisce
+userPrefix (src/utils.cpp):
+
+    std::string userPrefix(const Client& client)
+    {
+        return std::string(":") + client.getNick() + "!" +
+               client.getUser() + "@host";
+    }
+
+Cosi', quando anna scrive in un canale, bob riceve:
+
+    :anna!anna@host PRIVMSG #test :ciao a tutti
+
+e il suo client sa mostrare "<anna> ciao a tutti". Senza prefisso bob non
+saprebbe CHI ha parlato. (I server veri mettono l'hostname o l'IP reale al
+posto di "host"; per ft_irc una stringa fissa e' sufficiente.)
+
+0.5 — Il ciclo di vita di un comando nel nostro server
+------------------------------------------------------------
+    client scrive "JOIN #test\r\n"
+        -> TCP -> recv() in Server::readBuffer (src/Server.cpp)
+        -> parseMessage(raw) produce IrcMessage      (src/Parser.cpp)
+        -> Dispatcher::dispatch decide l'handler     (src/dispatch.cpp)
+        -> handle_JOIN esegue la logica              (cmd/handle_JOIN.cpp)
+        -> server.sendToClient(...) manda le risposte via send()
+
+Il dispatcher fa anche da "buttafuori": se il client non ha completato la
+registrazione (PASS+NICK+USER), gli unici comandi accettati sono PASS,
+NICK, USER, PING e QUIT; tutto il resto riceve 451 ERR_NOTREGISTERED.
+
+
+================================================================================
+PARTE 1 — LA REGISTRAZIONE: PASS, NICK, USER
+================================================================================
+
+Un client appena connesso e' un "fantasma": ha un socket ma nessuna
+identita'. La registrazione e' la sequenza che lo trasforma in un utente.
+Fonte: https://modern.ircdocs.horse/#connection-registration
+
+1.1 — PASS (cmd/handle_PASS.cpp)
+------------------------------------------------------------
+FORMATO:  PASS <password>
+SCOPO:    fornire la password del server (quella di ./ircserv <porta> <pass>).
+
+La logica e' tre controlli in fila, ognuno con il suo errore:
+
+    if (client.isRegistered())          -> 462 ERR_ALREADYREGISTERED
+    if (msg.params.empty())             -> 461 ERR_NEEDMOREPARAMS
+    if (msg.params[0] != server.getPassword()) -> 464 ERR_PASSWDMISMATCH
+    altrimenti: client.setPassOk(true);
+
+Nota didattica: PASS non risponde NIENTE in caso di successo. E' normale in
+IRC: silenzio = ok. Il client scopre che tutto e' andato bene solo quando,
+completata la registrazione, riceve il messaggio 001.
+
+Fonte: RFC 2812 sez. 3.1.1 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.1
+
+1.2 — NICK (cmd/handle_NICK.cpp)
+------------------------------------------------------------
+FORMATO:  NICK <nickname>
+SCOPO:    scegliere o cambiare il proprio nickname.
+
+Tre errori possibili:
+    431 ERR_NONICKNAMEGIVEN  — "NICK" senza parametri
+    432 ERR_ERRONEUSNICKNAME — caratteri non validi
+    433 ERR_NICKNAMEINUSE    — un ALTRO client ha gia' quel nick
+
+La validazione (isValidNick, in cmd/handle_NICK.cpp) segue la grammatica
+dell'RFC 2812 sez. 2.3.1: massimo 9 caratteri, il primo deve essere una
+lettera o un carattere speciale ( _-[]\`^{}| ), dal secondo in poi anche
+cifre. Per il controllo "gia' in uso" si scorre la mappa dei client:
+
+    for (it = clients.begin(); it != clients.end(); ++it)
+        if (it->first != client.getFd() && it->second.getNick() == newNick)
+            -> 433
+
+Il confronto it->first != client.getFd() serve a non auto-bloccarsi:
+ri-mandare il PROPRIO nick non e' un errore.
+
+Dettaglio importante del codice: NICK e' lecito anche DOPO la registrazione
+(cambio nick a runtime), ma il burst di benvenuto 001-004 va mandato UNA
+volta sola. Per questo c'e':
+
+    bool wasRegistered = client.isRegistered();
+    client.setNick(newNick);
+    client.setNickOk(true);
+    if (!wasRegistered && client.isRegistered())
+        sendWelcome(client, server);
+
+Fonte: RFC 2812 sez. 3.1.2 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.2
+
+1.3 — USER (cmd/handle_USER.cpp)
+------------------------------------------------------------
+FORMATO:  USER <username> <mode> <unused> :<realname>
+ESEMPIO:  USER anna 0 * :Anna Rossi
+
+Fornisce username e "vero nome". I campi <mode> e <unused> esistono per
+motivi storici: <mode> e' un bitmask per i mode utente iniziali (0 = nulla,
+8 = invisibile) e <unused> e' sempre "*". Non li usiamo — e non li usa
+praticamente nessuno — ma DEVONO esserci perche' i parametri sono
+posizionali: e' per questo che il controllo e'
+
+    if (msg.params.empty() || msg.trailing.empty()) -> 461
+
+Il realname e' trailing perche' puo' contenere spazi ("Anna Rossi").
+Errori: 461 e 462 (riprovare USER da registrati e' vietato).
+
+Quando l'ultimo dei tre flag (passOk, nickOk, userOk) diventa true,
+isRegistered() diventa true e parte sendWelcome (src/utils.cpp): i numerics
+001 RPL_WELCOME, 002 RPL_YOURHOST, 003 RPL_CREATED, 004 RPL_MYINFO.
+I client aspettano lo 001 per considerarsi "dentro". Output reale dal test:
+
+    :ircserv 001 anna :Welcome to the IRC Network anna!anna@host
+    :ircserv 002 anna :Your host is ircserv, running version 1.0
+    :ircserv 003 anna :This server was created today
+    :ircserv 004 anna ircserv 1.0 o o
+
+Fonte: RFC 2812 sez. 3.1.3 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.3
+
+
+================================================================================
+PARTE 2 — I CANALI: LA CLASSE Channel E IL COMANDO JOIN
+================================================================================
+
+2.1 — Cos'e' un canale, e come lo rappresentiamo
+------------------------------------------------------------
+Un canale e' una "stanza" con un nome che inizia per '#'. Non esiste
+finche' qualcuno non ci entra, e sparisce quando esce l'ultimo membro
+(RFC 2811 descrive i canali in dettaglio).
+
+La classe Channel (inc/Channel.hpp) contiene tutto lo stato:
+
+    std::string   _name;        // "#test"
+    std::string   _topic;       // argomento del canale
+    std::string   _key;         // password del canale (mode +k)
+    std::set<int> _members;     // fd dei membri
+    std::set<int> _operators;   // fd degli operator
+    std::set<int> _invited;     // fd con un invito pendente (per +i)
+    bool          _inviteOnly;  // mode +i
+    bool          _topicLocked; // mode +t
+    std::size_t   _userLimit;   // mode +l (0 = nessun limite)
+
+Scelta di design da capire bene: i membri sono memorizzati come FD (interi),
+non come puntatori a Client. Il file descriptor e' la chiave della mappa
+_clients del Server, quindi da un fd si risale sempre al Client; e un int
+non puo' mai diventare un puntatore penzolante. I tre std::set rendono
+naturali le domande tipiche: "e' membro?" = _members.count(fd) > 0.
+
+I canali vivono nel Server:  std::map<std::string, Channel> _channels;
+La mappa nome->canale rende la ricerca di "#test" un lookup diretto
+(findChannel, in src/utils.cpp, restituisce Channel* o NULL).
+
+2.2 — JOIN (cmd/handle_JOIN.cpp)
+------------------------------------------------------------
+FORMATO:  JOIN <#canale>[,<#canale2>...] [<key>[,<key2>...]]
+          JOIN 0        (esce da TUTTI i canali)
+
+JOIN e' il comando piu' ricco che abbiamo, quindi e' spezzato in funzioni
+piccole: isValidChannelName, joinOne, sendNames, partAll. Seguiamo joinOne
+passo passo, perche' e' una catena di controlli ESATTAMENTE nell'ordine in
+cui li descrive il protocollo:
+
+  1. nome valido? Deve iniziare con '#', avere almeno 2 caratteri e non
+     contenere spazi o virgole (che negli argomenti IRC sono separatori).
+     Se no -> 403 ERR_NOSUCHCHANNEL.
+
+  2. il canale esiste? Se NO viene CREATO al volo, e chi lo crea diventa
+     automaticamente channel operator:
+
+         bool isNew = channels.find(name) == channels.end();
+         if (isNew)
+             channels.insert(std::make_pair(name, Channel(name)));
+         ...
+         if (isNew)
+             chan.addOperator(client.getFd());
+
+     Questo e' il modo in cui in IRC "nasce" un operator: il primo che
+     entra. Non serve nessun comando speciale.
+
+  3. controlli d'ingresso, in quest'ordine:
+         canale +i e client non invitato     -> 473 ERR_INVITEONLYCHAN
+         canale con key e key sbagliata      -> 475 ERR_BADCHANNELKEY
+         canale pieno (mode +l raggiunto)    -> 471 ERR_CHANNELISFULL
+
+  4. ingresso effettivo: chan.addMember(fd). Nota: addMember (Channel.cpp)
+     fa anche _invited.erase(fd) — l'invito e' "usa e getta", una volta
+     entrato non vale piu'. E' il comportamento standard.
+
+  5. notifica: TUTTI i membri (incluso chi entra) ricevono
+         :anna!anna@host JOIN #test
+     Il broadcast usa exceptFd = -1, cioe' "nessuna esclusione": anche chi
+     entra deve ricevere il proprio JOIN, e' cosi' che il suo client sa che
+     l'ingresso e' riuscito e apre la finestra del canale.
+
+  6. il nuovo arrivato riceve il topic (332, o 331 se non c'e') e la lista
+     membri: 353 RPL_NAMREPLY + 366 RPL_ENDOFNAMES. Nel 353 gli operator
+     hanno la '@' davanti al nick. Output reale dal test:
+
+         :bob!bob@host JOIN #test
+         :ircserv 331 bob #test :No topic is set
+         :ircserv 353 bob = #test :@anna bob
+         :ircserv 366 bob #test :End of /NAMES list
+
+     (il "=" nel 353 significa "canale pubblico"; gli altri simboli, @ e *,
+     indicano canali segreti/privati che non implementiamo).
+
+  Il caso speciale "JOIN 0" (partAll) scorre tutti i canali e fa l'uscita
+  come farebbe PART. Attenzione al pattern C++98 per cancellare dentro un
+  ciclo su std::map:
+
+      std::map<std::string, Channel>::iterator current = it++;
+      ...
+      channels.erase(current);
+
+  Si salva l'iteratore corrente e si AVANZA PRIMA di cancellare: erase
+  invalida l'iteratore cancellato, e usarlo dopo sarebbe undefined behavior.
+
+Fonti: RFC 2812 sez. 3.2.1 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.1
+       Modern IRC — https://modern.ircdocs.horse/#join-message
+
+
+================================================================================
+PARTE 3 — PARLARE: PRIVMSG E NOTICE
+================================================================================
+
+3.1 — PRIVMSG (cmd/handle_PRIVMSG.cpp)
+------------------------------------------------------------
+FORMATO:  PRIVMSG <destinatario> :<testo>
+
+E' IL comando della chat: tutto quello che scrivi in un client IRC diventa
+un PRIVMSG. Il destinatario decide il comportamento:
+
+  - inizia per '#'  -> messaggio DI CANALE: il server lo inoltra a tutti i
+    membri TRANNE il mittente. L'esclusione e' fondamentale: se il mittente
+    ricevesse indietro il proprio messaggio, lo vedrebbe doppio (il suo
+    client lo mostra gia' quando lo invia). Nel codice:
+
+        broadcastToChannel(server, *chan, line, client.getFd());
+                                                ^^^^^^^^^^^^^^^
+                                                fd escluso dal giro
+
+  - altrimenti -> messaggio PRIVATO: findClientByNick cerca il destinatario
+    e il server glielo consegna, solo a lui.
+
+Errori (RFC 2812 sez. 3.3.1):
+    411 ERR_NORECIPIENT     — manca il destinatario
+    412 ERR_NOTEXTTOSEND    — manca il testo
+    401 ERR_NOSUCHNICK      — nick o canale inesistente
+    404 ERR_CANNOTSENDTOCHAN— il mittente non e' membro del canale
+                              (regola "no external messages")
+
+Dialogo reale dal test (anna scrive, la riceve solo bob):
+
+    anna invia:  PRIVMSG #test :ciao a tutti
+    bob riceve:  :anna!anna@host PRIVMSG #test :ciao a tutti
+    anna riceve: (niente)
+
+Fonte: https://modern.ircdocs.horse/#privmsg-message
+
+3.2 — NOTICE (cmd/handle_NOTICE.cpp)
+------------------------------------------------------------
+FORMATO:  NOTICE <destinatario> :<testo>
+
+Gemello di PRIVMSG con UNA differenza, scolpita nell'RFC 1459 sez. 4.4.2:
+"automatic replies must never be sent in response to a NOTICE message".
+In risposta a un NOTICE non si genera MAI nulla in automatico — nemmeno
+gli errori. Perche'? Immagina due bot: A manda un messaggio a B, B risponde
+con un errore, A risponde all'errore con un errore... loop infinito.
+NOTICE spezza il loop per contratto.
+
+Guarda la differenza nel codice — stessa struttura di PRIVMSG, ma dove
+PRIVMSG manda 411/412/401/404, NOTICE fa semplicemente return:
+
+    if (msg.params.empty() || msg.trailing.empty())
+        return;                                   // niente 461, silenzio
+    ...
+    if (chan && chan->isMember(client.getFd()))   // se qualcosa non va...
+        broadcastToChannel(...);                  // ...non si lamenta:
+    return;                                       // scarta e basta
+
+Fonte: https://modern.ircdocs.horse/#notice-message
+
+
+================================================================================
+PARTE 4 — I POTERI DEGLI OPERATOR: KICK, INVITE, TOPIC, MODE
+================================================================================
+
+Il "channel operator" (op) e' il moderatore di UN canale (da non confondere
+con l'IRC operator globale, comando OPER, che non ci serve). Come visto,
+si diventa op creando il canale, oppure ricevendo +o da un altro op.
+
+4.1 — KICK (cmd/handle_KICK.cpp)
+------------------------------------------------------------
+FORMATO:  KICK <#canale> <nick> [:<motivo>]
+
+Espelle un utente. La parte istruttiva e' la SCALA di controlli, dal
+problema piu' generale al piu' specifico — quasi tutti i comandi operator
+hanno questa stessa scala:
+
+    canale inesistente          -> 403 ERR_NOSUCHCHANNEL
+    tu non sei nel canale       -> 442 ERR_NOTONCHANNEL
+    tu non sei operator         -> 482 ERR_CHANOPRIVSNEEDED
+    la vittima non e' nel canale-> 441 ERR_USERNOTINCHANNEL
+
+E POI, il dettaglio che frega tutti la prima volta — l'ORDINE tra notifica
+e rimozione:
+
+    broadcastToChannel(server, *chan, ... " KICK " ..., -1);  // 1. avvisa
+    chan->removeMember(target->getFd());                      // 2. rimuovi
+
+PRIMA si manda il KICK a tutto il canale (vittima INCLUSA, exceptFd = -1),
+POI si rimuove. Se rimuovessi prima, la vittima non riceverebbe la
+notifica: il suo client non saprebbe mai di essere stato buttato fuori e
+mostrerebbe ancora la finestra del canale, "congelata".
+
+Se il motivo manca, la convenzione e' usare il nick di chi kicka:
+    std::string reason = msg.trailing.empty() ? client.getNick() : msg.trailing;
+
+Infine: se il canale resta vuoto, viene distrutto (erase dalla mappa).
+
+Fonte: RFC 2812 sez. 3.2.8 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.8
+
+4.2 — INVITE (cmd/handle_INVITE.cpp)
+------------------------------------------------------------
+FORMATO:  INVITE <nick> <#canale>     (nota: prima il nick, poi il canale!)
+
+Invita un utente. Diventa importante con i canali +i (invite-only), dove
+senza invito il JOIN fallisce con 473. Controlli:
+
+    nick inesistente             -> 401 ERR_NOSUCHNICK
+    canale inesistente           -> 403 ERR_NOSUCHCHANNEL
+    tu non sei nel canale        -> 442 ERR_NOTONCHANNEL
+    canale +i e tu non sei op    -> 482 ERR_CHANOPRIVSNEEDED
+    l'invitato e' gia' dentro    -> 443 ERR_USERONCHANNEL
+
+Sfumatura da esame: il controllo op scatta SOLO se il canale e' +i. In un
+canale normale chiunque sia membro puo' invitare (l'invito e' solo una
+cortesia); in un canale +i l'invito APRE LA PORTA, quindi e' riservato
+agli op. Nel codice:
+
+    if (chan->isInviteOnly() && !chan->isOperator(client.getFd())) -> 482
+
+Se tutto va bene succedono TRE cose:
+    1. il fd dell'invitato entra nel set _invited del canale
+       (e' la "lista degli ospiti" che JOIN controllera');
+    2. chi invita riceve la conferma 341 RPL_INVITING;
+    3. l'invitato riceve il messaggio di invito.
+
+Dialogo reale dal test:
+
+    anna invia:  INVITE bob #test
+    anna riceve: :ircserv 341 anna bob #test
+    bob riceve:  :anna!anna@host INVITE bob :#test
+
+E ricordati: l'invito si consuma al primo JOIN riuscito (visto in 2.2).
+
+Fonte: RFC 2812 sez. 3.2.7 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.7
+
+4.3 — TOPIC (cmd/handle_TOPIC.cpp)
+------------------------------------------------------------
+FORMATO:  TOPIC <#canale>            — LEGGE il topic
+          TOPIC <#canale> :<testo>   — SCRIVE il topic
+
+Un comando, due mestieri: la presenza del secondo argomento decide se e'
+una lettura o una scrittura. Nel codice il discrimine e':
+
+    if (msg.trailing.empty() && msg.params.size() < 2)   // niente testo:
+        -> lettura: 331 RPL_NOTOPIC oppure 332 RPL_TOPIC
+    altrimenti
+        -> scrittura
+
+La lettura la puo' fare qualunque membro. La scrittura dipende dal mode +t
+(topic locked): se attivo, solo gli op possono cambiare il topic:
+
+    if (chan->isTopicLocked() && !chan->isOperator(client.getFd())) -> 482
+
+Quando il topic cambia, TUTTO il canale viene avvisato (di nuovo il pattern
+"broadcast a tutti, incluso l'autore"):
+
+    anna invia:   TOPIC #test :benvenuti
+    tutti ricevono: :anna!anna@host TOPIC #test :benvenuti
+
+e da quel momento chi entra riceve il 332 nel burst di JOIN, e chi chiede
+"TOPIC #test" riceve:  :ircserv 332 bob #test :benvenuti
+
+Fonte: RFC 2812 sez. 3.2.4 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.4
+
+4.4 — MODE (cmd/handle_MODE.cpp)
+------------------------------------------------------------
+FORMATO:  MODE <#canale>                     — interroga i mode
+          MODE <#canale> <+/-flag...> [arg...] — cambia i mode
+ESEMPI:   MODE #test +i
+          MODE #test +k segreta
+          MODE #test +o bob
+          MODE #test +l 10
+          MODE #test +itk segreta      (piu' flag in un colpo solo)
+          MODE #test -k
+
+Il comando piu' complesso del progetto. Concetti chiave:
+
+a) I mode sono INTERRUTTORI del canale. Il subject di ft_irc ne chiede 5:
+     i = invite-only         (interruttore puro, nessun argomento)
+     t = topic riservato op  (interruttore puro)
+     k = password del canale (con argomento: la key)
+     o = dare/togliere op    (con argomento: il nick)
+     l = limite utenti       (con argomento SOLO quando si attiva)
+
+b) La stringa dei mode si legge come una macchina a stati: '+' e '-' non
+   sono comandi, sono CAMBI DI SEGNO che restano validi per i flag
+   successivi. "+it" = attiva i, attiva t. "+i-t" = attiva i, spegni t.
+   Nel codice e' il bool adding:
+
+       if (c == '+') { adding = true;  continue; }
+       if (c == '-') { adding = false; continue; }
+       if (c == 'i') chan->setInviteOnly(adding);
+       ...
+
+c) Gli argomenti si CONSUMANO in ordine. Con "MODE #test +kl segreta 10",
+   la 'k' prende "segreta" e la 'l' prende "10". Nel codice c'e' un indice
+   argIdx che parte da 2 (params[0] = canale, params[1] = flag) e avanza
+   ogni volta che un flag "affamato" chiama nextArg:
+
+       static bool nextArg(const IrcMessage& msg, std::size_t& idx,
+                           std::string& out)
+       {
+           if (idx >= msg.params.size())
+               return false;          // argomenti finiti -> 461
+           out = msg.params[idx++];   // prendi e avanza
+           return true;
+       }
+
+d) Ogni flag ha le sue regole particolari, tutte gestite nel ciclo:
+   - +k senza argomento -> 461; -k accetta (e ignora) un argomento perche'
+     molti client mandano "-k *" per abitudine;
+   - +o/-o vogliono un nick che sia MEMBRO del canale, altrimenti 441;
+   - +l vuole un numero > 0 (validato con std::atoi), -l azzera il limite;
+   - un flag sconosciuto (es. 'z') -> 472 ERR_UNKNOWNMODE, ma il ciclo
+     CONTINUA con i flag successivi: un errore non butta via tutta la riga.
+
+e) Interrogazione: "MODE #test" senza flag risponde con 324
+   RPL_CHANNELMODEIS. Il metodo Channel::modeString() ricostruisce la
+   stringa dei flag attivi, e sendChannelModes aggiunge key e limite:
+
+       anna invia:  MODE #test
+       anna riceve: :ircserv 324 anna #test +k segreta
+
+f) Permessi: interrogare e' libero; MODIFICARE richiede di essere membro
+   (442) e op (482). Nel test: bob (non op) prova "MODE #test +i" e
+   riceve  :ircserv 482 bob #test :You're not channel operator
+
+g) Caso limite gestito a parte: se il target NON inizia per '#' e' un
+   user-mode (es. "MODE anna +i" che molti client mandano da soli appena
+   connessi). Non fa parte del subject: lo ignoriamo in silenzio con un
+   return, senza errore, per non sporcare i client.
+
+Fonti: RFC 2812 sez. 3.2.3 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.3
+       Modern IRC (tabella dei channel modes): https://modern.ircdocs.horse/#channel-modes
+
+
+================================================================================
+PARTE 5 — USCIRE E RESTARE VIVI: PART, QUIT, PING/PONG
+================================================================================
+
+5.1 — PART (cmd/handle_PART.cpp)
+------------------------------------------------------------
+FORMATO:  PART <#canale>[,<#canale2>...] [:<motivo>]
+
+Esce da uno o piu' canali SENZA disconnettersi dal server (differenza
+fondamentale con QUIT). Errori: 403 canale inesistente, 442 non sei membro.
+
+Come per KICK, l'ordine e' sacro: PRIMA il broadcast a tutto il canale
+(incluso chi esce, cosi' il suo client chiude la finestra), POI la
+rimozione, e se il canale resta vuoto si distrugge:
+
+    broadcastToChannel(server, *chan, line + "\r\n", -1);
+    chan->removeMember(client.getFd());
+    if (chan->isEmpty())
+        server.getChannels().erase(name);
+
+Il motivo e' opzionale: "PART #test :torno dopo" produce
+    :bob!bob@host PART #test :torno dopo
+
+Fonte: RFC 2812 sez. 3.2.2 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.2.2
+
+5.2 — QUIT (cmd/handle_QUIT.cpp)
+------------------------------------------------------------
+FORMATO:  QUIT [:<motivo>]
+
+Disconnessione TOTALE dal server. E' il comando con piu' "pulizia" da fare,
+ed e' un ottimo esercizio sulla gestione delle risorse:
+
+  1. Notificare chi condivide ALMENO un canale con chi se ne va — ma UNA
+     volta sola a testa, anche se si condividono tre canali. Il trucco e'
+     un std::set dei gia' avvisati: insert() su un set restituisce
+     .second == false se l'elemento c'era gia', quindi
+
+         if (*m != client.getFd() && notified.insert(*m).second)
+             server.sendToClient(*m, line);
+
+     manda il QUIT solo al PRIMO incontro di ogni fd. Elegante e O(log n).
+
+  2. Rimuovere il client da ogni canale, distruggendo i canali rimasti
+     vuoti (stesso pattern iteratore-poi-avanza visto in JOIN 0).
+
+  3. Salutare con "ERROR :Closing Link" — e' la risposta standard che i
+     server IRC mandano prima di chiudere una connessione.
+
+  4. close(fd) e rimozione dalla mappa _clients. Questo passo va fatto per
+     ULTIMO: la reference 'client' che l'handler ha ricevuto punta DENTRO
+     la mappa del server; dopo erase() usarla sarebbe undefined behavior.
+     (Nota di integrazione: la rimozione del pollfd dal ciclo poll() spetta
+     al codice del server, vedi le note in TODO_COMANDI.txt.)
+
+Output reale dal test:
+    anna invia:  QUIT :ciao
+    bob riceve:  :anna!anna@host QUIT :ciao
+    anna riceve: ERROR :Closing Link
+
+Fonte: RFC 2812 sez. 3.1.7 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.1.7
+
+5.3 — PING / PONG (cmd/handle_PING.cpp)
+------------------------------------------------------------
+FORMATO:  client -> server:  PING :<token>
+          server -> client:  PONG <server> :<token>
+
+Il "battito cardiaco" di IRC. Una connessione TCP inattiva e' indistinguibile
+da una connessione morta: per capirlo, ogni tanto una parte manda PING e
+l'altra DEVE rispondere PONG rispecchiando lo stesso token. Se il PONG non
+arriva entro un timeout, il client chiude la connessione. I client reali
+(irssi, HexChat) pingano ogni 30-120 secondi: senza questo handler il
+server "funzionerebbe" per un minuto e poi tutti i client cadrebbero,
+apparentemente senza motivo. Per questo, pur non essendo citato nel
+subject, e' di fatto obbligatorio.
+
+L'implementazione e' minima ma con un dettaglio di robustezza: il token
+puo' arrivare come trailing ("PING :abc") o come parametro ("PING abc"),
+dipende dal client, e li accettiamo entrambi:
+
+    std::string token = msg.trailing;
+    if (token.empty() && !msg.params.empty())
+        token = msg.params[0];
+
+Senza token -> 409 ERR_NOORIGIN. Con token:
+
+    anna invia:  PING :token123
+    anna riceve: :ircserv PONG ircserv :token123
+
+Nota: il dispatcher permette PING anche PRIMA della registrazione, perche'
+alcuni client pingano gia' durante l'handshake.
+
+Fonti: RFC 2812 sez. 3.7.2/3.7.3 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.7.2
+       https://modern.ircdocs.horse/#ping-message
+
+
+================================================================================
+PARTE 6 — I PATTERN TRASVERSALI (quello che l'esaminatore chiedera')
+================================================================================
+
+Rileggendo i comandi, noterai che sono variazioni di POCHI pattern. Saperli
+nominare e' meta' dell'esame:
+
+P1. "Scala dei controlli": ogni handler valida dal generale al particolare
+    (parametri -> esistenza del canale -> membership -> permessi -> target)
+    e a ogni gradino risponde col numeric giusto e fa return. Mai proseguire
+    dopo un errore.
+
+P2. "Broadcast con esclusione": broadcastToChannel(server, chan, line, fd)
+    manda a tutti i membri tranne fd. Con fd = -1 non esclude nessuno.
+    PRIVMSG esclude il mittente; JOIN/PART/KICK/TOPIC/MODE/QUIT non
+    escludono nessuno (o escludono solo chi e' gia' stato servito).
+
+P3. "Prima notifica, poi rimozione": KICK, PART, QUIT avvisano PRIMA di
+    togliere il membro, altrimenti l'interessato non riceve nulla.
+
+P4. "Il silenzio e' assenso": PASS, NICK, USER, e in generale i comandi
+    riusciti, spesso non producono risposta diretta; producono EFFETTI
+    (welcome burst, echo del JOIN, broadcast del TOPIC...).
+
+P5. "Canali garbage-collected": nessuno distrugge mai un canale
+    esplicitamente; ogni punto che rimuove un membro controlla isEmpty()
+    e cancella il canale dalla mappa. Cosi' non esistono canali fantasma.
+
+P6. "fd come identita'": ovunque, l'identita' di un client e' il suo file
+    descriptor; nick e puntatori si risolvono al momento con
+    findClientByNick / server.getClients()[fd].
+
+
+================================================================================
+PARTE 7 — DOVE STUDIARE (in ordine consigliato)
+================================================================================
+
+1. Modern IRC — https://modern.ircdocs.horse/
+   LA risorsa da leggere per prima: e' l'unificazione moderna di RFC 1459 e
+   2812, scritta in modo leggibile, con esempi per ogni comando e la lista
+   completa dei numerics. Ogni comando di questa guida ha la sua pagina.
+
+2. RFC 2812 — https://datatracker.ietf.org/doc/html/rfc2812
+   Il documento normativo del protocollo client. Da consultare quando serve
+   la regola ESATTA (grammatica dei nick sez. 2.3.1, formato messaggi
+   sez. 2.3, ogni comando nelle sezioni 3.x citate sopra).
+
+3. RFC 1459 — https://datatracker.ietf.org/doc/html/rfc1459
+   L'originale del 1993. Utile per capire il "perche'" storico di certe
+   stranezze (i parametri di USER, il divieto di risposta ai NOTICE...).
+
+4. RFC 2811 — https://datatracker.ietf.org/doc/html/rfc2811
+   Tutto sui canali: modes, membership, semantica di +i/+k/+l ecc.
+
+5. Beej's Guide to Network Programming — https://beej.us/guide/bgnet/
+   Per la parte socket/TCP (recv, send, poll): non e' IRC ma e' il
+   prerequisito per capire il livello sotto.
+
+6. Guida di uno studente 42 (Ahmed Fatir) sul progetto ft_irc:
+   https://medium.com/@afatir.ahmedfatir/small-irc-server-ft-irc-42-network-7cee848de6f9
+
+7. Progetti di riferimento di altri studenti 42 (per confrontare le scelte):
+   - https://github.com/mcombeau/ft_irc     (pulito e documentato)
+   - https://github.com/marineks/Ft_irc     (cartella commands/ = il nostro cmd/)
+   - https://github.com/annafenzl/42-ft_irc (buona gestione dei mode)
+
+8. Per testare a mano:
+       ./ircserv 6667 dontpanic
+       nc -C 127.0.0.1 6667
+   e poi scrivere i comandi riga per riga (PASS, NICK, USER, JOIN...).
+   Con due terminali nc si vede il broadcast in diretta: quello che scrivi
+   in uno appare nell'altro, esattamente come negli esempi di questa guida.
+
+================================================================================
+                                 FINE GUIDA
+================================================================================

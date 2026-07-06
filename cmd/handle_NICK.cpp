@@ -57,9 +57,6 @@ void handle_NICK(Client& client, const IrcMessage& msg, Server& server)
         }
     }
 
-    /* Il welcome va mandato UNA sola volta, quando la registrazione si
-     * COMPLETA. Se il client era gia' registrato questo e' solo un cambio
-     * nick a runtime: niente burst 001-004. */
     bool wasRegistered = client.isRegistered();
     client.setNick(newNick);
     client.setNickOk(true);

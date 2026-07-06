@@ -10,8 +10,6 @@ void handle_USER(Client& client, const IrcMessage& msg, Server& server)
         return;
     }
 
-    /* USER <username> <hostname> <servername> :<realname>
-     * ci servono almeno lo username (params[0]) e il realname (trailing). */
     if (msg.params.empty() || msg.trailing.empty())
     {
         std::string reply = std::string(":") + SERVER_NAME + " 461 " +

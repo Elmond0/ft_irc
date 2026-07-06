@@ -12,6 +12,7 @@
 # include <cerrno>
 
 # include "Client.hpp"
+# include "Channel.hpp"
 
 # define IRCPASS "dontpanic"
 
@@ -22,6 +23,7 @@ class Server
 		sockaddr_in serverAddress;
 		int	_port;
 		std::map<int, Client> _clients;
+		std::map<std::string, Channel> _channels;
 		std::string _password;
 
 		void	addNewClient( std::vector<pollfd>& fds );
@@ -37,9 +39,10 @@ class Server
 		void	run( void );
 
 		// interfaccia per i comandi - @elia
-		const std::string&		getPassword( void ) const;
-		std::map<int, Client>&	getClients( void );
-		void					sendToClient( int fd, const std::string& msg );
+		const std::string&				getPassword( void ) const;
+		std::map<int, Client>&			getClients( void );
+		std::map<std::string, Channel>&	getChannels( void );
+		void							sendToClient( int fd, const std::string& msg );
 
 		class WrongPassword : public std::exception
 		{

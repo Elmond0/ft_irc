@@ -13,11 +13,9 @@ class Client
 		int	_sock_fd;
 		sockaddr_in	_addr;
 
-		// permessi
 		bool _isOp;
 		bool _isChanOp;
 
-		// registrazione (PASS/NICK/USER) - @elia
 		std::string	_nick;
 		std::string	_user;
 		std::string	_realname;
@@ -35,7 +33,6 @@ class Client
 		int	getSockFd( void ) const;
 		sockaddr_in getAddr( void ) const;
 
-		// interfaccia registrazione - @elia
 		int					getFd( void ) const;
 		const std::string&	getNick( void ) const;
 		const std::string&	getUser( void ) const;

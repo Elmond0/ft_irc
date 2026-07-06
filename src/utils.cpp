@@ -7,6 +7,65 @@ std::string nickOrStar(const Client& client)
     return client.getNick();
 }
 
+/* prefisso ":nick!user@host" con cui il server inoltra i messaggi utente */
+std::string userPrefix(const Client& client)
+{
+    return std::string(":") + client.getNick() + "!" + client.getUser() + "@host";
+}
+
+Client* findClientByNick(Server& server, const std::string& nick)
+{
+    std::map<int, Client>& clients = server.getClients();
+    for (std::map<int, Client>::iterator it = clients.begin();
+         it != clients.end(); ++it)
+    {
+        if (it->second.getNick() == nick)
+            return &it->second;
+    }
+    return NULL;
+}
+
+Channel* findChannel(Server& server, const std::string& name)
+{
+    std::map<std::string, Channel>& channels = server.getChannels();
+    std::map<std::string, Channel>::iterator it = channels.find(name);
+    if (it == channels.end())
+        return NULL;
+    return &it->second;
+}
+
+void broadcastToChannel(Server& server, Channel& chan,
+                        const std::string& line, int exceptFd)
+{
+    const std::set<int>& members = chan.getMembers();
+    for (std::set<int>::const_iterator it = members.begin();
+         it != members.end(); ++it)
+    {
+        if (*it != exceptFd)
+            server.sendToClient(*it, line);
+    }
+}
+
+/* "#a,#b,#c" -> ["#a", "#b", "#c"] (per JOIN e PART multipli) */
+std::vector<std::string> splitComma(const std::string& s)
+{
+    std::vector<std::string> out;
+    std::size_t start = 0;
+
+    while (start <= s.size())
+    {
+        std::size_t comma = s.find(',', start);
+        if (comma == std::string::npos)
+        {
+            out.push_back(s.substr(start));
+            break;
+        }
+        out.push_back(s.substr(start, comma - start));
+        start = comma + 1;
+    }
+    return out;
+}
+
 void sendWelcome(Client& client, Server& server)
 {
     std::string nick = client.getNick();

@@ -36,8 +36,10 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
                 handle_NICK(client, msg, _server);
             else if (msg.command == "USER")
                 handle_USER(client, msg, _server);
-            else if (msg.command == "CAP")
-                return;
+            else if (msg.command == "PING")
+                handle_PING(client, msg, _server);
+            else if (msg.command == "QUIT")
+                handle_QUIT(client, msg, _server);
             else
                 throw NotRegisteredException();
             return;
@@ -46,25 +48,29 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
         if (msg.command == "NICK")
             handle_NICK(client, msg, _server);
         else if (msg.command == "PASS")
-            handle_PASS(client, msg, _server); /* -> 462 gia' registrato */
+            handle_PASS(client, msg, _server);
         else if (msg.command == "USER")
-            handle_USER(client, msg, _server); /* -> 462 gia' registrato */
+            handle_USER(client, msg, _server);
         else if (msg.command == "PING")
-            (void)0; /* handle_PING -- da aggiungere */
+            handle_PING(client, msg, _server);
         else if (msg.command == "JOIN")
-            (void)0; /* handle_JOIN -- da aggiungere */
+            handle_JOIN(client, msg, _server);
         else if (msg.command == "PRIVMSG")
-            (void)0; /* handle_PRIVMSG -- da aggiungere */
+            handle_PRIVMSG(client, msg, _server);
+        else if (msg.command == "NOTICE")
+            handle_NOTICE(client, msg, _server);
         else if (msg.command == "KICK")
-            (void)0; /* handle_KICK -- da aggiungere */
+            handle_KICK(client, msg, _server);
         else if (msg.command == "INVITE")
-            (void)0; /* handle_INVITE -- da aggiungere */
+            handle_INVITE(client, msg, _server);
         else if (msg.command == "TOPIC")
-            (void)0; /* handle_TOPIC -- da aggiungere */
+            handle_TOPIC(client, msg, _server);
         else if (msg.command == "MODE")
-          (void)0; /* handle_MODE -- da aggiungere */
+            handle_MODE(client, msg, _server);
+        else if (msg.command == "PART")
+            handle_PART(client, msg, _server);
         else if (msg.command == "QUIT")
-            (void)0; /* handle_QUIT -- da aggiungere */
+            handle_QUIT(client, msg, _server);
         else
             throw UnknownCommandException();
     }

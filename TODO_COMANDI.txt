@@ -125,7 +125,7 @@ FONTI E RIFERIMENTI:
                         FASE 2 — CHAT BASE
 ================================================================================
 
-[ ] JOIN
+[X] JOIN
 ------------------------------------------------------------
 DESCRIZIONE:
   JOIN permette a un client registrato di entrare in un canale IRC. Se il
@@ -172,7 +172,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] PRIVMSG
+[X] PRIVMSG
 ------------------------------------------------------------
 DESCRIZIONE:
   PRIVMSG è il comando principale per inviare messaggi in IRC. Può essere
@@ -217,7 +217,7 @@ FONTI E RIFERIMENTI:
                    FASE 3 — COMANDI DA CHANNEL OPERATOR
 ================================================================================
 
-[ ] KICK
+[X] KICK
 ------------------------------------------------------------
 DESCRIZIONE:
   KICK espelle forzatamente un utente da un canale. Solo un channel operator
@@ -250,7 +250,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] INVITE
+[X] INVITE
 ------------------------------------------------------------
 DESCRIZIONE:
   INVITE invita un utente a entrare in un canale. È particolarmente
@@ -286,7 +286,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] TOPIC
+[X] TOPIC
 ------------------------------------------------------------
 DESCRIZIONE:
   TOPIC permette di vedere o cambiare il "topic" di un canale, ovvero il
@@ -322,7 +322,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] MODE
+[X] MODE
 ------------------------------------------------------------
 DESCRIZIONE:
   MODE è il comando più complesso dell'intero progetto. Permette di cambiare
@@ -403,7 +403,7 @@ FONTI E RIFERIMENTI:
                      FASE 4 — EXTRA (quasi universali)
 ================================================================================
 
-[ ] QUIT
+[X] QUIT
 ------------------------------------------------------------
 DESCRIZIONE:
   QUIT disconnette il client dal server in modo pulito. Il client manda
@@ -429,7 +429,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] PING / PONG
+[X] PING / PONG
 ------------------------------------------------------------
 DESCRIZIONE:
   PING e PONG sono il meccanismo di keepalive del protocollo IRC.
@@ -463,7 +463,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] PART
+[X] PART
 ------------------------------------------------------------
 DESCRIZIONE:
   PART permette a un client di uscire da uno o più canali senza
@@ -492,7 +492,7 @@ FONTI E RIFERIMENTI:
 
 --------------------------------------------------------------------------------
 
-[ ] NOTICE
+[X] NOTICE
 ------------------------------------------------------------
 DESCRIZIONE:
   NOTICE è quasi identico a PRIVMSG ma con una differenza fondamentale:
@@ -664,25 +664,289 @@ FASE 1 — Registrazione:
   [X] USER
 
 FASE 2 — Chat base:
-  [ ] JOIN
-  [ ] PRIVMSG
+  [X] JOIN
+  [X] PRIVMSG
 
 FASE 3 — Channel operator (obbligatori subject):
-  [ ] KICK
-  [ ] INVITE
-  [ ] TOPIC
-  [ ] MODE (+i, +t, +k, +o, +l)
+  [X] KICK
+  [X] INVITE
+  [X] TOPIC
+  [X] MODE (+i, +t, +k, +o, +l)
 
 FASE 4 — Extra quasi universali (fortemente consigliati):
-  [ ] QUIT
-  [ ] PING / PONG
-  [ ] PART
-  [ ] NOTICE
+  [X] QUIT
+  [X] PING / PONG
+  [X] PART
+  [X] NOTICE
 
 FASE 5 — Extra comuni (opzionali):
   [ ] NAMES
   [ ] LIST
   [ ] WHO
   [ ] WHOIS
+
+================================================================================
+              ⚠️  DA DIRE AL COMPAGNO CHE GESTISCE Server.cpp  ⚠️
+================================================================================
+
+Tutti i comandi fino alla fase 4 sono implementati nella cartella cmd/ e sono
+stati verificati funzionanti chiamando parser + dispatcher direttamente (test
+con socketpair, bypassando la lettura dal socket). Pero' testando con client
+reali (nc) sono emersi 4 BUG nel livello di trasporto — cioe' in
+Server::readBuffer() e Server::run() — che CORROMPONO i comandi prima ancora
+che arrivino al parser. Finche' non vengono sistemati, il server NON funziona
+in modo affidabile con nessun client (nc, irssi, HexChat), e all'esame
+verrebbe bocciato subito. Nessuno di questi bug e' nei comandi: sono tutti
+in Server.cpp.
+
+--------------------------------------------------------------------------------
+BUG 1 — Il buffer di recv() non viene mai terminato con '\0'
+--------------------------------------------------------------------------------
+DOVE: Server::readBuffer(), src/Server.cpp
+
+    char buffer[512];
+    if (recv(pfd.fd, &buffer, 512, 0) == -1)
+        std::cerr << strerror(errno) << std::endl;
+    std::string res(buffer);          // <-- legge fino al primo '\0'... che
+    return (res);                     //     nessuno ha mai scritto!
+
+recv() restituisce QUANTI byte ha letto, ma quel valore viene buttato via.
+Il costruttore std::string(char*) si ferma al primo byte nullo, ma:
+  a) il buffer e' una variabile di stack NON inizializzata: dopo i byte
+     appena letti c'e' spazzatura casuale;
+  b) alla lettura successiva, i byte della lettura PRECEDENTE sono ancora
+     li'. Esempio reale visto in test: il client manda "PASS dontpanic\r\n"
+     (16 byte), poi "NICK anna\r\n" (11 byte). La seconda recv sovrascrive
+     solo i primi 11 byte, quindi il buffer contiene
+     "NICK anna\r\nic\r\n<spazzatura>" e il server risponde
+     "432 Erroneus nickname" a un nick perfettamente valido.
+
+FIX: salvare il valore di ritorno e usarlo:
+
+    ssize_t n = recv(pfd.fd, buffer, sizeof(buffer) - 1, 0);
+    if (n <= 0)
+        // vedi BUG 3
+    buffer[n] = '\0';
+    std::string res(buffer, n);   // costruttore (ptr, len): ancora meglio
+
+--------------------------------------------------------------------------------
+BUG 2 — Nessuno spezza il buffer sulle righe \r\n
+--------------------------------------------------------------------------------
+DOVE: Server::run(), src/Server.cpp (il punto dove chiama parseMessage)
+
+TCP e' uno STREAM, non un protocollo a messaggi: una singola recv() puo'
+contenere MEZZO comando, UN comando, o DIECI comandi. I client reali mandano
+la registrazione in un colpo solo:
+
+    "PASS dontpanic\r\nNICK anna\r\nUSER anna 0 * :Anna Rossi\r\n"
+
+Oggi tutto questo arriva a parseMessage come UNA riga sola: il comando
+diventa PASS con parametro "dontpanic\r\nNICK" -> 464 Password incorrect,
+e la registrazione fallisce SEMPRE con i client veri. (Coi test manuali
+riga-per-riga su nc non si vede, perche' ogni invio = una recv.)
+
+FIX: serve un buffer di accumulo PER CLIENT (es. std::map<int, std::string>
+_recvBuf nel Server): ogni recv appende, poi si estraggono in loop tutte le
+righe complete terminate da \r\n (o \n) e si passa OGNI riga a
+parseMessage + dispatch. Quello che resta dopo l'ultimo \r\n rimane nel
+buffer in attesa dei byte successivi. Schema:
+
+    _recvBuf[fd] += datiAppenaLetti;
+    size_t pos;
+    while ((pos = _recvBuf[fd].find('\n')) != std::string::npos) {
+        std::string line = _recvBuf[fd].substr(0, pos + 1);
+        _recvBuf[fd].erase(0, pos + 1);
+        dispatcher.dispatch(_clients[fd], parseMessage(line));
+    }
+
+NOTA per il subject: e' esattamente il test che fanno all'esame con
+ctrl+D su nc ("com^Dman^Dd"), quindi va fatto comunque.
+
+--------------------------------------------------------------------------------
+BUG 3 — recv() == 0 (client disconnesso) non gestito -> loop infinito
+--------------------------------------------------------------------------------
+DOVE: Server::readBuffer() + Server::run(), src/Server.cpp
+
+Quando un client chiude la connessione, recv() restituisce 0 e il fd resta
+PER SEMPRE leggibile: poll() segnala POLLIN a ogni giro, readBuffer rilegge
+la spazzatura vecchia del buffer, il dispatcher la processa e manda errori
+451 a raffica a un socket morto. In test ha generato 20 MB di log in pochi
+secondi: e' un busy-loop al 100% di CPU.
+
+FIX: se recv() restituisce 0 (o -1):
+  1. close(fd)
+  2. rimuovere il pollfd dal vector fds (attenzione agli indici se si
+     rimuove mentre si itera: meglio marcare e rimuovere dopo il ciclo)
+  3. rimuovere il client da _clients (map)
+  4. (quando ci sara' l'integrazione coi canali) rimuoverlo anche da ogni
+     canale in _channels, come gia' fa handle_QUIT in cmd/handle_QUIT.cpp
+
+--------------------------------------------------------------------------------
+BUG 4 — setsockopt(SO_REUSEADDR) chiamata con parametri sbagliati
+--------------------------------------------------------------------------------
+DOVE: Server::run(), src/Server.cpp
+
+    setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR,
+               (void *)1, sizeof(SO_REUSEADDR));
+               ^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^
+               il numero 1 castato a PUNTATORE (indirizzo di memoria 0x1!)
+               e la size della COSTANTE SO_REUSEADDR, non del valore.
+
+La chiamata fallisce silenziosamente con EFAULT e l'opzione NON viene mai
+attivata. Conseguenza pratica: dopo ogni riavvio del server la porta resta
+in TIME_WAIT ~60 secondi e la bind() fallisce con "Address already in use".
+In piu' oggi, quando bind fallisce, il codice STAMPA l'errore ma CONTINUA:
+listen() parte su un socket non bindato e nessuno ascolta sulla porta 6667.
+
+FIX:
+
+    int opt = 1;
+    setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+e dopo bind()/listen() falliti bisogna USCIRE (throw), non proseguire.
+
+--------------------------------------------------------------------------------
+ALTRE NOTE MINORI (non bloccanti, ma da sapere)
+--------------------------------------------------------------------------------
+- handle_QUIT (cmd/handle_QUIT.cpp) oggi fa: notifica i canali, toglie il
+  client dai canali, manda "ERROR :Closing Link", chiude il fd e rimuove il
+  client da _clients. NON puo' pero' togliere il pollfd dal vector fds,
+  perche' quello vive dentro Server::run. Quando sistemate il BUG 3,
+  ha senso spostare la parte "close + erase" nella routine di disconnessione
+  del server, cosi' QUIT e disconnessione brutale passano dallo stesso punto.
+- addNewClient non controlla il valore di ritorno di accept() (-1).
+- fds[0].revents == POLLIN andrebbe scritto (fds[0].revents & POLLIN):
+  il confronto con == fallisce se arriva anche un altro flag insieme.
+
+================================================================================
+          MODIFICHE FATTE AI FILE COMUNI (guida per il merge) — @elia
+================================================================================
+
+Il lavoro sui comandi e' quasi tutto in file NUOVI (cartella cmd/, classe
+Channel) che non possono generare conflitti. I file COMUNI toccati sono
+TRE: inc/Server.hpp, src/Server.cpp, Makefile. Qui sotto c'e' l'elenco
+esatto delle righe, cosi' al merge sapete subito cosa e' mio e cosa e'
+vostro. Regola generale: in caso di conflitto su questi punti, tenete
+ENTRAMBE le modifiche (le mie sono solo AGGIUNTE, non cambiano nulla di
+esistente).
+
+--------------------------------------------------------------------------------
+FILE NUOVI (nessun conflitto possibile)
+--------------------------------------------------------------------------------
+  cmd/handle_PASS.cpp      (spostato da src/ con git mv, storia conservata)
+  cmd/handle_NICK.cpp      (spostato da src/ con git mv)
+  cmd/handle_USER.cpp      (spostato da src/ con git mv)
+  cmd/handle_JOIN.cpp      nuovo
+  cmd/handle_PRIVMSG.cpp   nuovo
+  cmd/handle_NOTICE.cpp    nuovo
+  cmd/handle_KICK.cpp      nuovo
+  cmd/handle_INVITE.cpp    nuovo
+  cmd/handle_TOPIC.cpp     nuovo
+  cmd/handle_MODE.cpp      nuovo
+  cmd/handle_PART.cpp      nuovo
+  cmd/handle_PING.cpp      nuovo
+  cmd/handle_QUIT.cpp      nuovo
+  inc/Channel.hpp          nuovo (classe canale: membri, op, invitati,
+                           topic, key, flag +i/+t, limite +l)
+  src/Channel.cpp          nuovo (implementazione, forma canonica)
+
+ATTENZIONE ai file SPOSTATI: se un collega ha modificato nel suo branch
+src/handle_PASS.cpp (o NICK/USER), git di solito segue il rename da solo,
+ma se il file e' stato modificato pesantemente da entrambe le parti puo'
+segnalare "deleted by us / modified by them". In quel caso: il contenuto
+giusto va in cmd/handle_XXX.cpp e src/handle_XXX.cpp non deve piu' esistere.
+
+--------------------------------------------------------------------------------
+inc/Server.hpp — 3 aggiunte
+--------------------------------------------------------------------------------
+1) In cima, dopo # include "Client.hpp":
+
+       # include "Channel.hpp"
+
+2) Tra i membri privati, subito dopo _clients:
+
+       std::map<std::string, Channel> _channels;
+
+   E' la mappa nome-canale -> oggetto Channel ("#test" -> Channel).
+   Vive nel Server perche' i canali devono sopravvivere tra un comando e
+   l'altro (il Dispatcher viene ricreato a ogni messaggio).
+
+3) Nella sezione "interfaccia per i comandi - @elia", aggiunto il getter:
+
+       std::map<std::string, Channel>&  getChannels( void );
+
+   (le righe vicine hanno solo cambiato allineamento delle tab per tenere
+   la colonna dritta: getPassword/getClients/sendToClient sono IDENTICHE
+   come firma, e' solo whitespace — se al merge vedete un conflitto li',
+   e' solo indentazione).
+
+--------------------------------------------------------------------------------
+src/Server.cpp — 1 aggiunta (2 righe)
+--------------------------------------------------------------------------------
+Nella sezione "interfaccia per i comandi - @elia", subito dopo
+getClients():
+
+    std::map<std::string, Channel>&  Server::getChannels( void ) { return _channels; }
+
+Nient'altro e' stato toccato in questo file: run(), readBuffer(),
+addNewClient() sono ESATTAMENTE come li avete lasciati (bug compresi,
+vedi sezione sopra).
+
+--------------------------------------------------------------------------------
+src/dispatch.cpp — file mio (@elia), ma ve lo segnalo perche' cambia
+                    il comportamento del server
+--------------------------------------------------------------------------------
+- Nel ramo "client NON registrato": aggiunti PING e QUIT tra i comandi
+  permessi prima della registrazione (i client reali pingano anche durante
+  l'handshake). CAP e' stato RIMOSSO: ora un client che manda CAP prima di
+  registrarsi riceve 451.
+- Nel ramo "client registrato": tutti gli stub "(void)0" sono stati
+  sostituiti dalle chiamate vere (handle_PING, handle_JOIN, handle_PRIVMSG,
+  handle_NOTICE, handle_KICK, handle_INVITE, handle_TOPIC, handle_MODE,
+  handle_PART, handle_QUIT). NOTICE e PART prima non c'erano proprio.
+
+--------------------------------------------------------------------------------
+inc/Commands.hpp e src/utils.cpp — file miei (@elia)
+--------------------------------------------------------------------------------
+- Commands.hpp: dichiarati i 10 nuovi handler + 5 helper condivisi.
+- utils.cpp: aggiunti gli helper usati da tutti i comandi:
+    userPrefix(client)        -> ":nick!user@host" (prefisso dei messaggi
+                                 inoltrati agli altri client)
+    findClientByNick(...)     -> cerca un Client* per nickname in _clients
+    findChannel(...)          -> cerca un Channel* per nome in _channels
+    broadcastToChannel(...)   -> manda una stringa a tutti i membri di un
+                                 canale (con fd opzionale da escludere,
+                                 es. il mittente in PRIVMSG)
+    splitComma("#a,#b")       -> vector di stringhe (JOIN/PART multipli)
+
+--------------------------------------------------------------------------------
+Makefile — 3 modifiche
+--------------------------------------------------------------------------------
+1) SRCS: rimossi src/handle_PASS.cpp, src/handle_NICK.cpp,
+   src/handle_USER.cpp (spostati in cmd/); aggiunto src/Channel.cpp.
+2) Nuova variabile CMD_DIR = cmd e nuova lista CMDS con i 13 file di cmd/;
+   OBJS ora concatena anche gli oggetti di cmd (finiscono in obj/cmd/).
+3) Nuova pattern rule, identica a quella di src/:
+
+       $(OBJ_DIR)/cmd/%.o : $(CMD_DIR)/%.cpp
+
+Se qualcuno aggiunge un .cpp in src/ nel suo branch, al merge basta unire
+le due liste SRCS: le modifiche non si pestano.
+
+--------------------------------------------------------------------------------
+COME FARE IL MERGE (procedura consigliata)
+--------------------------------------------------------------------------------
+1. Ognuno committa e pusha il proprio branch.
+2. Chi merge-a parte dal branch piu' "grosso" (probabilmente questo, ramo
+   elmondo) e ci porta dentro gli altri: git merge <branch-collega>.
+3. Conflitti attesi SOLO in: Makefile (lista SRCS), inc/Server.hpp
+   (se anche altri hanno aggiunto membri/metodi), src/Server.cpp (idem).
+   In tutti e tre i casi le mie modifiche sono pure AGGIUNTE: tenere
+   entrambi i lati del conflitto e ricompilare.
+4. Dopo il merge: make re DEVE compilare pulito con
+   -Wall -Wextra -Werror -std=c++98. Se compila, testare con:
+       ./ircserv 6667 dontpanic
+       nc -C 127.0.0.1 6667     (e poi PASS/NICK/USER a mano, una riga
+                                 alla volta finche' i BUG 1-3 non sono fixati)
 
 ================================================================================

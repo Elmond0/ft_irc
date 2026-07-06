@@ -12,11 +12,19 @@ OBJ_DIR = obj
 
 SRC_DIR = src
 
-SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
-       $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp $(SRC_DIR)/utils.cpp \
-       $(SRC_DIR)/handle_PASS.cpp $(SRC_DIR)/handle_NICK.cpp $(SRC_DIR)/handle_USER.cpp
+CMD_DIR = cmd
 
-OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
+       $(SRC_DIR)/Channel.cpp $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp \
+       $(SRC_DIR)/utils.cpp
+
+CMDS = $(CMD_DIR)/handle_PASS.cpp $(CMD_DIR)/handle_NICK.cpp $(CMD_DIR)/handle_USER.cpp \
+       $(CMD_DIR)/handle_JOIN.cpp $(CMD_DIR)/handle_PRIVMSG.cpp $(CMD_DIR)/handle_NOTICE.cpp \
+       $(CMD_DIR)/handle_KICK.cpp $(CMD_DIR)/handle_INVITE.cpp $(CMD_DIR)/handle_TOPIC.cpp \
+       $(CMD_DIR)/handle_MODE.cpp $(CMD_DIR)/handle_QUIT.cpp $(CMD_DIR)/handle_PING.cpp \
+       $(CMD_DIR)/handle_PART.cpp
+
+OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) $(CMDS:$(CMD_DIR)/%.cpp=$(OBJ_DIR)/cmd/%.o)
 
 GREEN := $(shell tput setaf 2)
 RED := $(shell tput setaf 1)
@@ -34,6 +42,11 @@ $(OBJ_DIR) :
 	@mkdir -p obj
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
+	@echo -e " $(GRAY) ● $< compiled$(RESET)"
+
+$(OBJ_DIR)/cmd/%.o : $(CMD_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
 	@echo -e " $(GRAY) ● $< compiled$(RESET)"

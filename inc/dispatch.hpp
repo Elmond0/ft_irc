@@ -12,7 +12,7 @@ class Dispatcher
 	private:
 		Server&	_server;
 
-		Dispatcher(void); /* non ha senso senza un Server */
+		Dispatcher(void);
 
 	public:
 		Dispatcher(Server& server);
