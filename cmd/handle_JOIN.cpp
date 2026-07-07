@@ -12,15 +12,19 @@ static void sendNames(Client& client, Channel& chan, Server& server)
 {
     std::string names;
     const std::set<int>& members = chan.getMembers();
+    std::map<int, Client>& clients = server.getClients();
 
     for (std::set<int>::const_iterator it = members.begin();
          it != members.end(); ++it)
     {
+        std::map<int, Client>::const_iterator c = clients.find(*it);
+        if (c == clients.end())
+            continue;
         if (!names.empty())
             names += " ";
         if (chan.isOperator(*it))
             names += "@";
-        names += server.getClients()[*it].getNick();
+        names += c->second.getNick();
     }
 
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
