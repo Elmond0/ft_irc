@@ -647,7 +647,7 @@ Senza token -> 409 ERR_NOORIGIN. Con token:
     anna invia:  PING :token123
     anna riceve: :ircserv PONG ircserv :token123
 
-Nota: il dispatcher permette PING anche PRIMA della registrazione, perche'
+Nota: il dispatcher permette PING anche PRIMA della registrazione, perche'handle_
 alcuni client pingano gia' durante l'handshake.
 
 Fonti: RFC 2812 sez. 3.7.2/3.7.3 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.7.2

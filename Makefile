@@ -18,11 +18,11 @@ SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
        $(SRC_DIR)/Channel.cpp $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp \
        $(SRC_DIR)/utils.cpp
 
-CMDS = $(CMD_DIR)/handle_PASS.cpp $(CMD_DIR)/handle_NICK.cpp $(CMD_DIR)/handle_USER.cpp \
-       $(CMD_DIR)/handle_JOIN.cpp $(CMD_DIR)/handle_PRIVMSG.cpp $(CMD_DIR)/handle_NOTICE.cpp \
-       $(CMD_DIR)/handle_KICK.cpp $(CMD_DIR)/handle_INVITE.cpp $(CMD_DIR)/handle_TOPIC.cpp \
-       $(CMD_DIR)/handle_MODE.cpp $(CMD_DIR)/handle_QUIT.cpp $(CMD_DIR)/handle_PING.cpp \
-       $(CMD_DIR)/handle_PART.cpp
+CMDS = $(CMD_DIR)/PASS.cpp $(CMD_DIR)/NICK.cpp $(CMD_DIR)/USER.cpp \
+       $(CMD_DIR)/JOIN.cpp $(CMD_DIR)/PRIVMSG.cpp $(CMD_DIR)/NOTICE.cpp \
+       $(CMD_DIR)/KICK.cpp $(CMD_DIR)/INVITE.cpp $(CMD_DIR)/TOPIC.cpp \
+       $(CMD_DIR)/MODE.cpp $(CMD_DIR)/QUIT.cpp $(CMD_DIR)/PING.cpp \
+       $(CMD_DIR)/PART.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) $(CMDS:$(CMD_DIR)/%.cpp=$(OBJ_DIR)/cmd/%.o)
 
