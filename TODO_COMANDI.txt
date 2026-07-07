@@ -692,12 +692,18 @@ FASE 5 — Extra comuni (opzionali):
 Tutti i comandi fino alla fase 4 sono implementati nella cartella cmd/ e sono
 stati verificati funzionanti chiamando parser + dispatcher direttamente (test
 con socketpair, bypassando la lettura dal socket). Pero' testando con client
-reali (nc) sono emersi 4 BUG nel livello di trasporto — cioe' in
+reali (nc) sono emersi 5 BUG nel livello di trasporto — cioe' in
 Server::readBuffer() e Server::run() — che CORROMPONO i comandi prima ancora
 che arrivino al parser. Finche' non vengono sistemati, il server NON funziona
 in modo affidabile con nessun client (nc, irssi, HexChat), e all'esame
 verrebbe bocciato subito. Nessuno di questi bug e' nei comandi: sono tutti
 in Server.cpp.
+
+PROVA CHE NON E' COLPA DEI COMANDI (test del 7 luglio): mandando la sessione
+completa PASS/NICK/USER/JOIN con un client che "tappa" il buffer (un byte
+'\0' in coda a ogni comando, inviato nello stesso pacchetto), TUTTO funziona:
+welcome 001-004, JOIN, 353/366. Stessi identici comandi via nc: falliscono
+in modo CASUALE (vedi BUG 1).
 
 --------------------------------------------------------------------------------
 BUG 1 — Il buffer di recv() non viene mai terminato con '\0'
@@ -715,11 +721,21 @@ Il costruttore std::string(char*) si ferma al primo byte nullo, ma:
   a) il buffer e' una variabile di stack NON inizializzata: dopo i byte
      appena letti c'e' spazzatura casuale;
   b) alla lettura successiva, i byte della lettura PRECEDENTE sono ancora
-     li'. Esempio reale visto in test: il client manda "PASS dontpanic\r\n"
-     (16 byte), poi "NICK anna\r\n" (11 byte). La seconda recv sovrascrive
-     solo i primi 11 byte, quindi il buffer contiene
-     "NICK anna\r\nic\r\n<spazzatura>" e il server risponde
-     "432 Erroneus nickname" a un nick perfettamente valido.
+     li'. Esempio: il client manda "PASS dontpanic\r\n" (16 byte), poi
+     "NICK anna\r\n" (11 byte). La seconda recv sovrascrive solo i primi
+     11 byte, quindi il buffer contiene "NICK anna\r\nnic\r\n<spazzatura>"
+     e il server risponde "432 Erroneus nickname" a un nick perfettamente
+     valido.
+
+IMPORTANTE — QUESTO BUG E' CASUALE, non deterministico. Dipende da cosa c'e'
+nello stack in quel momento: se per caso dopo i byte ricevuti c'e' uno zero,
+il comando passa pulito; altrimenti si attacca spazzatura. Verificato in
+test il 7 luglio: nella STESSA sessione "pass" e "user" sono arrivati puliti
+mentre "nick" e "join" avevano byte spazzatura attaccati; e lo stesso
+identico "NICK elmo" ha prodotto spazzatura DIVERSA a ogni esecuzione
+(nel log del server: "nick elmo^M" seguito da byte casuali tipo 0x8A 'o' 'Z').
+Tradotto: "ieri funzionava e oggi no senza aver toccato niente" e' il
+sintomo tipico di QUESTO bug, non di una regressione nei comandi.
 
 FIX: salvare il valore di ritorno e usarlo:
 
@@ -771,7 +787,8 @@ Quando un client chiude la connessione, recv() restituisce 0 e il fd resta
 PER SEMPRE leggibile: poll() segnala POLLIN a ogni giro, readBuffer rilegge
 la spazzatura vecchia del buffer, il dispatcher la processa e manda errori
 451 a raffica a un socket morto. In test ha generato 20 MB di log in pochi
-secondi: e' un busy-loop al 100% di CPU.
+secondi: e' un busy-loop al 100% di CPU. E in pratica spesso non si arriva
+nemmeno al loop: il processo MUORE prima per SIGPIPE (vedi BUG 5).
 
 FIX: se recv() restituisce 0 (o -1):
   1. close(fd)
@@ -804,6 +821,46 @@ FIX:
     setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
 e dopo bind()/listen() falliti bisogna USCIRE (throw), non proseguire.
+
+--------------------------------------------------------------------------------
+BUG 5 — SIGPIPE non gestito: il server MUORE quando un client si disconnette
+--------------------------------------------------------------------------------
+DOVE: manca del tutto (main.cpp o Server::run), src/
+
+Quando il server fa send() verso un client che ha gia' chiuso la connessione,
+il kernel manda al processo il segnale SIGPIPE, la cui azione di default e'
+TERMINARE IL PROCESSO. Niente messaggio di errore, niente crash visibile:
+il server semplicemente sparisce.
+
+Verificato in test il 7 luglio, due volte: chiusa la connessione del client
+di test, il processo ircserv e' morto (la shell ha riportato "Broken pipe").
+La catena e': client chiude -> recv()=0 non gestito (BUG 3) -> il dispatcher
+processa spazzatura e prova a RISPONDERE sul socket morto -> send() ->
+SIGPIPE -> processo terminato. Basta che UN client qualsiasi si disconnetta
+male e il server cade per TUTTI: all'esame e' bocciatura immediata.
+
+FIX (bastano 2 righe, due opzioni, meglio entrambe):
+
+  1. In main() o a inizio Server::run(), ignorare il segnale:
+
+         #include <csignal>
+         signal(SIGPIPE, SIG_IGN);
+
+     Cosi' send() su socket chiuso restituisce -1 con errno=EPIPE invece
+     di uccidere il processo (e il -1 e' gia' loggato da sendToClient).
+
+  2. In alternativa/in aggiunta, nella sendToClient usare il flag
+     MSG_NOSIGNAL:
+
+         send(fd, msg.c_str(), msg.size(), MSG_NOSIGNAL);
+
+     (questa posso farla io, sendToClient sta nella sezione interfaccia
+     comandi — ditemi voi se preferite la signal() globale, la MSG_NOSIGNAL,
+     o entrambe).
+
+NOTA: resta comunque necessario il fix del BUG 3 — ignorare SIGPIPE evita
+la morte del processo, ma senza gestire recv()=0 il fd morto continua a
+girare nel poll per sempre.
 
 --------------------------------------------------------------------------------
 ALTRE NOTE MINORI (non bloccanti, ma da sapere)
@@ -946,7 +1003,31 @@ COME FARE IL MERGE (procedura consigliata)
 4. Dopo il merge: make re DEVE compilare pulito con
    -Wall -Wextra -Werror -std=c++98. Se compila, testare con:
        ./ircserv 6667 dontpanic
-       nc -C 127.0.0.1 6667     (e poi PASS/NICK/USER a mano, una riga
-                                 alla volta finche' i BUG 1-3 non sono fixati)
+       nc -C 127.0.0.1 6667
+
+   ATTENZIONE: finche' i BUG 1-3 non sono sistemati, nc NON e' affidabile
+   nemmeno una riga alla volta — per colpa del BUG 1 lo stesso comando a
+   volte passa e a volte da' errore 432/464, a seconda della spazzatura
+   nello stack. Per testare i comandi IN MODO AFFIDABILE gia' adesso, usare
+   questo mini-client (manda un '\0' dopo ogni riga, che chiude il buffer
+   non inizializzato — si usa come nc: si digitano i comandi e si vedono
+   le risposte):
+
+       python3 -c "
+       import socket, sys, threading
+       s = socket.create_connection(('127.0.0.1', 6667))
+       threading.Thread(target=lambda: [print(d.decode(errors='replace'),
+           end='') for d in iter(lambda: s.recv(4096), b'')],
+           daemon=True).start()
+       for line in sys.stdin:
+           s.sendall(line.rstrip().encode() + b'\r\n\x00')
+       "
+
+   E' solo un cerotto per lavorare nel frattempo: con i client veri
+   (HexChat, irssi) il cerotto non esiste, quindi i BUG 1-3 vanno
+   sistemati comunque. Dopo il fix, testare anche la disconnessione
+   brutale: aprire nc, registrarsi, joinare un canale e chiudere con
+   ctrl+C — il server deve restare vivo (BUG 3 + BUG 5) e gli altri
+   client nel canale non devono piu' vedere il fantasma.
 
 ================================================================================
