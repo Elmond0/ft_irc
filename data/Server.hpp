@@ -1,27 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ircserv.h                                          :+:      :+:    :+:   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/07 15:37:39 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/07 15:37:41 by giomastr         ###   ########.fr       */
+/*   Created: 2026/07/05 16:39:39 by giomastr          #+#    #+#             */
+/*   Updated: 2026/07/05 16:39:56 by giomastr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#ifndef SERVER_HPP
+# define SERVER_HPP
 
-#ifndef IRCSERV_H
-# define IRCSERV_H
-
-# include <iostream>
-# include <fstream>
-# include <string>
-# include <sstream>
-# include <map>
-# include <exception>
-
-# include "Client.hpp"
-# include "Server.hpp"
 
 #endif

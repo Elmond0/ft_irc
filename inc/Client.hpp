@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/07 15:37:17 by giomastr          #+#    #+#             */
+/*   Updated: 2026/07/07 15:37:20 by giomastr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
@@ -18,12 +30,17 @@ class Client
 		bool _isChanOp;
 
 		// registrazione (PASS/NICK/USER) - @elia
-		std::string	_nick;
-		std::string	_user;
+		std::string	_nickname;
+		std::string	_username;
+		std::string _hostname;
 		std::string	_realname;
 		bool		_passOk;
-		bool		_nickOk;
-		bool		_userOk;
+		bool		_nickOk; //
+		bool		_userOk; //
+		bool		_registered;
+		// buffer
+		std::string _sendBuffer;
+		std::string _recvBuffer;
 
 	public:
 		Client( void );
@@ -37,16 +54,32 @@ class Client
 
 		// interfaccia registrazione - @elia
 		int					getFd( void ) const;
-		const std::string&	getNick( void ) const;
-		const std::string&	getUser( void ) const;
+
+		const std::string&	getNickname( void ) const;
+		const std::string&	getUsername( void ) const;
 		const std::string&	getRealname( void ) const;
-		void				setNick( const std::string& nick );
-		void				setUser( const std::string& user );
+		const std::string&	getHostname( void ) const;
+
+		void				setNickname( const std::string& nickname );
+		void				setUsername( const std::string& username );
 		void				setRealname( const std::string& realname );
+		void				setHostname( const std::string& hostname );
+
+		bool 				isPassOk() const;
 		void				setPassOk( bool ok );
 		void				setNickOk( bool ok );
 		void				setUserOk( bool ok );
 		bool				isRegistered( void ) const;
+
+		// static message box
+		std::string			getPrefix() const;
+
+		void				queueMessage(const std::string &message); 		// Accoda un messaggio gia' formattato (senza \r\n finale)
+		std::string			&getSendBuffer();
+		void				clearSendBuffer();
+		std::string			&getRecvBuffer(); 		// Buffer di ricezione grezzo
+
+
 };
 
 std::ostream& operator<<( std::ostream& o, Client const & c );
