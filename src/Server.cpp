@@ -19,15 +19,22 @@ Server& Server::operator=( Server const & other ) {
 
 Server::~Server( void ) {}
 
-std::string	Server::readBuffer( pollfd pfd ) {
-	char buffer[512];
-	if (recv(pfd.fd, &buffer, 512, 0) == -1) {
-		std::cout << "reading failed." << std::endl;
-		throw NetworkError();
+void	Server::readBuffer( int fd ) {
+	int bytes;
+	char	tmp[512];
+	while (_clients[fd]._recvBuffer.find("\r\n") != std::string::npos) {
+		bytes = recv(fd, tmp, 512, 0);
+		if (bytes < 0) {
+			throw NetworkError();
+		}
+		else if (bytes == 0) {
+			break ;
+		}
+		else {
+			_clients[fd]._recvBuffer.append(tmp, bytes);
+		}
 	}
-	std::cout << buffer << std::endl;
-	std::string res(buffer);
-	return (res);
+	std::cout << _clients[fd]._recvBuffer << std::endl;
 }
 
 void	Server::addNewClient( std::list<pollfd>& pfds ) {
@@ -88,22 +95,21 @@ void	Server::run( void ) {
 				addNewClient(pfds);
 			}
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
-				if ((*it).revents & POLLIN) {
-					std::string raw = readBuffer((*it));
-					IrcMessage msg = parseMessage(raw);
+				if (it->revents & POLLIN) {
+					readBuffer(it->fd);
+					IrcMessage msg = parseMessage(_clients[it->fd]._recvBuffer);
 					Dispatcher dispatcher(*this);
-					dispatcher.dispatch(_clients[(*it).fd], msg);
+					dispatcher.dispatch(_clients[it->fd], msg);
 				}
-				if ((*it).revents & POLLOUT) {
+				if (it->revents & POLLOUT) {
 					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
-				if ((*it).revents & POLLERR) {
+				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);
 					std::cout << "POLLERR" << std::endl;
 					throw NetworkError();
-
 				}
-				if ((*it).revents & POLLHUP) {
+				if (it->revents & POLLHUP) {
 					std::cout << "POLLHUP" << std::endl;
 					disconnectClient(pfds, *it);
 				}

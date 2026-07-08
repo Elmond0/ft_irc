@@ -29,7 +29,7 @@ class Server
 
 		void	addNewClient( std::list<pollfd>& fds );
 		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
-		std::string	readBuffer( pollfd pfd );
+		void	readBuffer( int fd );
 
 	public:
 		Server( void );
