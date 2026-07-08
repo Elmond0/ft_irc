@@ -29,7 +29,7 @@ server. Qui sotto trovi:
 
   inc/Client.hpp + src/Client.cpp
     - campi nuovi: _nick, _user, _realname, _passOk, _nickOk, _userOk
-    - metodi nuovi: getFd, getNick/setNick, getUser/setUser, setRealname,
+    - metodi nuovi: getFd, getNickname/setNickname, getUsername/setUsername, setRealname,
       setPassOk/setNickOk/setUserOk, isRegistered
     - ho aggiunto l'inizializzazione dei MIEI campi nei costruttori e la loro
       copia in operator= (senza toccare come gestisci i tuoi campi).

@@ -2,17 +2,17 @@
 
 std::string nickOrStar(const Client& client)
 {
-    if (client.getNick().empty())
+    if (client.getNickname().empty())
         return "*";
-    return client.getNick();
+    return client.getNickname();
 }
 
 void sendWelcome(Client& client, Server& server)
 {
-    std::string nick = client.getNick();
+    std::string nick = client.getNickname();
 
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 001 " +
-        nick + " :Welcome to the IRC Network " + nick + "!" + client.getUser() +
+        nick + " :Welcome to the IRC Network " + nick + "!" + client.getUsername() +
         "@host\r\n");
 
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 002 " +

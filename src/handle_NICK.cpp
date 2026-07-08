@@ -47,7 +47,7 @@ void handle_NICK(Client& client, const IrcMessage& msg, Server& server)
     for (std::map<int, Client>::iterator it = clients.begin();
          it != clients.end(); ++it)
     {
-        if (it->first != client.getFd() && it->second.getNick() == newNick)
+        if (it->first != client.getFd() && it->second.getNickname() == newNick)
         {
             std::string reply = std::string(":") + SERVER_NAME + " 433 " +
                 nickOrStar(client) + " " + newNick +
@@ -61,7 +61,7 @@ void handle_NICK(Client& client, const IrcMessage& msg, Server& server)
      * COMPLETA. Se il client era gia' registrato questo e' solo un cambio
      * nick a runtime: niente burst 001-004. */
     bool wasRegistered = client.isRegistered();
-    client.setNick(newNick);
+    client.setNickname(newNick);
     client.setNickOk(true);
     if (!wasRegistered && client.isRegistered())
         sendWelcome(client, server);
