@@ -36,7 +36,7 @@ $(OBJ_DIR) :
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
-	@echo -e " $(GRAY) ● $< compiled$(RESET)"
+	@echo " $(GRAY) ● $< compiled$(RESET)"
 
 clean :
 	@for f in $(OBJS); do \
@@ -46,7 +46,7 @@ clean :
 
 fclean : clean
 	@rm -f $(NAME)
-	@echo -e " $(RED) ✘ $(NAME) wiped$(RESET)"
+	@echo " $(RED) ✘ $(NAME) wiped$(RESET)"
 
 re : fclean all
 
