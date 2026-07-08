@@ -4,6 +4,7 @@
 # include <iostream>
 # include <string>
 # include <cstring>
+# include <sstream>
 # include <map>
 # include <list>
 # include <vector>
@@ -11,7 +12,7 @@
 # include <netinet/in.h>
 # include <poll.h>
 # include <cerrno>
-# include <algorithm>
+# include <unistd.h>
 
 # include "Client.hpp"
 
@@ -56,6 +57,11 @@ class Server
 				const char *what() const throw();
 		};
 		class Timeout : public std::exception
+		{
+			public:
+				const char *what() const throw();
+		};
+		class NetworkError : public std::exception
 		{
 			public:
 				const char *what() const throw();

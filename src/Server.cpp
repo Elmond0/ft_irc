@@ -21,8 +21,10 @@ Server::~Server( void ) {}
 
 std::string	Server::readBuffer( pollfd pfd ) {
 	char buffer[512];
-	if (recv(pfd.fd, &buffer, 512, 0) == -1)
-		std::cerr << strerror(errno) << std::endl;
+	if (recv(pfd.fd, &buffer, 512, 0) == -1) {
+		std::cout << "reading failed." << std::endl;
+		throw NetworkError();
+	}
 	std::cout << buffer << std::endl;
 	std::string res(buffer);
 	return (res);
@@ -40,8 +42,16 @@ void	Server::addNewClient( std::list<pollfd>& pfds ) {
 }
 
 void	Server::disconnectClient( std::list<pollfd>& pfds, pollfd cl) {
-	std::list<pollfd>::iterator it = find(pfds.begin(), pfds.end(), cl);
-	(*it).
+	std::cout << "sockFd " << cl.fd << " closed." << std::endl;
+	if (close(cl.fd) == -1)
+		throw NetworkError();
+	_clients.erase(cl.fd);
+	for (std::list<pollfd>::iterator it = pfds.begin(); it != pfds.end(); ++it) {
+		if ((*it).fd == cl.fd) {
+			pfds.erase(it);
+			return ;
+		}
+	}
 }
  
 void	Server::run( void ) {
@@ -54,14 +64,12 @@ void	Server::run( void ) {
 	memset(&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(_port);
-	std::cout << _port << std::endl;
-	std::cout << serverAddress.sin_port << std::endl;
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
 	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, (void *)1, sizeof(SO_REUSEADDR));
 	if (bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
-    	throw std::exception();
+		throw NetworkError();
 	if (listen(_listenSock_fd, 5) == -1)
-		throw std::exception();
+		throw NetworkError();
 	std::list<pollfd> pfds;
 	pollfd	serverPollfd;
 	serverPollfd.fd = _listenSock_fd;
@@ -70,32 +78,33 @@ void	Server::run( void ) {
 	while (true)
 	{
 		std::vector<pollfd> vfds(pfds.begin(), pfds.end());
-		for (std::list<pollfd>::iterator it = pfds.begin(); it != pfds.end(); ++it)
-			vfds.push_back(*it);
+		// for (std::list<pollfd>::iterator it = pfds.begin(); it != pfds.end(); ++it)
+		// 	vfds.push_back(*it);
 		int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
-		if (fdsNbr == 0)
-			throw Timeout();
-		else if (fdsNbr == -1)
+		if (fdsNbr == -1)
 			throw std::exception();
 		else {
 			if (vfds[0].revents == POLLIN) {
 				addNewClient(pfds);
 			}
-			for (int i = 1; i < static_cast<int>(vfds.size()); i++) {
-				if (vfds[i].revents & POLLIN) {
-					std::string raw = readBuffer(vfds[i]);
+			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
+				if ((*it).revents & POLLIN) {
+					std::string raw = readBuffer((*it));
 					IrcMessage msg = parseMessage(raw);
 					Dispatcher dispatcher(*this);
-					dispatcher.dispatch(_clients[vfds[i].fd], msg);
+					dispatcher.dispatch(_clients[(*it).fd], msg);
 				}
-				if (vfds[i].revents & POLLOUT) {
+				if ((*it).revents & POLLOUT) {
 					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
-				if (vfds[i].revents & POLLERR) {
-					disconnectClient();
-					throw std::exception();
+				if ((*it).revents & POLLERR) {
+					disconnectClient(pfds, *it);
+					std::cout << "POLLERR" << std::endl;
+					throw NetworkError();
+
 				}
-				if (vfds[i].revents & POLLHUP) {
+				if ((*it).revents & POLLHUP) {
+					std::cout << "POLLHUP" << std::endl;
 					disconnectClient(pfds, *it);
 				}
 			}
@@ -120,4 +129,4 @@ const char *Server::WrongPassword::what() const throw() { return "password incor
 
 const char *Server::Timeout::what() const throw() { return "timed out."; }
 
-// const char *Server::NetworkError::what() const throw() { return strerror(errno); }
+const char *Server::NetworkError::what() const throw() { return strerror(errno); }
