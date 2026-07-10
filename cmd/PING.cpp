@@ -1,6 +1,6 @@
 #include "../inc/Commands.hpp"
 
-void handle_PING(Client& client, const IrcMessage& msg, Server& server)
+void PING(Client& client, const IrcMessage& msg, Server& server)
 {
     std::string token = msg.trailing;
     if (token.empty() && !msg.params.empty())

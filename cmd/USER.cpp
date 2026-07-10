@@ -1,6 +1,6 @@
 #include "../inc/Commands.hpp"
 
-void handle_USER(Client& client, const IrcMessage& msg, Server& server)
+void USER(Client& client, const IrcMessage& msg, Server& server)
 {
     if (client.isRegistered())
     {

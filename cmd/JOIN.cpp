@@ -107,7 +107,7 @@ static void partAll(Client& client, Server& server)
     }
 }
 
-void handle_JOIN(Client& client, const IrcMessage& msg, Server& server)
+void JOIN(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.empty())
     {

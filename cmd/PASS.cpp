@@ -1,6 +1,6 @@
 #include "../inc/Commands.hpp"
 
-void handle_PASS(Client& client, const IrcMessage& msg, Server& server)
+void PASS(Client& client, const IrcMessage& msg, Server& server)
 {
     if (client.isRegistered())
     {

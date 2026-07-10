@@ -1,6 +1,6 @@
 #include "../inc/Commands.hpp"
 
-void handle_KICK(Client& client, const IrcMessage& msg, Server& server)
+void KICK(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.size() < 2)
     {

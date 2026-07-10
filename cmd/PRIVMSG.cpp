@@ -1,6 +1,6 @@
 #include "../inc/Commands.hpp"
 
-void handle_PRIVMSG(Client& client, const IrcMessage& msg, Server& server)
+void PRIVMSG(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.empty())
     {

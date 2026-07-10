@@ -25,7 +25,7 @@ static bool nextArg(const IrcMessage& msg, std::size_t& idx, std::string& out)
     return true;
 }
 
-void handle_MODE(Client& client, const IrcMessage& msg, Server& server)
+void MODE(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.empty())
     {

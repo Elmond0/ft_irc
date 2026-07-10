@@ -23,7 +23,7 @@ bool isValidNick(const std::string& nick)
     return true;
 }
 
-void handle_NICK(Client& client, const IrcMessage& msg, Server& server)
+void NICK(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.empty())
     {

@@ -31,46 +31,46 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
         if (!client.isRegistered())
         {
             if (msg.command == "PASS")
-                handle_PASS(client, msg, _server);
+                PASS(client, msg, _server);
             else if (msg.command == "NICK")
-                handle_NICK(client, msg, _server);
+                NICK(client, msg, _server);
             else if (msg.command == "USER")
-                handle_USER(client, msg, _server);
+                USER(client, msg, _server);
             else if (msg.command == "PING")
-                handle_PING(client, msg, _server);
+                PING(client, msg, _server);
             else if (msg.command == "QUIT")
-                handle_QUIT(client, msg, _server);
+                QUIT(client, msg, _server);
             else
                 throw NotRegisteredException();
             return;
         }
 
         if (msg.command == "NICK")
-            handle_NICK(client, msg, _server);
+            NICK(client, msg, _server);
         else if (msg.command == "PASS")
-            handle_PASS(client, msg, _server);
+            PASS(client, msg, _server);
         else if (msg.command == "USER")
-            handle_USER(client, msg, _server);
+            USER(client, msg, _server);
         else if (msg.command == "PING")
-            handle_PING(client, msg, _server);
+            PING(client, msg, _server);
         else if (msg.command == "JOIN")
-            handle_JOIN(client, msg, _server);
+            JOIN(client, msg, _server);
         else if (msg.command == "PRIVMSG")
-            handle_PRIVMSG(client, msg, _server);
+            PRIVMSG(client, msg, _server);
         else if (msg.command == "NOTICE")
-            handle_NOTICE(client, msg, _server);
+            NOTICE(client, msg, _server);
         else if (msg.command == "KICK")
-            handle_KICK(client, msg, _server);
+            KICK(client, msg, _server);
         else if (msg.command == "INVITE")
-            handle_INVITE(client, msg, _server);
+            INVITE(client, msg, _server);
         else if (msg.command == "TOPIC")
-            handle_TOPIC(client, msg, _server);
+            TOPIC(client, msg, _server);
         else if (msg.command == "MODE")
-            handle_MODE(client, msg, _server);
+            MODE(client, msg, _server);
         else if (msg.command == "PART")
-            handle_PART(client, msg, _server);
+            PART(client, msg, _server);
         else if (msg.command == "QUIT")
-            handle_QUIT(client, msg, _server);
+            QUIT(client, msg, _server);
         else
             throw UnknownCommandException();
     }

@@ -27,7 +27,7 @@ static void partOne(Client& client, Server& server,
         server.getChannels().erase(name);
 }
 
-void handle_PART(Client& client, const IrcMessage& msg, Server& server)
+void PART(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.empty())
     {

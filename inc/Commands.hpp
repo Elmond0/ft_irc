@@ -13,25 +13,25 @@
 # endif
 
 /* fase 1 — registrazione */
-void		handle_PASS(Client& client, const IrcMessage& msg, Server& server);
-void		handle_NICK(Client& client, const IrcMessage& msg, Server& server);
-void		handle_USER(Client& client, const IrcMessage& msg, Server& server);
+void		PASS(Client& client, const IrcMessage& msg, Server& server);
+void		NICK(Client& client, const IrcMessage& msg, Server& server);
+void		USER(Client& client, const IrcMessage& msg, Server& server);
 
 /* fase 2 — chat base */
-void		handle_JOIN(Client& client, const IrcMessage& msg, Server& server);
-void		handle_PRIVMSG(Client& client, const IrcMessage& msg, Server& server);
+void		JOIN(Client& client, const IrcMessage& msg, Server& server);
+void		PRIVMSG(Client& client, const IrcMessage& msg, Server& server);
 
 /* fase 3 — channel operator */
-void		handle_KICK(Client& client, const IrcMessage& msg, Server& server);
-void		handle_INVITE(Client& client, const IrcMessage& msg, Server& server);
-void		handle_TOPIC(Client& client, const IrcMessage& msg, Server& server);
-void		handle_MODE(Client& client, const IrcMessage& msg, Server& server);
+void		KICK(Client& client, const IrcMessage& msg, Server& server);
+void		INVITE(Client& client, const IrcMessage& msg, Server& server);
+void		TOPIC(Client& client, const IrcMessage& msg, Server& server);
+void		MODE(Client& client, const IrcMessage& msg, Server& server);
 
 /* fase 4 — extra */
-void		handle_QUIT(Client& client, const IrcMessage& msg, Server& server);
-void		handle_PING(Client& client, const IrcMessage& msg, Server& server);
-void		handle_PART(Client& client, const IrcMessage& msg, Server& server);
-void		handle_NOTICE(Client& client, const IrcMessage& msg, Server& server);
+void		QUIT(Client& client, const IrcMessage& msg, Server& server);
+void		PING(Client& client, const IrcMessage& msg, Server& server);
+void		PART(Client& client, const IrcMessage& msg, Server& server);
+void		NOTICE(Client& client, const IrcMessage& msg, Server& server);
 
 /* helper condivisi (src/utils.cpp) */
 std::string	nickOrStar(const Client& client);

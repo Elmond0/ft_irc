@@ -2,7 +2,7 @@
 #include <set>
 #include <unistd.h>
 
-void handle_QUIT(Client& client, const IrcMessage& msg, Server& server)
+void QUIT(Client& client, const IrcMessage& msg, Server& server)
 {
     std::string reason = msg.trailing.empty() ? "Client Quit" : msg.trailing;
     std::string line = userPrefix(client) + " QUIT :" + reason + "\r\n";

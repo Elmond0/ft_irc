@@ -1,6 +1,6 @@
 #include "../inc/Commands.hpp"
 
-void handle_NOTICE(Client& client, const IrcMessage& msg, Server& server)
+void NOTICE(Client& client, const IrcMessage& msg, Server& server)
 {
     if (msg.params.empty() || msg.trailing.empty())
         return;
