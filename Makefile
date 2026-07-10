@@ -19,7 +19,7 @@ SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
        $(SRC_DIR)/utils.cpp
 
 CMDS = $(CMD_DIR)/PASS.cpp $(CMD_DIR)/NICK.cpp $(CMD_DIR)/USER.cpp \
-       $(CMD_DIR)/JOIN.cpp $(CMD_DIR)/PRIVMSG.cpp $(CMD_DIR)/NOTICE.cpp \
+       $(CMD_DIR)/JOIN.cpp $(CMD_DIR)/PRIVMSG.cpp \
        $(CMD_DIR)/KICK.cpp $(CMD_DIR)/INVITE.cpp $(CMD_DIR)/TOPIC.cpp \
        $(CMD_DIR)/MODE.cpp $(CMD_DIR)/QUIT.cpp $(CMD_DIR)/PING.cpp \
        $(CMD_DIR)/PART.cpp

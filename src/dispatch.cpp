@@ -58,7 +58,8 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
         else if (msg.command == "PRIVMSG")
             PRIVMSG(client, msg, _server);
         else if (msg.command == "NOTICE")
-            NOTICE(client, msg, _server);
+            ; /* non implementato; ignorato in silenzio: la RFC vieta
+                 di rispondere a un NOTICE, quindi niente 421 */
         else if (msg.command == "KICK")
             KICK(client, msg, _server);
         else if (msg.command == "INVITE")

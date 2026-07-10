@@ -44,7 +44,6 @@ void		MODE(Client& client, const IrcMessage& msg, Server& server);
 void		QUIT(Client& client, const IrcMessage& msg, Server& server);
 void		PING(Client& client, const IrcMessage& msg, Server& server);
 void		PART(Client& client, const IrcMessage& msg, Server& server);
-void		NOTICE(Client& client, const IrcMessage& msg, Server& server);
 
 /* helper condivisi (src/utils.cpp) */
 std::string	nickOrStar(const Client& client);
