@@ -5,7 +5,7 @@ void TOPIC(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.empty())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 461 " + client.getNick() + " TOPIC :Not enough parameters\r\n");
+            " 461 " + client.getNickname() + " TOPIC :Not enough parameters\r\n");
         return;
     }
 
@@ -15,13 +15,13 @@ void TOPIC(Client& client, const IrcMessage& msg, Server& server)
     if (!chan)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 403 " + client.getNick() + " " + chanName + " :No such channel\r\n");
+            " 403 " + client.getNickname() + " " + chanName + " :No such channel\r\n");
         return;
     }
-    if (!chan->isMember(client.getFd()))
+    if (!chan->hasClient(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 442 " + client.getNick() + " " + chanName + " :You're not on that channel\r\n");
+            " 442 " + client.getNickname() + " " + chanName + " :You're not on that channel\r\n");
         return;
     }
 
@@ -29,17 +29,17 @@ void TOPIC(Client& client, const IrcMessage& msg, Server& server)
     {
         if (chan->getTopic().empty())
             server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                " 331 " + client.getNick() + " " + chanName + " :No topic is set\r\n");
+                " 331 " + client.getNickname() + " " + chanName + " :No topic is set\r\n");
         else
             server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                " 332 " + client.getNick() + " " + chanName + " :" + chan->getTopic() + "\r\n");
+                " 332 " + client.getNickname() + " " + chanName + " :" + chan->getTopic() + "\r\n");
         return;
     }
 
-    if (chan->isTopicLocked() && !chan->isOperator(client.getFd()))
+    if (chan->isTopicRestricted() && !chan->isOperator(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 482 " + client.getNick() + " " + chanName + " :You're not channel operator\r\n");
+            " 482 " + client.getNickname() + " " + chanName + " :You're not channel operator\r\n");
         return;
     }
 

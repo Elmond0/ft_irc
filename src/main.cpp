@@ -1,4 +1,4 @@
-#include "ircserv.h"
+#include "Server.hpp"
 
 void	parse_args(int argc, char **argv, int& port, std::string& password) {
 	if (argc != 3)
@@ -18,13 +18,12 @@ int main(int argc, char **argv)
 	try
 	{
 		parse_args(argc, argv, port, password);
-		// std::cout << "port : " << port << " password: " << password << std::endl;
     	Server server(port, password);
 	    server.run();
 	}
 	catch(const std::exception& e)
 	{
-		std::cerr << e.what() << '\n';
+		std::cerr << "ERROR: " << e.what() << '\n';
 	}
     return 0;
 }

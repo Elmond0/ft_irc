@@ -11,26 +11,21 @@ static bool isValidChannelName(const std::string& name)
 static void sendNames(Client& client, Channel& chan, Server& server)
 {
     std::string names;
-    const std::set<int>& members = chan.getMembers();
-    std::map<int, Client>& clients = server.getClients();
+    const std::vector<Client*>& members = chan.getClients();
 
-    for (std::set<int>::const_iterator it = members.begin();
-         it != members.end(); ++it)
+    for (std::size_t i = 0; i < members.size(); ++i)
     {
-        std::map<int, Client>::const_iterator c = clients.find(*it);
-        if (c == clients.end())
-            continue;
         if (!names.empty())
             names += " ";
-        if (chan.isOperator(*it))
+        if (chan.isOperator(members[i]))
             names += "@";
-        names += c->second.getNick();
+        names += members[i]->getNickname();
     }
 
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-        " 353 " + client.getNick() + " = " + chan.getName() + " :" + names + "\r\n");
+        " 353 " + client.getNickname() + " = " + chan.getName() + " :" + names + "\r\n");
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-        " 366 " + client.getNick() + " " + chan.getName() + " :End of /NAMES list\r\n");
+        " 366 " + client.getNickname() + " " + chan.getName() + " :End of /NAMES list\r\n");
 }
 
 static void joinOne(Client& client, Server& server,
@@ -39,7 +34,7 @@ static void joinOne(Client& client, Server& server,
     if (!isValidChannelName(name))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 403 " + client.getNick() + " " + name + " :No such channel\r\n");
+            " 403 " + client.getNickname() + " " + name + " :No such channel\r\n");
         return;
     }
 
@@ -49,41 +44,42 @@ static void joinOne(Client& client, Server& server,
         channels.insert(std::make_pair(name, Channel(name)));
     Channel& chan = channels[name];
 
-    if (chan.isMember(client.getFd()))
+    if (chan.hasClient(&client))
         return;
 
-    if (chan.isInviteOnly() && !chan.isInvited(client.getFd()))
+    if (chan.isInviteOnly() && !chan.isInvited(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 473 " + client.getNick() + " " + name + " :Cannot join channel (+i)\r\n");
+            " 473 " + client.getNickname() + " " + name + " :Cannot join channel (+i)\r\n");
         return;
     }
-    if (!chan.getKey().empty() && key != chan.getKey())
+    if (chan.hasKey() && key != chan.getKey())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 475 " + client.getNick() + " " + name + " :Cannot join channel (+k)\r\n");
+            " 475 " + client.getNickname() + " " + name + " :Cannot join channel (+k)\r\n");
         return;
     }
-    if (chan.isFull())
+    if (chan.getUserLimit() > 0 && chan.getClients().size() >= chan.getUserLimit())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 471 " + client.getNick() + " " + name + " :Cannot join channel (+l)\r\n");
+            " 471 " + client.getNickname() + " " + name + " :Cannot join channel (+l)\r\n");
         return;
     }
 
-    chan.addMember(client.getFd());
+    chan.addClient(&client);
+    chan.removeInvited(&client); /* l'invito si consuma al join */
     if (isNew)
-        chan.addOperator(client.getFd()); /* il creatore diventa op */
+        chan.addOperator(&client); /* il creatore diventa op */
 
     broadcastToChannel(server, chan,
         userPrefix(client) + " JOIN " + name + "\r\n", -1);
 
     if (chan.getTopic().empty())
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 331 " + client.getNick() + " " + name + " :No topic is set\r\n");
+            " 331 " + client.getNickname() + " " + name + " :No topic is set\r\n");
     else
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 332 " + client.getNick() + " " + name + " :" + chan.getTopic() + "\r\n");
+            " 332 " + client.getNickname() + " " + name + " :" + chan.getTopic() + "\r\n");
 
     sendNames(client, chan, server);
 }
@@ -97,11 +93,11 @@ static void partAll(Client& client, Server& server)
     {
         std::map<std::string, Channel>::iterator current = it++;
         Channel& chan = current->second;
-        if (!chan.isMember(client.getFd()))
+        if (!chan.hasClient(&client))
             continue;
         broadcastToChannel(server, chan,
             userPrefix(client) + " PART " + chan.getName() + "\r\n", -1);
-        chan.removeMember(client.getFd());
+        chan.removeClient(&client);
         if (chan.isEmpty())
             channels.erase(current);
     }
@@ -112,7 +108,7 @@ void JOIN(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.empty())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 461 " + client.getNick() + " JOIN :Not enough parameters\r\n");
+            " 461 " + client.getNickname() + " JOIN :Not enough parameters\r\n");
         return;
     }
 

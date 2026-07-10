@@ -2,15 +2,15 @@
 
 std::string nickOrStar(const Client& client)
 {
-    if (client.getNick().empty())
+    if (client.getNickname().empty())
         return "*";
-    return client.getNick();
+    return client.getNickname();
 }
 
 /* prefisso ":nick!user@host" con cui il server inoltra i messaggi utente */
 std::string userPrefix(const Client& client)
 {
-    return std::string(":") + client.getNick() + "!" + client.getUser() + "@host";
+    return std::string(":") + client.getPrefix();
 }
 
 Client* findClientByNick(Server& server, const std::string& nick)
@@ -19,7 +19,7 @@ Client* findClientByNick(Server& server, const std::string& nick)
     for (std::map<int, Client>::iterator it = clients.begin();
          it != clients.end(); ++it)
     {
-        if (it->second.getNick() == nick)
+        if (it->second.getNickname() == nick)
             return &it->second;
     }
     return NULL;
@@ -37,12 +37,11 @@ Channel* findChannel(Server& server, const std::string& name)
 void broadcastToChannel(Server& server, Channel& chan,
                         const std::string& line, int exceptFd)
 {
-    const std::set<int>& members = chan.getMembers();
-    for (std::set<int>::const_iterator it = members.begin();
-         it != members.end(); ++it)
+    const std::vector<Client*>& members = chan.getClients();
+    for (std::size_t i = 0; i < members.size(); ++i)
     {
-        if (*it != exceptFd)
-            server.sendToClient(*it, line);
+        if (members[i]->getFd() != exceptFd)
+            server.sendToClient(members[i]->getFd(), line);
     }
 }
 
@@ -68,11 +67,10 @@ std::vector<std::string> splitComma(const std::string& s)
 
 void sendWelcome(Client& client, Server& server)
 {
-    std::string nick = client.getNick();
+    std::string nick = client.getNickname();
 
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 001 " +
-        nick + " :Welcome to the IRC Network " + nick + "!" + client.getUser() +
-        "@host\r\n");
+        nick + " :Welcome to the IRC Network " + client.getPrefix() + "\r\n");
 
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 002 " +
         nick + " :Your host is " + SERVER_NAME + ", running version 1.0\r\n");

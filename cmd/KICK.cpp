@@ -5,7 +5,7 @@ void KICK(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.size() < 2)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 461 " + client.getNick() + " KICK :Not enough parameters\r\n");
+            " 461 " + client.getNickname() + " KICK :Not enough parameters\r\n");
         return;
     }
 
@@ -16,37 +16,37 @@ void KICK(Client& client, const IrcMessage& msg, Server& server)
     if (!chan)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 403 " + client.getNick() + " " + chanName + " :No such channel\r\n");
+            " 403 " + client.getNickname() + " " + chanName + " :No such channel\r\n");
         return;
     }
-    if (!chan->isMember(client.getFd()))
+    if (!chan->hasClient(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 442 " + client.getNick() + " " + chanName + " :You're not on that channel\r\n");
+            " 442 " + client.getNickname() + " " + chanName + " :You're not on that channel\r\n");
         return;
     }
-    if (!chan->isOperator(client.getFd()))
+    if (!chan->isOperator(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 482 " + client.getNick() + " " + chanName + " :You're not channel operator\r\n");
+            " 482 " + client.getNickname() + " " + chanName + " :You're not channel operator\r\n");
         return;
     }
 
     Client* target = findClientByNick(server, targetNick);
-    if (!target || !chan->isMember(target->getFd()))
+    if (!target || !chan->hasClient(target))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 441 " + client.getNick() + " " + targetNick + " " + chanName +
+            " 441 " + client.getNickname() + " " + targetNick + " " + chanName +
             " :They aren't on that channel\r\n");
         return;
     }
 
-    std::string reason = msg.trailing.empty() ? client.getNick() : msg.trailing;
+    std::string reason = msg.trailing.empty() ? client.getNickname() : msg.trailing;
 
     broadcastToChannel(server, *chan,
         userPrefix(client) + " KICK " + chanName + " " + targetNick +
         " :" + reason + "\r\n", -1);
-    chan->removeMember(target->getFd());
+    chan->removeClient(target);
     if (chan->isEmpty())
         server.getChannels().erase(chanName);
 }

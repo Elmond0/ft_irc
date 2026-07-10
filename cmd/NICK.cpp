@@ -48,7 +48,7 @@ void NICK(Client& client, const IrcMessage& msg, Server& server)
     for (std::map<int, Client>::iterator it = clients.begin();
          it != clients.end(); ++it)
     {
-        if (it->first != client.getFd() && it->second.getNick() == newNick)
+        if (it->first != client.getFd() && it->second.getNickname() == newNick)
         {
             std::string reply = std::string(":") + SERVER_NAME + " 433 " +
                 nickOrStar(client) + " " + newNick +
@@ -72,19 +72,18 @@ void NICK(Client& client, const IrcMessage& msg, Server& server)
         for (std::map<std::string, Channel>::iterator ch = channels.begin();
              ch != channels.end(); ++ch)
         {
-            if (!ch->second.isMember(client.getFd()))
+            if (!ch->second.hasClient(&client))
                 continue;
-            const std::set<int>& members = ch->second.getMembers();
-            for (std::set<int>::const_iterator m = members.begin();
-                 m != members.end(); ++m)
+            const std::vector<Client*>& members = ch->second.getClients();
+            for (std::size_t m = 0; m < members.size(); ++m)
             {
-                if (*m != client.getFd() && notified.insert(*m).second)
-                    server.sendToClient(*m, line);
+                if (members[m] != &client && notified.insert(members[m]->getFd()).second)
+                    server.sendToClient(members[m]->getFd(), line);
             }
         }
     }
 
-    client.setNick(newNick);
+    client.setNickname(newNick);
     client.setNickOk(true);
     if (!wasRegistered && client.isRegistered())
         sendWelcome(client, server);

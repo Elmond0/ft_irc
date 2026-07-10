@@ -18,7 +18,7 @@ void USER(Client& client, const IrcMessage& msg, Server& server)
         return;
     }
 
-    client.setUser(msg.params[0]);
+    client.setUsername(msg.params[0]);
     client.setRealname(msg.trailing);
     client.setUserOk(true);
 

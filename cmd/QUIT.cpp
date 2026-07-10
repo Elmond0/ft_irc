@@ -15,18 +15,17 @@ void QUIT(Client& client, const IrcMessage& msg, Server& server)
     {
         std::map<std::string, Channel>::iterator current = it++;
         Channel& chan = current->second;
-        if (!chan.isMember(client.getFd()))
+        if (!chan.hasClient(&client))
             continue;
 
-        const std::set<int>& members = chan.getMembers();
-        for (std::set<int>::const_iterator m = members.begin();
-             m != members.end(); ++m)
+        const std::vector<Client*>& members = chan.getClients();
+        for (std::size_t m = 0; m < members.size(); ++m)
         {
-            if (*m != client.getFd() && notified.insert(*m).second)
-                server.sendToClient(*m, line);
+            if (members[m] != &client && notified.insert(members[m]->getFd()).second)
+                server.sendToClient(members[m]->getFd(), line);
         }
 
-        chan.removeMember(client.getFd());
+        chan.removeClient(&client);
         if (chan.isEmpty())
             channels.erase(current);
     }

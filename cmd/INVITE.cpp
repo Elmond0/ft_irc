@@ -5,7 +5,7 @@ void INVITE(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.size() < 2)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 461 " + client.getNick() + " INVITE :Not enough parameters\r\n");
+            " 461 " + client.getNickname() + " INVITE :Not enough parameters\r\n");
         return;
     }
 
@@ -16,7 +16,7 @@ void INVITE(Client& client, const IrcMessage& msg, Server& server)
     if (!target)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 401 " + client.getNick() + " " + targetNick + " :No such nick/channel\r\n");
+            " 401 " + client.getNickname() + " " + targetNick + " :No such nick/channel\r\n");
         return;
     }
 
@@ -24,32 +24,32 @@ void INVITE(Client& client, const IrcMessage& msg, Server& server)
     if (!chan)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 403 " + client.getNick() + " " + chanName + " :No such channel\r\n");
+            " 403 " + client.getNickname() + " " + chanName + " :No such channel\r\n");
         return;
     }
-    if (!chan->isMember(client.getFd()))
+    if (!chan->hasClient(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 442 " + client.getNick() + " " + chanName + " :You're not on that channel\r\n");
+            " 442 " + client.getNickname() + " " + chanName + " :You're not on that channel\r\n");
         return;
     }
-    if (chan->isInviteOnly() && !chan->isOperator(client.getFd()))
+    if (chan->isInviteOnly() && !chan->isOperator(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 482 " + client.getNick() + " " + chanName + " :You're not channel operator\r\n");
+            " 482 " + client.getNickname() + " " + chanName + " :You're not channel operator\r\n");
         return;
     }
-    if (chan->isMember(target->getFd()))
+    if (chan->hasClient(target))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 443 " + client.getNick() + " " + targetNick + " " + chanName +
+            " 443 " + client.getNickname() + " " + targetNick + " " + chanName +
             " :is already on channel\r\n");
         return;
     }
 
-    chan->invite(target->getFd());
+    chan->addInvited(target);
     server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-        " 341 " + client.getNick() + " " + targetNick + " " + chanName + "\r\n");
+        " 341 " + client.getNickname() + " " + targetNick + " " + chanName + "\r\n");
     server.sendToClient(target->getFd(),
         userPrefix(client) + " INVITE " + targetNick + " :" + chanName + "\r\n");
 }

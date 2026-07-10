@@ -7,13 +7,13 @@ static void partOne(Client& client, Server& server,
     if (!chan)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 403 " + client.getNick() + " " + name + " :No such channel\r\n");
+            " 403 " + client.getNickname() + " " + name + " :No such channel\r\n");
         return;
     }
-    if (!chan->isMember(client.getFd()))
+    if (!chan->hasClient(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 442 " + client.getNick() + " " + name + " :You're not on that channel\r\n");
+            " 442 " + client.getNickname() + " " + name + " :You're not on that channel\r\n");
         return;
     }
 
@@ -22,7 +22,7 @@ static void partOne(Client& client, Server& server,
         line += " :" + reason;
     broadcastToChannel(server, *chan, line + "\r\n", -1);
 
-    chan->removeMember(client.getFd());
+    chan->removeClient(&client);
     if (chan->isEmpty())
         server.getChannels().erase(name);
 }
@@ -32,7 +32,7 @@ void PART(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.empty())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 461 " + client.getNick() + " PART :Not enough parameters\r\n");
+            " 461 " + client.getNickname() + " PART :Not enough parameters\r\n");
         return;
     }
 

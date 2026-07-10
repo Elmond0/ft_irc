@@ -1,15 +1,30 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Server.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/07 15:37:53 by giomastr          #+#    #+#             */
+/*   Updated: 2026/07/07 15:37:57 by giomastr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
 # include <iostream>
 # include <string>
 # include <cstring>
+# include <sstream>
 # include <map>
+# include <list>
 # include <vector>
 # include <sys/socket.h>
 # include <netinet/in.h>
 # include <poll.h>
 # include <cerrno>
+# include <unistd.h>
 
 # include "Client.hpp"
 # include "Channel.hpp"
@@ -26,8 +41,9 @@ class Server
 		std::map<std::string, Channel> _channels;
 		std::string _password;
 
-		void	addNewClient( std::vector<pollfd>& fds );
-		std::string	readBuffer( pollfd pfd );
+		void	addNewClient( std::list<pollfd>& fds );
+		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
+		void	readBuffer( int fd );
 
 	public:
 		Server( void );
@@ -51,6 +67,16 @@ class Server
 		};
 
 		class PortNotValid : public std::exception
+		{
+			public:
+				const char *what() const throw();
+		};
+		class Timeout : public std::exception
+		{
+			public:
+				const char *what() const throw();
+		};
+		class NetworkError : public std::exception
 		{
 			public:
 				const char *what() const throw();

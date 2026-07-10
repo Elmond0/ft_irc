@@ -1,58 +1,94 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Channel.hpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/07 15:51:04 by giomastr          #+#    #+#             */
+/*   Updated: 2026/07/08 15:43:17 by giomastr         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CHANNEL_HPP
-# define CHANNEL_HPP
+#define CHANNEL_HPP
 
-# include <string>
-# include <set>
+#include <string>
+#include <vector>
 
+class Client;
+
+/*
+** Channel
+** Contiene solo dati e regole di canale (membri, operatori, invitati,
+** modalita'). Non conosce socket ne' parsing: Persona C chiamera' questi
+** metodi dopo aver interpretato JOIN/PART/KICK/INVITE/TOPIC/MODE.
+*/
 class Channel
 {
 	private:
-		std::string		_name;
-		std::string		_topic;
-		std::string		_key;
-		std::set<int>	_members;
-		std::set<int>	_operators;
-		std::set<int>	_invited;
-		bool			_inviteOnly;
-		bool			_topicLocked;
-		std::size_t		_userLimit;
+		std::string				_name;
+		std::string				_topic;
+		std::string				_key;
+		size_t					_userLimit;
+		bool					_hasUserLimit;
+		bool					_inviteOnly;
+		bool					_topicRestricted;
+		std::vector<Client *>	_clients;
+		std::vector<Client *>	_operators;
+		std::vector<Client *>	_invited;
+
+		static bool	contains(const std::vector<Client *> &v, Client *c);
+		static void	remove(std::vector<Client *> &v, Client *c);
 
 	public:
-		Channel( void );
-		Channel( const std::string& name );
-		Channel( const Channel& other );
-		Channel& operator=( const Channel& other );
-		~Channel( void );
+		Channel();
+		explicit Channel(const std::string &name);
+		Channel(const Channel &other);
+		Channel &operator=(const Channel &other);
+		~Channel();
 
-		const std::string&		getName( void ) const;
-		const std::string&		getTopic( void ) const;
-		const std::string&		getKey( void ) const;
-		const std::set<int>&	getMembers( void ) const;
-		std::size_t				getUserLimit( void ) const;
+		const std::string	&getName() const;
 
-		void	setTopic( const std::string& topic );
-		void	setKey( const std::string& key );
-		void	setInviteOnly( bool on );
-		void	setTopicLocked( bool on );
-		void	setUserLimit( std::size_t limit );
+		const std::string	&getTopic() const;
+		void				setTopic(const std::string &topic);
 
-		bool	isInviteOnly( void ) const;
-		bool	isTopicLocked( void ) const;
-		bool	isFull( void ) const;
-		bool	isEmpty( void ) const;
+		void				addClient(Client *client);
+		void				removeClient(Client *client);
+		bool				hasClient(Client *client) const;
+		bool				isEmpty() const;
+		const std::vector<Client *>	&getClients() const;
 
-		void	addMember( int fd );
-		void	removeMember( int fd );
-		bool	isMember( int fd ) const;
+		void				addOperator(Client *client);
+		void				removeOperator(Client *client);
+		bool				isOperator(Client *client) const;
 
-		void	addOperator( int fd );
-		void	removeOperator( int fd );
-		bool	isOperator( int fd ) const;
+		void				addInvited(Client *client);
+		void				removeInvited(Client *client);
+		bool				isInvited(Client *client) const;
 
-		void	invite( int fd );
-		bool	isInvited( int fd ) const;
+		bool				isInviteOnly() const;
+		void				setInviteOnly(bool value);
 
-		std::string	modeString( void ) const;
+		bool				isTopicRestricted() const;
+		void				setTopicRestricted(bool value);
+
+		bool				hasKey() const;
+		const std::string	&getKey() const;
+		void				setKey(const std::string &key);
+		void				clearKey();
+
+		size_t				getUserLimit() const;
+		void				setUserLimit(size_t limit);
+		void				clearUserLimit();
+
+		/* stringa tipo "+itk" per il reply MODE/RPL_CHANNELMODEIS */
+		std::string			getModeString() const;
+
+		/* invia message a tutti i membri, escludendo eventualmente uno */
+		void				broadcast(const std::string &message, Client *exclude = 0) const;
+
+
 };
 
 #endif

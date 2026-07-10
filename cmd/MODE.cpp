@@ -4,8 +4,11 @@
 
 static void sendChannelModes(Client& client, Channel& chan, Server& server)
 {
+    std::string modes = chan.getModeString();
+    if (modes.empty())
+        modes = "+";
     std::string reply = std::string(":") + SERVER_NAME + " 324 " +
-        client.getNick() + " " + chan.getName() + " " + chan.modeString();
+        client.getNickname() + " " + chan.getName() + " " + modes;
     if (!chan.getKey().empty())
         reply += " " + chan.getKey();
     if (chan.getUserLimit() > 0)
@@ -30,7 +33,7 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.empty())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 461 " + client.getNick() + " MODE :Not enough parameters\r\n");
+            " 461 " + client.getNickname() + " MODE :Not enough parameters\r\n");
         return;
     }
 
@@ -42,30 +45,30 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
     if (!chan)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 403 " + client.getNick() + " " + target + " :No such channel\r\n");
+            " 403 " + client.getNickname() + " " + target + " :No such channel\r\n");
         return;
     }
 
     if (msg.params.size() == 1)
     {
-        if (chan->isMember(client.getFd()))
+        if (chan->hasClient(&client))
             sendChannelModes(client, *chan, server);
         else
             server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                " 442 " + client.getNick() + " " + target + " :You're not on that channel\r\n");
+                " 442 " + client.getNickname() + " " + target + " :You're not on that channel\r\n");
         return;
     }
 
-    if (!chan->isMember(client.getFd()))
+    if (!chan->hasClient(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 442 " + client.getNick() + " " + target + " :You're not on that channel\r\n");
+            " 442 " + client.getNickname() + " " + target + " :You're not on that channel\r\n");
         return;
     }
-    if (!chan->isOperator(client.getFd()))
+    if (!chan->isOperator(&client))
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 482 " + client.getNick() + " " + target + " :You're not channel operator\r\n");
+            " 482 " + client.getNickname() + " " + target + " :You're not channel operator\r\n");
         return;
     }
 
@@ -98,14 +101,14 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
         }
         else if (c == 't')
         {
-            chan->setTopicLocked(adding);
+            chan->setTopicRestricted(adding);
             ok = true;
         }
         else if (c == 'k')
         {
             if (!adding)
             {
-                chan->setKey("");
+                chan->clearKey();
                 nextArg(msg, argIdx, arg);
                 ok = true;
                 usedArg = "*";
@@ -118,28 +121,28 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
             }
             else
                 server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                    " 461 " + client.getNick() + " MODE :Not enough parameters\r\n");
+                    " 461 " + client.getNickname() + " MODE :Not enough parameters\r\n");
         }
         else if (c == 'o')
         {
             if (!nextArg(msg, argIdx, arg))
             {
                 server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                    " 461 " + client.getNick() + " MODE :Not enough parameters\r\n");
+                    " 461 " + client.getNickname() + " MODE :Not enough parameters\r\n");
                 continue;
             }
             Client* member = findClientByNick(server, arg);
-            if (!member || !chan->isMember(member->getFd()))
+            if (!member || !chan->hasClient(member))
             {
                 server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                    " 441 " + client.getNick() + " " + arg + " " + target +
+                    " 441 " + client.getNickname() + " " + arg + " " + target +
                     " :They aren't on that channel\r\n");
                 continue;
             }
             if (adding)
-                chan->addOperator(member->getFd());
+                chan->addOperator(member);
             else
-                chan->removeOperator(member->getFd());
+                chan->removeOperator(member);
             ok = true;
             usedArg = arg;
         }
@@ -147,7 +150,7 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
         {
             if (!adding)
             {
-                chan->setUserLimit(0);
+                chan->clearUserLimit();
                 ok = true;
             }
             else if (nextArg(msg, argIdx, arg) && std::atoi(arg.c_str()) > 0)
@@ -158,12 +161,12 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
             }
             else
                 server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                    " 461 " + client.getNick() + " MODE :Not enough parameters\r\n");
+                    " 461 " + client.getNickname() + " MODE :Not enough parameters\r\n");
         }
         else
         {
             server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                " 472 " + client.getNick() + " " + std::string(1, c) +
+                " 472 " + client.getNickname() + " " + std::string(1, c) +
                 " :is unknown mode char to me\r\n");
         }
 

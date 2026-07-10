@@ -5,13 +5,13 @@ void PRIVMSG(Client& client, const IrcMessage& msg, Server& server)
     if (msg.params.empty())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 411 " + client.getNick() + " :No recipient given (PRIVMSG)\r\n");
+            " 411 " + client.getNickname() + " :No recipient given (PRIVMSG)\r\n");
         return;
     }
     if (msg.trailing.empty())
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 412 " + client.getNick() + " :No text to send\r\n");
+            " 412 " + client.getNickname() + " :No text to send\r\n");
         return;
     }
 
@@ -25,13 +25,13 @@ void PRIVMSG(Client& client, const IrcMessage& msg, Server& server)
         if (!chan)
         {
             server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                " 401 " + client.getNick() + " " + target + " :No such nick/channel\r\n");
+                " 401 " + client.getNickname() + " " + target + " :No such nick/channel\r\n");
             return;
         }
-        if (!chan->isMember(client.getFd()))
+        if (!chan->hasClient(&client))
         {
             server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-                " 404 " + client.getNick() + " " + target + " :Cannot send to channel\r\n");
+                " 404 " + client.getNickname() + " " + target + " :Cannot send to channel\r\n");
             return;
         }
         broadcastToChannel(server, *chan, line, client.getFd());
@@ -42,7 +42,7 @@ void PRIVMSG(Client& client, const IrcMessage& msg, Server& server)
     if (!dest)
     {
         server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-            " 401 " + client.getNick() + " " + target + " :No such nick/channel\r\n");
+            " 401 " + client.getNickname() + " " + target + " :No such nick/channel\r\n");
         return;
     }
     server.sendToClient(dest->getFd(), line);
