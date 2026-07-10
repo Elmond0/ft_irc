@@ -1,5 +1,6 @@
 #include "../inc/Commands.hpp"
 #include <map>
+#include <set>
 
 bool isValidNick(const std::string& nick)
 {
@@ -58,6 +59,31 @@ void NICK(Client& client, const IrcMessage& msg, Server& server)
     }
 
     bool wasRegistered = client.isRegistered();
+
+    /* RFC 1459: il cambio nick va notificato al client stesso e a tutti
+       i canali in cui si trova, con il prefisso del VECCHIO nick */
+    if (wasRegistered)
+    {
+        std::string line = userPrefix(client) + " NICK :" + newNick + "\r\n";
+        server.sendToClient(client.getFd(), line);
+
+        std::set<int> notified;
+        std::map<std::string, Channel>& channels = server.getChannels();
+        for (std::map<std::string, Channel>::iterator ch = channels.begin();
+             ch != channels.end(); ++ch)
+        {
+            if (!ch->second.isMember(client.getFd()))
+                continue;
+            const std::set<int>& members = ch->second.getMembers();
+            for (std::set<int>::const_iterator m = members.begin();
+                 m != members.end(); ++m)
+            {
+                if (*m != client.getFd() && notified.insert(*m).second)
+                    server.sendToClient(*m, line);
+            }
+        }
+    }
+
     client.setNick(newNick);
     client.setNickOk(true);
     if (!wasRegistered && client.isRegistered())

@@ -48,7 +48,11 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
 
     if (msg.params.size() == 1)
     {
-        sendChannelModes(client, *chan, server);
+        if (chan->isMember(client.getFd()))
+            sendChannelModes(client, *chan, server);
+        else
+            server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
+                " 442 " + client.getNick() + " " + target + " :You're not on that channel\r\n");
         return;
     }
 
@@ -70,6 +74,13 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
     bool adding = true;
     std::string arg;
 
+    /* il broadcast deve contenere SOLO i mode davvero applicati:
+       un +k senza argomento o un mode sconosciuto genera un errore
+       al mittente ma non deve arrivare al canale */
+    std::string appliedModes;
+    std::string appliedArgs;
+    char lastSign = 0;
+
     for (std::size_t i = 0; i < modes.size(); ++i)
     {
         char c = modes[i];
@@ -77,19 +88,34 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
         if (c == '+') { adding = true; continue; }
         if (c == '-') { adding = false; continue; }
 
+        bool ok = false;
+        std::string usedArg;
+
         if (c == 'i')
+        {
             chan->setInviteOnly(adding);
+            ok = true;
+        }
         else if (c == 't')
+        {
             chan->setTopicLocked(adding);
+            ok = true;
+        }
         else if (c == 'k')
         {
             if (!adding)
             {
                 chan->setKey("");
                 nextArg(msg, argIdx, arg);
+                ok = true;
+                usedArg = "*";
             }
             else if (nextArg(msg, argIdx, arg))
+            {
                 chan->setKey(arg);
+                ok = true;
+                usedArg = arg;
+            }
             else
                 server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
                     " 461 " + client.getNick() + " MODE :Not enough parameters\r\n");
@@ -114,13 +140,22 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
                 chan->addOperator(member->getFd());
             else
                 chan->removeOperator(member->getFd());
+            ok = true;
+            usedArg = arg;
         }
         else if (c == 'l')
         {
             if (!adding)
+            {
                 chan->setUserLimit(0);
+                ok = true;
+            }
             else if (nextArg(msg, argIdx, arg) && std::atoi(arg.c_str()) > 0)
+            {
                 chan->setUserLimit(std::atoi(arg.c_str()));
+                ok = true;
+                usedArg = arg;
+            }
             else
                 server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
                     " 461 " + client.getNick() + " MODE :Not enough parameters\r\n");
@@ -131,11 +166,23 @@ void MODE(Client& client, const IrcMessage& msg, Server& server)
                 " 472 " + client.getNick() + " " + std::string(1, c) +
                 " :is unknown mode char to me\r\n");
         }
+
+        if (ok)
+        {
+            char sign = adding ? '+' : '-';
+            if (sign != lastSign)
+            {
+                appliedModes += sign;
+                lastSign = sign;
+            }
+            appliedModes += c;
+            if (!usedArg.empty())
+                appliedArgs += " " + usedArg;
+        }
     }
 
-    std::string applied = modes;
-    for (std::size_t i = 2; i < msg.params.size(); ++i)
-        applied += " " + msg.params[i];
-    broadcastToChannel(server, *chan,
-        userPrefix(client) + " MODE " + target + " " + applied + "\r\n", -1);
+    if (!appliedModes.empty())
+        broadcastToChannel(server, *chan,
+            userPrefix(client) + " MODE " + target + " " +
+            appliedModes + appliedArgs + "\r\n", -1);
 }
