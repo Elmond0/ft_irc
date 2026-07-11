@@ -14,19 +14,20 @@
 # define DISPATCH_HPP
 
 # include <string>
+# include <map>
+# include <set>
 # include <exception>
 # include "IrcMessage.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
+# include "Commands.hpp"
 
 class Dispatcher
 {
-	private:
-		Server&	_server;
-
-		Dispatcher(void);
-
 	public:
+		/* puntatore a un metodo-comando di Command */
+		typedef void (Command::*CommandFn)(Client&, const IrcMessage&);
+
 		Dispatcher(Server& server);
 		Dispatcher(const Dispatcher& other);
 		~Dispatcher(void);
@@ -44,6 +45,15 @@ class Dispatcher
 			public:
 				const char*	what(void) const throw();
 		};
+
+	private:
+		Server&							_server;
+		std::map<std::string, CommandFn>	_handlers;
+		std::set<std::string>			_preReg; /* comandi leciti prima della registrazione */
+
+		Dispatcher(void);
+
+		void	initHandlers(void);
 };
 
 #endif

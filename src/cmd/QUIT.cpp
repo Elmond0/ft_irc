@@ -1,14 +1,14 @@
-#include "../inc/Commands.hpp"
+#include "../../inc/Commands.hpp"
 #include <set>
 #include <unistd.h>
 
-void QUIT(Client& client, const IrcMessage& msg, Server& server)
+void Command::QUIT(Client& client, const IrcMessage& msg)
 {
     std::string reason = msg.trailing.empty() ? "Client Quit" : msg.trailing;
     std::string line = userPrefix(client) + " QUIT :" + reason + "\r\n";
 
     std::set<int> notified;
-    std::map<std::string, Channel>& channels = server.getChannels();
+    std::map<std::string, Channel>& channels = _server.getChannels();
     std::map<std::string, Channel>::iterator it = channels.begin();
 
     while (it != channels.end())
@@ -22,7 +22,7 @@ void QUIT(Client& client, const IrcMessage& msg, Server& server)
         for (std::size_t m = 0; m < members.size(); ++m)
         {
             if (members[m] != &client && notified.insert(members[m]->getFd()).second)
-                server.sendToClient(members[m]->getFd(), line);
+                _server.sendToClient(members[m]->getFd(), line);
         }
 
         chan.removeClient(&client);
@@ -30,8 +30,8 @@ void QUIT(Client& client, const IrcMessage& msg, Server& server)
             channels.erase(current);
     }
 
-    server.sendToClient(client.getFd(), "ERROR :Closing Link\r\n");
+    _server.sendToClient(client.getFd(), "ERROR :Closing Link\r\n");
     int fd = client.getFd();
     close(fd);
-    server.getClients().erase(fd);
+    _server.getClients().erase(fd);
 }

@@ -1,4 +1,4 @@
-#include "../inc/Commands.hpp"
+#include "../../inc/Commands.hpp"
 #include <map>
 #include <set>
 
@@ -24,38 +24,22 @@ bool isValidNick(const std::string& nick)
     return true;
 }
 
-void NICK(Client& client, const IrcMessage& msg, Server& server)
+void Command::NICK(Client& client, const IrcMessage& msg)
 {
     if (msg.params.empty())
-    {
-        std::string reply = std::string(":") + SERVER_NAME + " 431 " +
-            nickOrStar(client) + " :No nickname given\r\n";
-        server.sendToClient(client.getFd(), reply);
-        return;
-    }
+        throw NumericError(431, ":No nickname given");
 
     const std::string& newNick = msg.params[0];
 
     if (!isValidNick(newNick))
-    {
-        std::string reply = std::string(":") + SERVER_NAME + " 432 " +
-            nickOrStar(client) + " " + newNick + " :Erroneus nickname\r\n";
-        server.sendToClient(client.getFd(), reply);
-        return;
-    }
+        throw NumericError(432, newNick + " :Erroneus nickname");
 
-    std::map<int, Client>& clients = server.getClients();
+    std::map<int, Client>& clients = _server.getClients();
     for (std::map<int, Client>::iterator it = clients.begin();
          it != clients.end(); ++it)
     {
         if (it->first != client.getFd() && it->second.getNickname() == newNick)
-        {
-            std::string reply = std::string(":") + SERVER_NAME + " 433 " +
-                nickOrStar(client) + " " + newNick +
-                " :Nickname is already in use\r\n";
-            server.sendToClient(client.getFd(), reply);
-            return;
-        }
+            throw NumericError(433, newNick + " :Nickname is already in use");
     }
 
     bool wasRegistered = client.isRegistered();
@@ -65,10 +49,10 @@ void NICK(Client& client, const IrcMessage& msg, Server& server)
     if (wasRegistered)
     {
         std::string line = userPrefix(client) + " NICK :" + newNick + "\r\n";
-        server.sendToClient(client.getFd(), line);
+        _server.sendToClient(client.getFd(), line);
 
         std::set<int> notified;
-        std::map<std::string, Channel>& channels = server.getChannels();
+        std::map<std::string, Channel>& channels = _server.getChannels();
         for (std::map<std::string, Channel>::iterator ch = channels.begin();
              ch != channels.end(); ++ch)
         {
@@ -78,7 +62,7 @@ void NICK(Client& client, const IrcMessage& msg, Server& server)
             for (std::size_t m = 0; m < members.size(); ++m)
             {
                 if (members[m] != &client && notified.insert(members[m]->getFd()).second)
-                    server.sendToClient(members[m]->getFd(), line);
+                    _server.sendToClient(members[m]->getFd(), line);
             }
         }
     }
@@ -86,5 +70,5 @@ void NICK(Client& client, const IrcMessage& msg, Server& server)
     client.setNickname(newNick);
     client.setNickOk(true);
     if (!wasRegistered && client.isRegistered())
-        sendWelcome(client, server);
+        sendWelcome(client, _server);
 }

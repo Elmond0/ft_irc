@@ -12,13 +12,14 @@ OBJ_DIR = obj
 
 SRC_DIR = src
 
-CMD_DIR = cmd
+CMD_DIR = $(SRC_DIR)/cmd
 
 SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
        $(SRC_DIR)/Channel.cpp $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp \
        $(SRC_DIR)/utils.cpp
 
-CMDS = $(CMD_DIR)/PASS.cpp $(CMD_DIR)/NICK.cpp $(CMD_DIR)/USER.cpp \
+CMDS = $(CMD_DIR)/Command.cpp \
+       $(CMD_DIR)/PASS.cpp $(CMD_DIR)/NICK.cpp $(CMD_DIR)/USER.cpp \
        $(CMD_DIR)/JOIN.cpp $(CMD_DIR)/PRIVMSG.cpp \
        $(CMD_DIR)/KICK.cpp $(CMD_DIR)/INVITE.cpp $(CMD_DIR)/TOPIC.cpp \
        $(CMD_DIR)/MODE.cpp $(CMD_DIR)/QUIT.cpp $(CMD_DIR)/PING.cpp \

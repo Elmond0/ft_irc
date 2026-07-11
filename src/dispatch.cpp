@@ -1,15 +1,41 @@
 
 #include "../inc/dispatch.hpp"
 #include "../inc/Commands.hpp"
+#include <sstream>
 
 
 
-Dispatcher::Dispatcher(Server& server) : _server(server) {}
+Dispatcher::Dispatcher(Server& server) : _server(server)
+{
+    initHandlers();
+}
 
-Dispatcher::Dispatcher(const Dispatcher& other) : _server(other._server) {}
+Dispatcher::Dispatcher(const Dispatcher& other)
+    : _server(other._server), _handlers(other._handlers), _preReg(other._preReg) {}
 
 Dispatcher::~Dispatcher(void) {}
 
+void Dispatcher::initHandlers(void)
+{
+    _handlers["PASS"]    = &Command::PASS;
+    _handlers["NICK"]    = &Command::NICK;
+    _handlers["USER"]    = &Command::USER;
+    _handlers["JOIN"]    = &Command::JOIN;
+    _handlers["PRIVMSG"] = &Command::PRIVMSG;
+    _handlers["KICK"]    = &Command::KICK;
+    _handlers["INVITE"]  = &Command::INVITE;
+    _handlers["TOPIC"]   = &Command::TOPIC;
+    _handlers["MODE"]    = &Command::MODE;
+    _handlers["QUIT"]    = &Command::QUIT;
+    _handlers["PING"]    = &Command::PING;
+    _handlers["PART"]    = &Command::PART;
+
+    _preReg.insert("PASS");
+    _preReg.insert("NICK");
+    _preReg.insert("USER");
+    _preReg.insert("PING");
+    _preReg.insert("QUIT");
+}
 
 const char* Dispatcher::NotRegisteredException::what(void) const throw()
 {
@@ -26,54 +52,27 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
     if (msg.command.empty())
         return;
 
+    Command cmd(_server);
+
     try
     {
-        if (!client.isRegistered())
-        {
-            if (msg.command == "PASS")
-                PASS(client, msg, _server);
-            else if (msg.command == "NICK")
-                NICK(client, msg, _server);
-            else if (msg.command == "USER")
-                USER(client, msg, _server);
-            else if (msg.command == "PING")
-                PING(client, msg, _server);
-            else if (msg.command == "QUIT")
-                QUIT(client, msg, _server);
-            else
-                throw NotRegisteredException();
-            return;
-        }
+        if (!client.isRegistered() && _preReg.find(msg.command) == _preReg.end())
+            throw NotRegisteredException();
 
-        if (msg.command == "NICK")
-            NICK(client, msg, _server);
-        else if (msg.command == "PASS")
-            PASS(client, msg, _server);
-        else if (msg.command == "USER")
-            USER(client, msg, _server);
-        else if (msg.command == "PING")
-            PING(client, msg, _server);
-        else if (msg.command == "JOIN")
-            JOIN(client, msg, _server);
-        else if (msg.command == "PRIVMSG")
-            PRIVMSG(client, msg, _server);
-        else if (msg.command == "NOTICE")
-            ; /* non implementato; ignorato in silenzio: la RFC vieta
-                 di rispondere a un NOTICE, quindi niente 421 */
-        else if (msg.command == "KICK")
-            KICK(client, msg, _server);
-        else if (msg.command == "INVITE")
-            INVITE(client, msg, _server);
-        else if (msg.command == "TOPIC")
-            TOPIC(client, msg, _server);
-        else if (msg.command == "MODE")
-            MODE(client, msg, _server);
-        else if (msg.command == "PART")
-            PART(client, msg, _server);
-        else if (msg.command == "QUIT")
-            QUIT(client, msg, _server);
-        else
+        std::map<std::string, CommandFn>::const_iterator it =
+            _handlers.find(msg.command);
+        if (it == _handlers.end())
             throw UnknownCommandException();
+
+        (cmd.*(it->second))(client, msg); /* chiamata via puntatore a metodo */
+    }
+    catch (const Command::NumericError& e)
+    {
+        /* errore fatale di un comando: qui diventa la reply numerica */
+        std::ostringstream oss;
+        oss << ":" << SERVER_NAME << " " << e.code() << " "
+            << nickOrStar(client) << " " << e.text() << "\r\n";
+        _server.sendToClient(client.getFd(), oss.str());
     }
     catch (const NotRegisteredException& e)
     {
