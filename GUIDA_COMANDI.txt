@@ -653,6 +653,124 @@ alcuni client pingano gia' durante l'handshake.
 Fonti: RFC 2812 sez. 3.7.2/3.7.3 — https://datatracker.ietf.org/doc/html/rfc2812#section-3.7.2
        https://modern.ircdocs.horse/#ping-message
 
+MIGLIORAMENTO MANCANTE — ping periodico lato server
+------------------------------------------------------------
+L'implementazione attuale e' SOLO REATTIVA: il server risponde ai PING che
+arrivano dai client, ma non ne manda mai uno da solo. Un server IRC reale e'
+anche PROATTIVO: manda PING periodici a ogni client connesso e disconnette
+chi non risponde entro un timeout. Senza questo meccanismo, un client che
+crasha senza chiudere il socket TCP resta nella mappa _clients per sempre,
+occupando memoria e interferendo con eventuali riconnessioni dello stesso nick.
+
+COSA MANCA NEL CODICE ATTUALE:
+
+  1. La classe Client (inc/Client.hpp) non ha nessun campo che tracci il
+     tempo: nessun "ultimo messaggio ricevuto", nessun "ping in attesa".
+
+  2. Il loop principale (src/Server.cpp, funzione run()) ha gia' un timeout
+     di 1 secondo su poll():
+
+         int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
+
+     ma quando poll() ritorna per timeout (fdsNbr == 0), non viene fatto
+     NULLA. Il valore 0 non viene nemmeno controllato: la gestione dei
+     client idle e' completamente assente.
+
+  3. La classe Server ha una eccezione Timeout definita
+     (src/Server.cpp riga 138), ma non viene mai lanciata da nessuna parte.
+     E' uno scheletro vuoto senza corpo.
+
+COME IMPLEMENTARLO — i tre passi:
+
+  PASSO 1 — aggiungere i campi temporali a Client (inc/Client.hpp):
+
+      #include <ctime>
+
+      // dentro la sezione private:
+      time_t _lastActivity;   // aggiornato a ogni messaggio ricevuto
+      bool   _pingPending;    // true se il server ha mandato PING ma non
+                              // ha ancora ricevuto il PONG corrispondente
+
+      // costruttore: inizializzarli con
+      _lastActivity = time(NULL);
+      _pingPending  = false;
+
+      // getter/setter pubblici da aggiungere in Client.hpp e Client.cpp:
+      time_t getLastActivity()  const;
+      bool   isPingPending()    const;
+      void   updateActivity();            // chiama time(NULL) e setta _pingPending = false
+      void   setPingPending(bool val);
+
+  PASSO 2 — aggiornare _lastActivity a ogni messaggio ricevuto.
+  Il posto giusto e' in src/Server.cpp, dentro run(), immediatamente dopo
+  che readBuffer ha letto dati e PRIMA di chiamare il dispatcher:
+
+      if (it->revents & POLLIN) {
+          readBuffer(it->fd);
+          _clients[it->fd].updateActivity();    // <-- aggiungere questa riga
+          IrcMessage msg = parseMessage(_clients[it->fd].getRecvBuffer());
+          Dispatcher dispatcher(*this);
+          dispatcher.dispatch(_clients[it->fd], msg);
+      }
+
+  PASSO 3 — aggiungere la logica di keep-alive nel loop principale.
+  Dentro run(), dopo il blocco che gestisce il primo elemento del vettore
+  (il listening socket), aggiungere un controllo periodico:
+
+      // costanti da definire in cima al file (o in un header):
+      const int PING_INTERVAL = 60;   // manda PING se inattivo da 60s
+      const int PING_TIMEOUT  = 90;   // disconnette se non risponde in 90s
+
+      time_t now = time(NULL);
+      for (std::map<int,Client>::iterator ci = _clients.begin();
+           ci != _clients.end(); /* avanza dentro */)
+      {
+          Client& c   = ci->second;
+          int     cfd = ci->first;
+          double  idle = difftime(now, c.getLastActivity());
+
+          if (c.isPingPending() && idle > PING_TIMEOUT)
+          {
+              // non ha risposto al PING: disconnetti
+              sendToClient(cfd, "ERROR :Ping timeout\r\n");
+              // rimozione sicura dentro il ciclo:
+              std::map<int,Client>::iterator toErase = ci++;
+              // qui bisogna anche rimuovere il pollfd e toglierlo dai canali
+              // (stessa logica di disconnectClient, da adattare)
+              _clients.erase(toErase);
+              continue;
+          }
+          if (!c.isPingPending() && idle > PING_INTERVAL)
+          {
+              // client silenzioso da troppo tempo: mandagli un PING
+              std::string ping = std::string(":") + SERVER_NAME +
+                                 " PING :" + SERVER_NAME + "\r\n";
+              sendToClient(cfd, ping);
+              c.setPingPending(true);
+          }
+          ++ci;
+      }
+
+  PASSO 3b — gestire il PONG in arrivo dal client.
+  Quando il client risponde al PING del server, manda "PONG :ircserv".
+  Bisogna aggiungere l'handler PONG nel dispatcher (src/dispatch.cpp)
+  che chiama semplicemente updateActivity() sul client:
+
+      else if (msg.command == "PONG")
+          client.updateActivity();    // azzera il pending e aggiorna il clock
+
+DOVE SI TROVA OGNI PEZZO DA TOCCARE (riassunto):
+
+  inc/Client.hpp       aggiungere i campi _lastActivity e _pingPending
+  src/Client.cpp       implementare i getter/setter e updateActivity()
+  src/Server.cpp       riga ~99: chiamare updateActivity() dopo readBuffer()
+                       riga ~90: aggiungere il blocco di keep-alive nel loop
+  src/dispatch.cpp     aggiungere il case "PONG" che chiama updateActivity()
+
+NOTA: questa modifica NON e' richiesta dal subject di 42, ma senza di essa
+il server non regge sessioni lunghe con client reali come irssi o HexChat,
+che si scollegano silenziosamente dopo circa 90 secondi di inattivita'.
+
 
 ================================================================================
 PARTE 6 — I PATTERN TRASVERSALI (quello che l'esaminatore chiedera')
