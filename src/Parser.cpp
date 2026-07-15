@@ -73,7 +73,6 @@ IrcMessage parseMessage(const std::string& raw)
 
         if (line[pos] == ':')
         {
-            /* tutto il resto (spazi inclusi) e' UN solo parametro: il trailing */
             msg.trailing = line.substr(pos + 1);
             break;
         }

@@ -64,11 +64,10 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
         if (it == _handlers.end())
             throw UnknownCommandException();
 
-        (cmd.*(it->second))(client, msg); /* chiamata via puntatore a metodo */
+        (cmd.*(it->second))(client, msg);
     }
     catch (const Command::NumericError& e)
     {
-        /* errore fatale di un comando: qui diventa la reply numerica */
         std::ostringstream oss;
         oss << ":" << SERVER_NAME << " " << e.code() << " "
             << nickOrStar(client) << " " << e.text() << "\r\n";

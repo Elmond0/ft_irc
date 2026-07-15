@@ -25,7 +25,6 @@
 class Dispatcher
 {
 	public:
-		/* puntatore a un metodo-comando di Command */
 		typedef void (Command::*CommandFn)(Client&, const IrcMessage&);
 
 		Dispatcher(Server& server);
@@ -49,7 +48,7 @@ class Dispatcher
 	private:
 		Server&							_server;
 		std::map<std::string, CommandFn>	_handlers;
-		std::set<std::string>			_preReg; /* comandi leciti prima della registrazione */
+		std::set<std::string>			_preReg;
 
 		Dispatcher(void);
 
