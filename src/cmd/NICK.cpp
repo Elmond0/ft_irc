@@ -26,6 +26,11 @@ bool isValidNick(const std::string& nick)
 
 void Command::NICK(Client& client, const IrcMessage& msg)
 {
+    /* RFC 1459 4.1.1: la password va impostata prima di ogni tentativo
+       di registrazione, quindi PASS deve precedere NICK/USER */
+    if (!client.isPassOk())
+        throw NumericError(464, ":Password required");
+
     if (msg.params.empty())
         throw NumericError(431, ":No nickname given");
 
@@ -44,8 +49,6 @@ void Command::NICK(Client& client, const IrcMessage& msg)
 
     bool wasRegistered = client.isRegistered();
 
-    /* RFC 1459: il cambio nick va notificato al client stesso e a tutti
-       i canali in cui si trova, con il prefisso del VECCHIO nick */
     if (wasRegistered)
     {
         std::string line = userPrefix(client) + " NICK :" + newNick + "\r\n";
@@ -66,7 +69,6 @@ void Command::NICK(Client& client, const IrcMessage& msg)
             }
         }
     }
-
     client.setNickname(newNick);
     client.setNickOk(true);
     if (!wasRegistered && client.isRegistered())

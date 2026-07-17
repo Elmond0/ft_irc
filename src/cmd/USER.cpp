@@ -5,6 +5,9 @@ void Command::USER(Client& client, const IrcMessage& msg)
     if (client.isRegistered())
         throw NumericError(462, ":You may not reregister");
 
+    if (!client.isPassOk())
+        throw NumericError(464, ":Password required");
+
     if (msg.params.empty() || msg.trailing.empty())
         throw NumericError(461, "USER :Not enough parameters");
 

@@ -28,7 +28,6 @@ Client& Client::operator=( Client const & other ) {
 		_passOk = other._passOk;
 		_nickOk = other._nickOk;
 		_userOk = other._userOk;
-		_registered = other._registered;
 		_sendBuffer = other._sendBuffer;
 		_recvBuffer = other._recvBuffer;
 	}
@@ -105,7 +104,6 @@ std::string &Client::getRecvBuffer()
 {
 	return (_recvBuffer);
 }
-
 
 std::ostream& operator<<( std::ostream& o, Client const & c ) {
 	o << "CLIENT\nsocket fd: " << c.getSockFd() << "\naddress: " << inet_ntoa(c.getAddr().sin_addr) << "\n";
