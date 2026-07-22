@@ -28,16 +28,14 @@ class Client
 		bool _isOp;
 		bool _isChanOp;
 
-		// registrazione (PASS/NICK/USER) - @elia
 		std::string	_nickname;
 		std::string	_username;
 		std::string _hostname;
 		std::string	_realname;
 		bool		_passOk;
-		bool		_nickOk; //
-		bool		_userOk; //
-		bool		_registered;
-		// buffer
+		bool		_nickOk;
+		bool		_userOk;
+
 		std::string _sendBuffer;
 		std::string _recvBuffer;
 

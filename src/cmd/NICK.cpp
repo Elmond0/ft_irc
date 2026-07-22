@@ -1,6 +1,6 @@
 #include "../../inc/Commands.hpp"
 
-bool isValidNick(const std::string &nick) 
+bool isValidNick(const std::string &nick)
 {
   if (nick.empty() || nick.size() > 9)
     return false;
@@ -21,8 +21,13 @@ bool isValidNick(const std::string &nick)
   return true;
 }
 
-void Command::NICK(Client &client, const IrcMessage &msg) 
+void Command::NICK(Client &client, const IrcMessage &msg)
 {
+  /* RFC 1459 4.1.1: la password va impostata prima di ogni tentativo
+     di registrazione, quindi PASS deve precedere NICK/USER */
+  if (!client.isPassOk())
+    throw NumericError(464, ":Password required");
+
   if (msg.params.empty())
     throw NumericError(431, ":No nickname given");
 
@@ -33,7 +38,7 @@ void Command::NICK(Client &client, const IrcMessage &msg)
 
   std::map<int, Client> &clients = _server.getClients();
 
-  for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) 
+  for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
   {
     if (it->first != client.getFd() && sameNick(it->second.getNickname(), newNick))
       throw NumericError(433, newNick + " :Nickname is already in use");
@@ -41,7 +46,7 @@ void Command::NICK(Client &client, const IrcMessage &msg)
 
   bool wasRegistered = client.isRegistered();
 
-  if (wasRegistered) 
+  if (wasRegistered)
   {
     std::string line = userPrefix(client) + " NICK :" + newNick + "\r\n";
 
@@ -50,12 +55,12 @@ void Command::NICK(Client &client, const IrcMessage &msg)
     std::set<int> notified;
     std::map<std::string, Channel> &channels = _server.getChannels();
 
-    for (std::map<std::string, Channel>::iterator ch = channels.begin(); ch != channels.end(); ++ch) 
+    for (std::map<std::string, Channel>::iterator ch = channels.begin(); ch != channels.end(); ++ch)
 	{
       if (!ch->second.hasClient(&client))
         continue;
       const std::vector<Client *> &members = ch->second.getClients();
-      for (std::size_t m = 0; m < members.size(); ++m) 
+      for (std::size_t m = 0; m < members.size(); ++m)
 	  {
         if (members[m] != &client && notified.insert(members[m]->getFd()).second)
           _server.sendToClient(members[m]->getFd(), line);
