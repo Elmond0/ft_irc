@@ -23,8 +23,6 @@ bool isValidNick(const std::string &nick)
 
 void Command::NICK(Client &client, const IrcMessage &msg)
 {
-  /* RFC 1459 4.1.1: la password va impostata prima di ogni tentativo
-     di registrazione, quindi PASS deve precedere NICK/USER */
   if (!client.isPassOk())
     throw NumericError(464, ":Password required");
 

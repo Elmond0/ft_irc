@@ -5,7 +5,6 @@ void Command::USER(Client &client, const IrcMessage &msg)
   if (client.isRegistered())
     throw NumericError(462, ":You may not reregister");
 
-  /* RFC 1459: PASS deve precedere NICK/USER */
   if (!client.isPassOk())
     throw NumericError(464, ":Password required");
 
