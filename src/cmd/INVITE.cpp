@@ -25,6 +25,5 @@ void Command::INVITE(Client& client, const IrcMessage& msg)
 
     chan->addInvited(target);
     numeric(client, 341, targetNick + " " + chanName);
-    _server.sendToClient(target->getFd(),
-        userPrefix(client) + " INVITE " + targetNick + " :" + chanName + "\r\n");
+    _server.sendToClient(target->getFd(), userPrefix(client) + " INVITE " + targetNick + " :" + chanName + "\r\n");
 }

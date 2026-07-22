@@ -1,7 +1,6 @@
 #include "../../inc/Commands.hpp"
 
-void Command::partOne(Client& client, const std::string& name,
-                      const std::string& reason)
+void Command::partOne(Client& client, const std::string& name, const std::string& reason)
 {
     Channel* chan = findChannel(_server, name);
     if (!chan)
@@ -16,6 +15,7 @@ void Command::partOne(Client& client, const std::string& name,
     }
 
     std::string line = userPrefix(client) + " PART " + name;
+
     if (!reason.empty())
         line += " :" + reason;
     broadcastToChannel(_server, *chan, line + "\r\n", -1);
@@ -31,6 +31,7 @@ void Command::PART(Client& client, const IrcMessage& msg)
         throw NumericError(461, "PART :Not enough parameters");
 
     std::vector<std::string> names = splitComma(msg.params[0]);
+	
     for (std::size_t i = 0; i < names.size(); ++i)
         partOne(client, names[i], msg.trailing);
 }

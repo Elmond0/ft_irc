@@ -8,8 +8,7 @@ void Command::PRIVMSG(Client& client, const IrcMessage& msg)
         throw NumericError(412, ":No text to send");
 
     const std::string& target = msg.params[0];
-    std::string line = userPrefix(client) + " PRIVMSG " + target +
-        " :" + msg.trailing + "\r\n";
+    std::string line = userPrefix(client) + " PRIVMSG " + target + " :" + msg.trailing + "\r\n";
 
     if (target[0] == '#')
     {

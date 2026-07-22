@@ -15,10 +15,12 @@ void Command::QUIT(Client& client, const IrcMessage& msg)
     {
         std::map<std::string, Channel>::iterator current = it++;
         Channel& chan = current->second;
+
         if (!chan.hasClient(&client))
             continue;
 
         const std::vector<Client*>& members = chan.getClients();
+		
         for (std::size_t m = 0; m < members.size(); ++m)
         {
             if (members[m] != &client && notified.insert(members[m]->getFd()).second)
