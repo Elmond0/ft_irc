@@ -5,8 +5,7 @@ bool Command::isValidChannelName(const std::string& name) const
 {
     if (name.size() < 2 || name[0] != '#')
         return false;
-    return name.find(' ') == std::string::npos &&
-           name.find(',') == std::string::npos;
+    return name.find(' ') == std::string::npos && name.find(',') == std::string::npos;
 }
 
 void Command::sendNames(Client& client, Channel& chan)

@@ -62,6 +62,12 @@ bool Command::applyOneMode(Client& client, Channel& chan, char c,
             }
             if (nextArg(msg, argIdx, arg))
             {
+                if (chan.hasKey())
+                {
+                    numeric(client, 467, chan.getName() +
+                        " :Channel key already set");
+                    return false;
+                }
                 chan.setKey(arg);
                 usedArg = arg;
                 return true;
@@ -161,7 +167,15 @@ void Command::MODE(Client& client, const IrcMessage& msg)
 
     const std::string& target = msg.params[0];
     if (target[0] != '#')
+    {
+        Client* targetUser = findClientByNick(_server, target);
+        if (!targetUser)
+            throw NumericError(401, target + " :No such nick/channel");
+        if (targetUser != &client)
+            throw NumericError(502, ":Cannot change mode for other users");
+        numeric(client, 221, "+"); /* RPL_UMODEIS: nessun user mode supportato */
         return;
+    }
 
     Channel* chan = findChannel(_server, target);
     if (!chan)
