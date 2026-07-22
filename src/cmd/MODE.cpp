@@ -5,6 +5,7 @@
 void Command::sendChannelModes(Client& client, Channel& chan)
 {
     std::string modes = chan.getModeString();
+
     if (modes.empty())
         modes = "+";
     std::string rest = chan.getName() + " " + modes;
@@ -36,9 +37,7 @@ static bool parseLimit(const std::string& str, long& out)
     return *end == '\0' && out > 0;
 }
 
-bool Command::applyOneMode(Client& client, Channel& chan, char c,
-                           bool adding, const IrcMessage& msg,
-                           std::size_t& argIdx, std::string& usedArg)
+bool Command::applyOneMode(Client& client, Channel& chan, char c, bool adding, const IrcMessage& msg, std::size_t& argIdx, std::string& usedArg)
 {
     std::string arg;
 
@@ -56,7 +55,7 @@ bool Command::applyOneMode(Client& client, Channel& chan, char c,
             if (!adding)
             {
                 chan.clearKey();
-                nextArg(msg, argIdx, arg); /* consuma il "*" dei client */
+                nextArg(msg, argIdx, arg);
                 usedArg = "*";
                 return true;
             }
@@ -85,8 +84,7 @@ bool Command::applyOneMode(Client& client, Channel& chan, char c,
             Client* member = findClientByNick(_server, arg);
             if (!member || !chan.hasClient(member))
             {
-                numeric(client, 441, arg + " " + chan.getName() +
-                    " :They aren't on that channel");
+                numeric(client, 441, arg + " " + chan.getName() + " :They aren't on that channel");
                 return false;
             }
             if (adding)
@@ -116,8 +114,7 @@ bool Command::applyOneMode(Client& client, Channel& chan, char c,
         }
 
         default:
-            numeric(client, 472, std::string(1, c) +
-                " :is unknown mode char to me");
+            numeric(client, 472, std::string(1, c) + " :is unknown mode char to me");
             return false;
     }
 }
@@ -155,9 +152,7 @@ void Command::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
     }
 
     if (!appliedModes.empty())
-        broadcastToChannel(_server, chan,
-            userPrefix(client) + " MODE " + chan.getName() + " " +
-            appliedModes + appliedArgs + "\r\n", -1);
+        broadcastToChannel(_server, chan, userPrefix(client) + " MODE " + chan.getName() + " " + appliedModes + appliedArgs + "\r\n", -1);
 }
 
 void Command::MODE(Client& client, const IrcMessage& msg)
@@ -166,6 +161,7 @@ void Command::MODE(Client& client, const IrcMessage& msg)
         throw NumericError(461, "MODE :Not enough parameters");
 
     const std::string& target = msg.params[0];
+
     if (target[0] != '#')
     {
         Client* targetUser = findClientByNick(_server, target);
@@ -178,6 +174,7 @@ void Command::MODE(Client& client, const IrcMessage& msg)
     }
 
     Channel* chan = findChannel(_server, target);
+
     if (!chan)
         throw NumericError(403, target + " :No such channel");
     if (!chan->hasClient(&client))
