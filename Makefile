@@ -16,14 +16,14 @@ CMD_DIR = $(SRC_DIR)/cmd
 
 SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
        $(SRC_DIR)/Channel.cpp $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp \
-       $(SRC_DIR)/utils.cpp
+       $(SRC_DIR)/CommandUtils.cpp
 
-CMDS = $(CMD_DIR)/Command.cpp \
-       $(CMD_DIR)/PASS.cpp $(CMD_DIR)/NICK.cpp $(CMD_DIR)/USER.cpp \
-       $(CMD_DIR)/JOIN.cpp $(CMD_DIR)/PRIVMSG.cpp \
-       $(CMD_DIR)/KICK.cpp $(CMD_DIR)/INVITE.cpp $(CMD_DIR)/TOPIC.cpp \
-       $(CMD_DIR)/MODE.cpp $(CMD_DIR)/QUIT.cpp $(CMD_DIR)/PING.cpp \
-       $(CMD_DIR)/PART.cpp
+CMDS = $(CMD_DIR)/ACommand.cpp \
+       $(CMD_DIR)/Pass.cpp $(CMD_DIR)/Nick.cpp $(CMD_DIR)/User.cpp \
+       $(CMD_DIR)/Join.cpp $(CMD_DIR)/Privmsg.cpp \
+       $(CMD_DIR)/Kick.cpp $(CMD_DIR)/Invite.cpp $(CMD_DIR)/Topic.cpp \
+       $(CMD_DIR)/Mode.cpp $(CMD_DIR)/Quit.cpp $(CMD_DIR)/Ping.cpp \
+       $(CMD_DIR)/Part.cpp
 
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) $(CMDS:$(CMD_DIR)/%.cpp=$(OBJ_DIR)/cmd/%.o)
 

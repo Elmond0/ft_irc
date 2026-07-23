@@ -1,6 +1,14 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
+#include <cstddef>
+#include <string>
+#include <vector>
 
-void Command::partOne(Client& client, const std::string& name, const std::string& reason)
+Part::Part(Server &server) : ACommand(server) {}
+
+Part::~Part(void) {}
+
+void Part::partOne(Client& client, const std::string& name, const std::string& reason)
 {
     Channel* chan = findChannel(_server, name);
     if (!chan)
@@ -25,13 +33,13 @@ void Command::partOne(Client& client, const std::string& name, const std::string
         _server.getChannels().erase(name);
 }
 
-void Command::PART(Client& client, const IrcMessage& msg)
+void Part::execute(Client& client, const IrcMessage& msg)
 {
     if (msg.params.empty())
         throw NumericError(461, "PART :Not enough parameters");
 
     std::vector<std::string> names = splitComma(msg.params[0]);
-	
+
     for (std::size_t i = 0; i < names.size(); ++i)
         partOne(client, names[i], msg.trailing);
 }

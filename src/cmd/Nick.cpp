@@ -1,6 +1,12 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
+#include <cstddef>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
-bool isValidNick(const std::string &nick)
+bool Nick::isValidNick(const std::string &nick) const
 {
   if (nick.empty() || nick.size() > 9)
     return false;
@@ -21,7 +27,11 @@ bool isValidNick(const std::string &nick)
   return true;
 }
 
-void Command::NICK(Client &client, const IrcMessage &msg)
+Nick::Nick(Server &server) : ACommand(server) {}
+
+Nick::~Nick(void) {}
+
+void Nick::execute(Client &client, const IrcMessage &msg)
 {
   if (!client.isPassOk())
     throw NumericError(464, ":Password required");

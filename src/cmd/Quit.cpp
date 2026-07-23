@@ -1,8 +1,17 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
+#include <cstddef>
+#include <map>
 #include <set>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
-void Command::QUIT(Client& client, const IrcMessage& msg)
+Quit::Quit(Server &server) : ACommand(server) {}
+
+Quit::~Quit(void) {}
+
+void Quit::execute(Client &client, const IrcMessage &msg)
 {
     std::string reason = msg.trailing.empty() ? "Client Quit" : msg.trailing;
     std::string line = userPrefix(client) + " QUIT :" + reason + "\r\n";
@@ -20,7 +29,7 @@ void Command::QUIT(Client& client, const IrcMessage& msg)
             continue;
 
         const std::vector<Client*>& members = chan.getClients();
-		
+
         for (std::size_t m = 0; m < members.size(); ++m)
         {
             if (members[m] != &client && notified.insert(members[m]->getFd()).second)

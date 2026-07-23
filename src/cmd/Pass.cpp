@@ -1,6 +1,11 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
 
-void Command::PASS(Client &client, const IrcMessage &msg) 
+Pass::Pass(Server &server) : ACommand(server) {}
+
+Pass::~Pass(void) {}
+
+void Pass::execute(Client &client, const IrcMessage &msg)
 {
   if (client.isRegistered())
     throw NumericError(462, ":You may not reregister");

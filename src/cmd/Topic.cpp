@@ -1,6 +1,11 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
 
-void Command::TOPIC(Client& client, const IrcMessage& msg)
+Topic::Topic(Server &server) : ACommand(server) {}
+
+Topic::~Topic(void) {}
+
+void Topic::execute(Client &client, const IrcMessage &msg)
 {
     if (msg.params.empty())
         throw NumericError(461, "TOPIC :Not enough parameters");

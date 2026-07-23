@@ -1,8 +1,15 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
+#include <cstddef>
 #include <cstdlib>
 #include <sstream>
+#include <string>
 
-void Command::sendChannelModes(Client& client, Channel& chan)
+Mode::Mode(Server &server) : ACommand(server) {}
+
+Mode::~Mode(void) {}
+
+void Mode::sendChannelModes(Client& client, Channel& chan)
 {
     std::string modes = chan.getModeString();
 
@@ -20,7 +27,7 @@ void Command::sendChannelModes(Client& client, Channel& chan)
     numeric(client, 324, rest);
 }
 
-bool Command::nextArg(const IrcMessage& msg, std::size_t& idx, std::string& out)
+bool Mode::nextArg(const IrcMessage& msg, std::size_t& idx, std::string& out)
 {
     if (idx >= msg.params.size())
         return false;
@@ -37,7 +44,7 @@ static bool parseLimit(const std::string& str, long& out)
     return *end == '\0' && out > 0;
 }
 
-bool Command::applyOneMode(Client& client, Channel& chan, char c, bool adding, const IrcMessage& msg, std::size_t& argIdx, std::string& usedArg)
+bool Mode::applyOneMode(Client& client, Channel& chan, char c, bool adding, const IrcMessage& msg, std::size_t& argIdx, std::string& usedArg)
 {
     std::string arg;
 
@@ -119,7 +126,7 @@ bool Command::applyOneMode(Client& client, Channel& chan, char c, bool adding, c
     }
 }
 
-void Command::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
+void Mode::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
 {
     const std::string& modes = msg.params[1];
     std::size_t argIdx = 2;
@@ -155,7 +162,7 @@ void Command::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
         broadcastToChannel(_server, chan, userPrefix(client) + " MODE " + chan.getName() + " " + appliedModes + appliedArgs + "\r\n", -1);
 }
 
-void Command::MODE(Client& client, const IrcMessage& msg)
+void Mode::execute(Client& client, const IrcMessage& msg)
 {
     if (msg.params.empty())
         throw NumericError(461, "MODE :Not enough parameters");

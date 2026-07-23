@@ -1,4 +1,10 @@
-#include "../inc/Commands.hpp"
+#include "../inc/CommandUtils.hpp"
+#include <cstddef>
+#include <map>
+#include <sstream>
+#include <string>
+#include <unistd.h>
+#include <vector>
 
 static char ircLower(char c) {
   if (c >= 'A' && c <= 'Z')

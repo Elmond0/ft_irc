@@ -1,80 +1,84 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Commands.hpp                                       :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/07 15:37:25 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/07 15:37:26 by giomastr         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #ifndef COMMANDS_HPP
 #define COMMANDS_HPP
 
-#include "Channel.hpp"
-#include "Client.hpp"
-#include "IrcMessage.hpp"
-#include "Server.hpp"
-#include <exception>
-#include <map>
-#include <set>
-#include <sstream>
+#include "ACommand.hpp"
+#include <cstddef>
 #include <string>
-#include <unistd.h>
-#include <vector>
 
-#ifndef SERVER_NAME
-#define SERVER_NAME "ircserv"
-#endif
+class Channel;
 
-class Command {
+class Pass : public ACommand {
 public:
-  class NumericError : public std::exception {
-  private:
-    int _code;
-    std::string _text;
+  Pass(Server &server);
+  ~Pass(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
 
-  public:
-    NumericError(int code, const std::string &text);
-    virtual ~NumericError() throw();
-
-    int code() const;
-    const std::string &text() const;
-    virtual const char *what() const throw();
-  };
-
-  Command(Server &server);
-  Command(const Command &other);
-  ~Command(void);
-
-  void PASS(Client &client, const IrcMessage &msg);
-  void NICK(Client &client, const IrcMessage &msg);
-  void USER(Client &client, const IrcMessage &msg);
-
-  void JOIN(Client &client, const IrcMessage &msg);
-  void PRIVMSG(Client &client, const IrcMessage &msg);
-  void KICK(Client &client, const IrcMessage &msg);
-  void INVITE(Client &client, const IrcMessage &msg);
-  void TOPIC(Client &client, const IrcMessage &msg);
-  void MODE(Client &client, const IrcMessage &msg);
-  void QUIT(Client &client, const IrcMessage &msg);
-  void PING(Client &client, const IrcMessage &msg);
-  void PART(Client &client, const IrcMessage &msg);
+class Nick : public ACommand {
+public:
+  Nick(Server &server);
+  ~Nick(void);
+  void execute(Client &client, const IrcMessage &msg);
 
 private:
-  Server &_server;
+  bool isValidNick(const std::string &nick) const;
+};
 
-  Command(void);
+class User : public ACommand {
+public:
+  User(Server &server);
+  ~User(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
 
-  void numeric(Client &client, int code, const std::string &text);
+class Join : public ACommand {
+public:
+  Join(Server &server);
+  ~Join(void);
+  void execute(Client &client, const IrcMessage &msg);
 
+private:
   bool isValidChannelName(const std::string &name) const;
   void sendNames(Client &client, Channel &chan);
   void joinOne(Client &client, const std::string &name, const std::string &key);
   void partAll(Client &client);
-  void partOne(Client &client, const std::string &name, const std::string &reason);
+};
+
+class Privmsg : public ACommand {
+public:
+  Privmsg(Server &server);
+  ~Privmsg(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
+
+class Kick : public ACommand {
+public:
+  Kick(Server &server);
+  ~Kick(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
+
+class Invite : public ACommand {
+public:
+  Invite(Server &server);
+  ~Invite(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
+
+class Topic : public ACommand {
+public:
+  Topic(Server &server);
+  ~Topic(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
+
+class Mode : public ACommand {
+public:
+  Mode(Server &server);
+  ~Mode(void);
+  void execute(Client &client, const IrcMessage &msg);
+
+private:
   void sendChannelModes(Client &client, Channel &chan);
   void applyModes(Client &client, Channel &chan, const IrcMessage &msg);
   bool applyOneMode(Client &client, Channel &chan, char c, bool adding, const IrcMessage &msg, std::size_t &argIdx,
@@ -82,16 +86,28 @@ private:
   static bool nextArg(const IrcMessage &msg, std::size_t &idx, std::string &out);
 };
 
-std::string nickOrStar(const Client &client);
-void sendWelcome(Client &client, Server &server);
-void rejectRegistration(Client &client, Server &server, int code, const std::string &text);
-void finishRegistrationAttempt(Client &client, Server &server);
-bool isValidNick(const std::string &nick);
-bool sameNick(const std::string &a, const std::string &b);
-std::string userPrefix(const Client &client);
-Client *findClientByNick(Server &server, const std::string &nick);
-Channel *findChannel(Server &server, const std::string &name);
-void broadcastToChannel(Server &server, Channel &chan, const std::string &line, int exceptFd);
-std::vector<std::string> splitComma(const std::string &s);
+class Quit : public ACommand {
+public:
+  Quit(Server &server);
+  ~Quit(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
+
+class Ping : public ACommand {
+public:
+  Ping(Server &server);
+  ~Ping(void);
+  void execute(Client &client, const IrcMessage &msg);
+};
+
+class Part : public ACommand {
+public:
+  Part(Server &server);
+  ~Part(void);
+  void execute(Client &client, const IrcMessage &msg);
+
+private:
+  void partOne(Client &client, const std::string &name, const std::string &reason);
+};
 
 #endif

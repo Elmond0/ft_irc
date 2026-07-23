@@ -1,6 +1,11 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
 
-void Command::INVITE(Client& client, const IrcMessage& msg)
+Invite::Invite(Server &server) : ACommand(server) {}
+
+Invite::~Invite(void) {}
+
+void Invite::execute(Client &client, const IrcMessage &msg)
 {
     if (msg.params.size() < 2)
         throw NumericError(461, "INVITE :Not enough parameters");

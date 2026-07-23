@@ -1,6 +1,11 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
 
-void Command::KICK(Client& client, const IrcMessage& msg)
+Kick::Kick(Server &server) : ACommand(server) {}
+
+Kick::~Kick(void) {}
+
+void Kick::execute(Client &client, const IrcMessage &msg)
 {
     if (msg.params.size() < 2)
         throw NumericError(461, "KICK :Not enough parameters");

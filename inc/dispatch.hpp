@@ -20,13 +20,11 @@
 # include "IrcMessage.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
-# include "Commands.hpp"
+# include "ACommand.hpp"
 
 class Dispatcher
 {
 	public:
-		typedef void (Command::*CommandFn)(Client&, const IrcMessage&);
-
 		Dispatcher(Server& server);
 		Dispatcher(const Dispatcher& other);
 		~Dispatcher(void);
@@ -47,12 +45,12 @@ class Dispatcher
 
 	private:
 		Server&							_server;
-		std::map<std::string, CommandFn>	_handlers;
+		std::map<std::string, ACommand*>	_commands;
 		std::set<std::string>			_preReg;
 
 		Dispatcher(void);
 
-		void	initHandlers(void);
+		void	initCommands(void);
 };
 
 #endif

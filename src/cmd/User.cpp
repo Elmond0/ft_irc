@@ -1,6 +1,11 @@
 #include "../../inc/Commands.hpp"
+#include "../../inc/CommandUtils.hpp"
 
-void Command::USER(Client &client, const IrcMessage &msg)
+User::User(Server &server) : ACommand(server) {}
+
+User::~User(void) {}
+
+void User::execute(Client &client, const IrcMessage &msg)
 {
   if (client.isRegistered())
     throw NumericError(462, ":You may not reregister");
