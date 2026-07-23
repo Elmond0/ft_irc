@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miricci <miricci@student.42firenze.it>     +#+  +:+       +#+        */
+/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 15:37:17 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/08 18:04:02 by miricci          ###   ########.fr       */
+/*   Updated: 2026/07/23 16:41:31 by giomastr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,10 +74,15 @@ class Client
 		// static message box
 		std::string			getPrefix() const;
 
-		void				queueMessage(const std::string &message); 		// Accoda un messaggio gia' formattato (senza \r\n finale)
+		void 				setSendBuffer(std::string sendBuffer);
+		void 				setRecvBuffer(std::string recvBuffer);
+
 		std::string			&getSendBuffer();
-		void				clearSendBuffer();
 		std::string			&getRecvBuffer(); 		// Buffer di ricezione grezzo
+
+		void				queueMessage(const std::string &message); 		// Accoda un messaggio gia' formattato (senza \r\n finale)
+		void				clearSendBuffer();
+
 
 
 };

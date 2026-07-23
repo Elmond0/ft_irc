@@ -6,7 +6,7 @@
 /*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 17:33:24 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/07 15:48:48 by giomastr         ###   ########.fr       */
+/*   Updated: 2026/07/23 16:41:22 by giomastr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,20 +91,25 @@ void Client::queueMessage(const std::string &message)
 	_sendBuffer += "\r\n";
 }
 
-std::string &Client::getSendBuffer()
-{
-	return (_sendBuffer);
-}
-
 void Client::clearSendBuffer()
 {
 	_sendBuffer.clear();
+}
+
+void	Client::setSendBuffer( std::string sendBuffer ) { _sendBuffer = sendBuffer; }
+
+void	Client::setRecvBuffer( std::string recvBuffer ) { _recvBuffer = recvBuffer; }
+
+std::string &Client::getSendBuffer()
+{
+	return (_sendBuffer);
 }
 
 std::string &Client::getRecvBuffer()
 {
 	return (_recvBuffer);
 }
+
 
 
 std::ostream& operator<<( std::ostream& o, Client const & c ) {
