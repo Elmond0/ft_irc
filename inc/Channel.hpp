@@ -6,7 +6,7 @@
 /*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 15:51:04 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/08 15:43:17 by giomastr         ###   ########.fr       */
+/*   Updated: 2026/07/09 15:05:14 by giomastr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ class Channel
 
 	public:
 		Channel();
-		explicit Channel(const std::string &name);
+		explicit Channel(const std::string &name); // might remove the explicit
 		Channel(const Channel &other);
 		Channel &operator=(const Channel &other);
 		~Channel();
