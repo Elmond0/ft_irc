@@ -87,8 +87,6 @@ void	Server::run( void ) {
 	while (true)
 	{
 		std::vector<pollfd> vfds(pfds.begin(), pfds.end());
-		// for (std::list<pollfd>::iterator it = pfds.begin(); it != pfds.end(); ++it)
-		// 	vfds.push_back(*it);
 		int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
 		if (fdsNbr == -1)
 			throw std::exception();
