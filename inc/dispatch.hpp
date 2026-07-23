@@ -14,18 +14,16 @@
 # define DISPATCH_HPP
 
 # include <string>
+# include <map>
+# include <set>
 # include <exception>
 # include "IrcMessage.hpp"
 # include "Client.hpp"
 # include "Server.hpp"
+# include "ACommand.hpp"
 
 class Dispatcher
 {
-	private:
-		Server&	_server;
-
-		Dispatcher(void); /* non ha senso senza un Server */
-
 	public:
 		Dispatcher(Server& server);
 		Dispatcher(const Dispatcher& other);
@@ -44,6 +42,15 @@ class Dispatcher
 			public:
 				const char*	what(void) const throw();
 		};
+
+	private:
+		Server&							_server;
+		std::map<std::string, ACommand*>	_commands;
+		std::set<std::string>			_preReg;
+
+		Dispatcher(void);
+
+		void	initCommands(void);
 };
 
 #endif

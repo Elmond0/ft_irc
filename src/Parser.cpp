@@ -22,6 +22,18 @@ static std::string nextToken(const std::string& line, std::size_t& pos)
     return line.substr(start, pos - start);
 }
 
+std::ostream& operator<<(std::ostream& o, const IrcMessage& msg)
+{
+    o << "command: " << msg.command;
+    if (!msg.prefix.empty())
+        o << " | prefix: " << msg.prefix;
+    for (std::size_t i = 0; i < msg.params.size(); ++i)
+        o << " | param[" << i << "]: " << msg.params[i];
+    if (!msg.trailing.empty())
+        o << " | trailing: " << msg.trailing;
+    return o;
+}
+
 IrcMessage parseMessage(const std::string& raw)
 {
     IrcMessage msg;
@@ -61,7 +73,6 @@ IrcMessage parseMessage(const std::string& raw)
 
         if (line[pos] == ':')
         {
-            /* tutto il resto (spazi inclusi) e' UN solo parametro: il trailing */
             msg.trailing = line.substr(pos + 1);
             break;
         }

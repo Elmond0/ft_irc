@@ -1,15 +1,65 @@
 
 #include "../inc/dispatch.hpp"
-#include "../inc/Commands.hpp"
+#include "../inc/CommandUtils.hpp"
+#include "../inc/PASS.hpp"
+#include "../inc/NICK.hpp"
+#include "../inc/USER.hpp"
+#include "../inc/JOIN.hpp"
+#include "../inc/PRIVMSG.hpp"
+#include "../inc/KICK.hpp"
+#include "../inc/INVITE.hpp"
+#include "../inc/TOPIC.hpp"
+#include "../inc/MODE.hpp"
+#include "../inc/QUIT.hpp"
+#include "../inc/PING.hpp"
+#include "../inc/PART.hpp"
+#include <map>
+#include <sstream>
+#include <string>
 
+Dispatcher::Dispatcher(Server& server) : _server(server)
+{
+    initCommands();
+}
 
+// Nota: non copiamo _commands (puntatori posseduti) per evitare una doppia
+// delete. La copia riparte con la propria mappa di comandi.
+Dispatcher::Dispatcher(const Dispatcher& other)
+    : _server(other._server), _preReg(other._preReg)
+{
+    initCommands();
+}
 
-Dispatcher::Dispatcher(Server& server) : _server(server) {}
+Dispatcher::~Dispatcher(void)
+{
+    for (std::map<std::string, ACommand*>::iterator it = _commands.begin();
+         it != _commands.end(); ++it)
+        delete it->second;
+}
 
-Dispatcher::Dispatcher(const Dispatcher& other) : _server(other._server) {}
+// Ogni comando e' una classe concreta derivata da ACommand (come i Form
+// dell'ex02). Qui vengono istanziati una volta e associati al loro nome.
+void Dispatcher::initCommands(void)
+{
+    _commands["PASS"]    = new PASS(_server);
+    _commands["NICK"]    = new NICK(_server);
+    _commands["USER"]    = new USER(_server);
+    _commands["JOIN"]    = new JOIN(_server);
+    _commands["PRIVMSG"] = new PRIVMSG(_server);
+    _commands["KICK"]    = new KICK(_server);
+    _commands["INVITE"]  = new INVITE(_server);
+    _commands["TOPIC"]   = new TOPIC(_server);
+    _commands["MODE"]    = new MODE(_server);
+    _commands["QUIT"]    = new QUIT(_server);
+    _commands["PING"]    = new PING(_server);
+    _commands["PART"]    = new PART(_server);
 
-Dispatcher::~Dispatcher(void) {}
-
+    _preReg.insert("PASS");
+    _preReg.insert("NICK");
+    _preReg.insert("USER");
+    _preReg.insert("PING");
+    _preReg.insert("QUIT");
+}
 
 const char* Dispatcher::NotRegisteredException::what(void) const throw()
 {
@@ -28,45 +78,25 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
 
     try
     {
-        if (!client.isRegistered())
-        {
-            if (msg.command == "PASS")
-                handle_PASS(client, msg, _server);
-            else if (msg.command == "NICK")
-                handle_NICK(client, msg, _server);
-            else if (msg.command == "USER")
-                handle_USER(client, msg, _server);
-            else if (msg.command == "CAP")
-                return;
-            else
-                throw NotRegisteredException();
-            return;
-        }
+        if (!client.isRegistered() && _preReg.find(msg.command) == _preReg.end())
+            throw NotRegisteredException();
 
-        if (msg.command == "NICK")
-            handle_NICK(client, msg, _server);
-        else if (msg.command == "PASS")
-            handle_PASS(client, msg, _server); /* -> 462 gia' registrato */
-        else if (msg.command == "USER")
-            handle_USER(client, msg, _server); /* -> 462 gia' registrato */
-        else if (msg.command == "PING")
-            (void)0; /* handle_PING -- da aggiungere */
-        else if (msg.command == "JOIN")
-            (void)0; /* handle_JOIN -- da aggiungere */
-        else if (msg.command == "PRIVMSG")
-            (void)0; /* handle_PRIVMSG -- da aggiungere */
-        else if (msg.command == "KICK")
-            (void)0; /* handle_KICK -- da aggiungere */
-        else if (msg.command == "INVITE")
-            (void)0; /* handle_INVITE -- da aggiungere */
-        else if (msg.command == "TOPIC")
-            (void)0; /* handle_TOPIC -- da aggiungere */
-        else if (msg.command == "MODE")
-          (void)0; /* handle_MODE -- da aggiungere */
-        else if (msg.command == "QUIT")
-            (void)0; /* handle_QUIT -- da aggiungere */
-        else
+        std::map<std::string, ACommand*>::const_iterator it =
+            _commands.find(msg.command);
+        if (it == _commands.end())
             throw UnknownCommandException();
+
+        // Chiamata polimorfica: il comando giusto viene scelto a runtime,
+        // proprio come Bureaucrat chiamava form.execute() senza sapere
+        // quale Form fosse.
+        it->second->execute(client, msg);
+    }
+    catch (const ACommand::NumericError& e)
+    {
+        std::ostringstream oss;
+        oss << ":" << SERVER_NAME << " " << e.code() << " "
+            << nickOrStar(client) << " " << e.text() << "\r\n";
+        _server.sendToClient(client.getFd(), oss.str());
     }
     catch (const NotRegisteredException& e)
     {

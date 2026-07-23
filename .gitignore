@@ -1,3 +1,4 @@
 prove/*
-prove
-*.o
+proveobj/
+ircserv
+obj/

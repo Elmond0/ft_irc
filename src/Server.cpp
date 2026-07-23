@@ -125,6 +125,8 @@ const std::string&	Server::getPassword( void ) const { return _password; }
 
 std::map<int, Client>&	Server::getClients( void ) { return _clients; }
 
+std::map<std::string, Channel>&	Server::getChannels( void ) { return _channels; }
+
 void	Server::sendToClient( int fd, const std::string& msg ) {
 	if (send(fd, msg.c_str(), msg.size(), 0) == -1)
 		throw std::exception();

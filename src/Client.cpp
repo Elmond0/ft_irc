@@ -6,7 +6,7 @@
 /*   By: miricci <miricci@student.42firenze.it>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 17:33:24 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/23 16:42:56 by miricci          ###   ########.fr       */
+/*   Updated: 2026/07/23 17:27:50 by miricci          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@ Client& Client::operator=( Client const & other ) {
 		_passOk = other._passOk;
 		_nickOk = other._nickOk;
 		_userOk = other._userOk;
-		_registered = other._registered;
 		_sendBuffer = other._sendBuffer;
 		_recvBuffer = other._recvBuffer;
 	}
@@ -109,8 +108,6 @@ std::string &Client::getRecvBuffer()
 {
 	return (_recvBuffer);
 }
-
-
 
 std::ostream& operator<<( std::ostream& o, Client const & c ) {
 	o << "CLIENT\nsocket fd: " << c.getSockFd() << "\naddress: " << inet_ntoa(c.getAddr().sin_addr) << "\n";

@@ -16,8 +16,8 @@
 
 # include <string>
 # include <vector>
+# include <ostream>
 
-/* [:prefix] COMMAND [param1 param2 ...] [:trailing]\r\n */
 struct IrcMessage
 {
 	std::string					prefix;
@@ -25,5 +25,7 @@ struct IrcMessage
 	std::vector<std::string>	params;
 	std::string					trailing;
 };
+
+std::ostream&	operator<<(std::ostream& o, const IrcMessage& msg);
 
 #endif
