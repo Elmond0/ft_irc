@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Privmsg.hpp"
 #include "../../inc/CommandUtils.hpp"
 
 Privmsg::Privmsg(Server &server) : ACommand(server) {}

@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Ping.hpp"
 
 Ping::Ping(Server &server) : ACommand(server) {}
 

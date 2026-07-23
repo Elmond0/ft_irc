@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Quit.hpp"
 #include "../../inc/CommandUtils.hpp"
 #include <cstddef>
 #include <map>

@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Invite.hpp"
 #include "../../inc/CommandUtils.hpp"
 
 Invite::Invite(Server &server) : ACommand(server) {}

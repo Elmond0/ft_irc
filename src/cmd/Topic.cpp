@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Topic.hpp"
 #include "../../inc/CommandUtils.hpp"
 
 Topic::Topic(Server &server) : ACommand(server) {}

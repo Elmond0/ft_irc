@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Pass.hpp"
 #include "../../inc/CommandUtils.hpp"
 
 Pass::Pass(Server &server) : ACommand(server) {}

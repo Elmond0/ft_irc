@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/Kick.hpp"
 #include "../../inc/CommandUtils.hpp"
 
 Kick::Kick(Server &server) : ACommand(server) {}

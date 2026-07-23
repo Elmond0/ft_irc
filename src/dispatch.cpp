@@ -1,7 +1,18 @@
 
 #include "../inc/dispatch.hpp"
 #include "../inc/CommandUtils.hpp"
-#include "../inc/Commands.hpp"
+#include "../inc/Pass.hpp"
+#include "../inc/Nick.hpp"
+#include "../inc/User.hpp"
+#include "../inc/Join.hpp"
+#include "../inc/Privmsg.hpp"
+#include "../inc/Kick.hpp"
+#include "../inc/Invite.hpp"
+#include "../inc/Topic.hpp"
+#include "../inc/Mode.hpp"
+#include "../inc/Quit.hpp"
+#include "../inc/Ping.hpp"
+#include "../inc/Part.hpp"
 #include <map>
 #include <sstream>
 #include <string>

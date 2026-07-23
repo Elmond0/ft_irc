@@ -1,4 +1,4 @@
-#include "../../inc/Commands.hpp"
+#include "../../inc/User.hpp"
 #include "../../inc/CommandUtils.hpp"
 
 User::User(Server &server) : ACommand(server) {}
