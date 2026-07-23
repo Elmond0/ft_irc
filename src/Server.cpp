@@ -31,7 +31,10 @@ void	Server::readBuffer( int fd ) {
 			break ;
 		}
 		else {
-			_clients[fd].getRecvBuffer().append(tmp, bytes);
+			std::string buffer = _clients[fd].getRecvBuffer();
+			buffer.append(tmp, bytes);
+			// modifica buffer con setter
+
 		}
 	}
 	std::cout << _clients[fd].getRecvBuffer() << std::endl;
