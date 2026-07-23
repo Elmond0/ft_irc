@@ -22,7 +22,7 @@ Server::~Server( void ) {}
 void	Server::readBuffer( int fd ) {
 	int bytes;
 	char	tmp[512];
-	while (_clients[fd].getRecvBuffer().find("\r\n") != std::string::npos) {
+	while (_clients[fd].getRecvBuffer().find("\r\n") == std::string::npos) {
 		bytes = recv(fd, tmp, 512, 0);
 		if (bytes < 0) {
 			throw NetworkError();
@@ -33,11 +33,10 @@ void	Server::readBuffer( int fd ) {
 		else {
 			std::string buffer = _clients[fd].getRecvBuffer();
 			buffer.append(tmp, bytes);
-			// modifica buffer con setter
-
+			_clients[fd].setRecvBuffer(buffer);
 		}
 	}
-	std::cout << _clients[fd].getRecvBuffer() << std::endl;
+	// std::cout << _clients[fd].getRecvBuffer() << std::endl;
 }
 
 void	Server::addNewClient( std::list<pollfd>& pfds ) {
@@ -100,6 +99,7 @@ void	Server::run( void ) {
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
 				if (it->revents & POLLIN) {
 					readBuffer(it->fd);
+					std::cout << _clients[it->fd].getRecvBuffer() << std::endl;
 					IrcMessage msg = parseMessage(_clients[it->fd].getRecvBuffer());
 					Dispatcher dispatcher(*this);
 					dispatcher.dispatch(_clients[it->fd], msg);
