@@ -1,15 +1,15 @@
-#include "../../inc/Mode.hpp"
+#include "../../inc/MODE.hpp"
 #include "../../inc/CommandUtils.hpp"
 #include <cstddef>
 #include <cstdlib>
 #include <sstream>
 #include <string>
 
-Mode::Mode(Server &server) : ACommand(server) {}
+MODE::MODE(Server &server) : ACommand(server) {}
 
-Mode::~Mode(void) {}
+MODE::~MODE(void) {}
 
-void Mode::sendChannelModes(Client& client, Channel& chan)
+void MODE::sendChannelModes(Client& client, Channel& chan)
 {
     std::string modes = chan.getModeString();
 
@@ -27,7 +27,7 @@ void Mode::sendChannelModes(Client& client, Channel& chan)
     numeric(client, 324, rest);
 }
 
-bool Mode::nextArg(const IrcMessage& msg, std::size_t& idx, std::string& out)
+bool MODE::nextArg(const IrcMessage& msg, std::size_t& idx, std::string& out)
 {
     if (idx >= msg.params.size())
         return false;
@@ -44,7 +44,7 @@ static bool parseLimit(const std::string& str, long& out)
     return *end == '\0' && out > 0;
 }
 
-bool Mode::applyOneMode(Client& client, Channel& chan, char c, bool adding, const IrcMessage& msg, std::size_t& argIdx, std::string& usedArg)
+bool MODE::applyOneMode(Client& client, Channel& chan, char c, bool adding, const IrcMessage& msg, std::size_t& argIdx, std::string& usedArg)
 {
     std::string arg;
 
@@ -126,7 +126,7 @@ bool Mode::applyOneMode(Client& client, Channel& chan, char c, bool adding, cons
     }
 }
 
-void Mode::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
+void MODE::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
 {
     const std::string& modes = msg.params[1];
     std::size_t argIdx = 2;
@@ -162,7 +162,7 @@ void Mode::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
         broadcastToChannel(_server, chan, userPrefix(client) + " MODE " + chan.getName() + " " + appliedModes + appliedArgs + "\r\n", -1);
 }
 
-void Mode::execute(Client& client, const IrcMessage& msg)
+void MODE::execute(Client& client, const IrcMessage& msg)
 {
     if (msg.params.empty())
         throw NumericError(461, "MODE :Not enough parameters");

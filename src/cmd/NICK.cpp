@@ -1,4 +1,4 @@
-#include "../../inc/Nick.hpp"
+#include "../../inc/NICK.hpp"
 #include "../../inc/CommandUtils.hpp"
 #include <cstddef>
 #include <map>
@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-bool Nick::isValidNick(const std::string &nick) const
+bool NICK::isValidNick(const std::string &nick) const
 {
   if (nick.empty() || nick.size() > 9)
     return false;
@@ -27,11 +27,11 @@ bool Nick::isValidNick(const std::string &nick) const
   return true;
 }
 
-Nick::Nick(Server &server) : ACommand(server) {}
+NICK::NICK(Server &server) : ACommand(server) {}
 
-Nick::~Nick(void) {}
+NICK::~NICK(void) {}
 
-void Nick::execute(Client &client, const IrcMessage &msg)
+void NICK::execute(Client &client, const IrcMessage &msg)
 {
   if (!client.isPassOk())
     throw NumericError(464, ":Password required");

@@ -1,11 +1,11 @@
-#include "../../inc/Privmsg.hpp"
+#include "../../inc/PRIVMSG.hpp"
 #include "../../inc/CommandUtils.hpp"
 
-Privmsg::Privmsg(Server &server) : ACommand(server) {}
+PRIVMSG::PRIVMSG(Server &server) : ACommand(server) {}
 
-Privmsg::~Privmsg(void) {}
+PRIVMSG::~PRIVMSG(void) {}
 
-void Privmsg::execute(Client &client, const IrcMessage &msg)
+void PRIVMSG::execute(Client &client, const IrcMessage &msg)
 {
     if (msg.params.empty())
         throw NumericError(411, ":No recipient given (PRIVMSG)");

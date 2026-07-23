@@ -1,4 +1,4 @@
-#include "../../inc/Quit.hpp"
+#include "../../inc/QUIT.hpp"
 #include "../../inc/CommandUtils.hpp"
 #include <cstddef>
 #include <map>
@@ -7,11 +7,11 @@
 #include <unistd.h>
 #include <vector>
 
-Quit::Quit(Server &server) : ACommand(server) {}
+QUIT::QUIT(Server &server) : ACommand(server) {}
 
-Quit::~Quit(void) {}
+QUIT::~QUIT(void) {}
 
-void Quit::execute(Client &client, const IrcMessage &msg)
+void QUIT::execute(Client &client, const IrcMessage &msg)
 {
     std::string reason = msg.trailing.empty() ? "Client Quit" : msg.trailing;
     std::string line = userPrefix(client) + " QUIT :" + reason + "\r\n";

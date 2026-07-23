@@ -11,35 +11,36 @@
 #define SERVER_NAME "ircserv"
 #endif
 
-class ACommand {
-public:
+class ACommand
+{
+	public:
+		class NumericError : public std::exception
+		{
+			private:
+				int _code;
+				std::string _text;
 
-  class NumericError : public std::exception {
-  private:
-    int _code;
-    std::string _text;
+			public:
+				NumericError(int code, const std::string &text);
+				virtual ~NumericError() throw();
 
-  public:
-    NumericError(int code, const std::string &text);
-    virtual ~NumericError() throw();
+				int code() const;
+				const std::string &text() const;
+				virtual const char *what() const throw();
+		};
 
-    int code() const;
-    const std::string &text() const;
-    virtual const char *what() const throw();
-  };
+		ACommand(Server &server);
+		virtual ~ACommand(void);
 
-  ACommand(Server &server);
-  virtual ~ACommand(void);
+		virtual void execute(Client &client, const IrcMessage &msg) = 0;
 
-  virtual void execute(Client &client, const IrcMessage &msg) = 0;
+	protected:
+		Server &_server;
 
-protected:
-  Server &_server;
+		void numeric(Client &client, int code, const std::string &text);
 
-  void numeric(Client &client, int code, const std::string &text);
-
-private:
-  ACommand(void);
+	private:
+		ACommand(void);
 };
 
 #endif

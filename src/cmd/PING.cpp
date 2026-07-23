@@ -1,10 +1,10 @@
-#include "../../inc/Ping.hpp"
+#include "../../inc/PING.hpp"
 
-Ping::Ping(Server &server) : ACommand(server) {}
+PING::PING(Server &server) : ACommand(server) {}
 
-Ping::~Ping(void) {}
+PING::~PING(void) {}
 
-void Ping::execute(Client &client, const IrcMessage &msg)
+void PING::execute(Client &client, const IrcMessage &msg)
 {
     std::string token = msg.trailing;
     if (token.empty() && !msg.params.empty())

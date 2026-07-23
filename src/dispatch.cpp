@@ -1,18 +1,18 @@
 
 #include "../inc/dispatch.hpp"
 #include "../inc/CommandUtils.hpp"
-#include "../inc/Pass.hpp"
-#include "../inc/Nick.hpp"
-#include "../inc/User.hpp"
-#include "../inc/Join.hpp"
-#include "../inc/Privmsg.hpp"
-#include "../inc/Kick.hpp"
-#include "../inc/Invite.hpp"
-#include "../inc/Topic.hpp"
-#include "../inc/Mode.hpp"
-#include "../inc/Quit.hpp"
-#include "../inc/Ping.hpp"
-#include "../inc/Part.hpp"
+#include "../inc/PASS.hpp"
+#include "../inc/NICK.hpp"
+#include "../inc/USER.hpp"
+#include "../inc/JOIN.hpp"
+#include "../inc/PRIVMSG.hpp"
+#include "../inc/KICK.hpp"
+#include "../inc/INVITE.hpp"
+#include "../inc/TOPIC.hpp"
+#include "../inc/MODE.hpp"
+#include "../inc/QUIT.hpp"
+#include "../inc/PING.hpp"
+#include "../inc/PART.hpp"
 #include <map>
 #include <sstream>
 #include <string>
@@ -41,18 +41,18 @@ Dispatcher::~Dispatcher(void)
 // dell'ex02). Qui vengono istanziati una volta e associati al loro nome.
 void Dispatcher::initCommands(void)
 {
-    _commands["PASS"]    = new Pass(_server);
-    _commands["NICK"]    = new Nick(_server);
-    _commands["USER"]    = new User(_server);
-    _commands["JOIN"]    = new Join(_server);
-    _commands["PRIVMSG"] = new Privmsg(_server);
-    _commands["KICK"]    = new Kick(_server);
-    _commands["INVITE"]  = new Invite(_server);
-    _commands["TOPIC"]   = new Topic(_server);
-    _commands["MODE"]    = new Mode(_server);
-    _commands["QUIT"]    = new Quit(_server);
-    _commands["PING"]    = new Ping(_server);
-    _commands["PART"]    = new Part(_server);
+    _commands["PASS"]    = new PASS(_server);
+    _commands["NICK"]    = new NICK(_server);
+    _commands["USER"]    = new USER(_server);
+    _commands["JOIN"]    = new JOIN(_server);
+    _commands["PRIVMSG"] = new PRIVMSG(_server);
+    _commands["KICK"]    = new KICK(_server);
+    _commands["INVITE"]  = new INVITE(_server);
+    _commands["TOPIC"]   = new TOPIC(_server);
+    _commands["MODE"]    = new MODE(_server);
+    _commands["QUIT"]    = new QUIT(_server);
+    _commands["PING"]    = new PING(_server);
+    _commands["PART"]    = new PART(_server);
 
     _preReg.insert("PASS");
     _preReg.insert("NICK");

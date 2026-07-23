@@ -1,4 +1,4 @@
-#include "../../inc/Join.hpp"
+#include "../../inc/JOIN.hpp"
 #include "../../inc/CommandUtils.hpp"
 #include <cstddef>
 #include <map>
@@ -6,18 +6,18 @@
 #include <utility>
 #include <vector>
 
-Join::Join(Server &server) : ACommand(server) {}
+JOIN::JOIN(Server &server) : ACommand(server) {}
 
-Join::~Join(void) {}
+JOIN::~JOIN(void) {}
 
-bool Join::isValidChannelName(const std::string& name) const
+bool JOIN::isValidChannelName(const std::string& name) const
 {
     if (name.size() < 2 || name[0] != '#')
         return false;
     return name.find(' ') == std::string::npos && name.find(',') == std::string::npos;
 }
 
-void Join::sendNames(Client& client, Channel& chan)
+void JOIN::sendNames(Client& client, Channel& chan)
 {
     std::string names;
     const std::vector<Client*>& members = chan.getClients();
@@ -35,7 +35,7 @@ void Join::sendNames(Client& client, Channel& chan)
     numeric(client, 366, chan.getName() + " :End of /NAMES list");
 }
 
-void Join::joinOne(Client& client, const std::string& name,
+void JOIN::joinOne(Client& client, const std::string& name,
                       const std::string& key)
 {
     if (!isValidChannelName(name))
@@ -85,7 +85,7 @@ void Join::joinOne(Client& client, const std::string& name,
     sendNames(client, chan);
 }
 
-void Join::partAll(Client& client)
+void JOIN::partAll(Client& client)
 {
     std::map<std::string, Channel>& channels = _server.getChannels();
     std::map<std::string, Channel>::iterator it = channels.begin();
@@ -104,7 +104,7 @@ void Join::partAll(Client& client)
     }
 }
 
-void Join::execute(Client& client, const IrcMessage& msg)
+void JOIN::execute(Client& client, const IrcMessage& msg)
 {
     if (msg.params.empty())
         throw NumericError(461, "JOIN :Not enough parameters");
