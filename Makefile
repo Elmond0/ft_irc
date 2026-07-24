@@ -50,7 +50,7 @@ $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 $(OBJ_DIR)/cmd/%.o : $(CMD_DIR)/%.cpp
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -I$(INC_DIR) -c $< -o $@
-	@echo -e " $(GRAY) ● $< compiled$(RESET)"
+	@echo " $(GRAY) ● $< compiled$(RESET)"
 
 clean :
 	@for f in $(OBJS); do \

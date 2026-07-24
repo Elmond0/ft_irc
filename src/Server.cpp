@@ -20,23 +20,27 @@ Server& Server::operator=( Server const & other ) {
 Server::~Server( void ) {}
 
 void	Server::readBuffer( int fd ) {
-	int bytes;
 	char	tmp[512];
-	while (_clients[fd].getRecvBuffer().find("\r\n") == std::string::npos) {
-		bytes = recv(fd, tmp, 512, 0);
-		if (bytes < 0) {
-			throw NetworkError();
-		}
-		else if (bytes == 0) {
-			break ;
-		}
-		else {
-			std::string buffer = _clients[fd].getRecvBuffer();
-			buffer.append(tmp, bytes);
+	int		bytes = recv(fd, tmp, 512, 0);
+	if (bytes < 0) {
+		throw NetworkError();
+	}
+	else if (bytes == 0) {
+		// DHN
+		return ;
+	}
+	else {
+		std::string buffer = _clients[fd].getRecvBuffer();
+		buffer.append(tmp, bytes);
+		size_t pos;
+		while ((pos = buffer.find("\n")) != std::string::npos) {
+			buffer.substr(0, pos);
+			buffer.erase(0, pos + 1);
+			if (!buffer.empty() && buffer[buffer.size() - 1] == '\r')
+    			buffer.erase(buffer.size() - 1);
 			_clients[fd].setRecvBuffer(buffer);
 		}
 	}
-	// std::cout << _clients[fd].getRecvBuffer() << std::endl;
 }
 
 void	Server::addNewClient( std::list<pollfd>& pfds ) {
@@ -86,6 +90,7 @@ void	Server::run( void ) {
 	pfds.push_back(serverPollfd);
 	while (true)
 	{
+		int i = 0;
 		std::vector<pollfd> vfds(pfds.begin(), pfds.end());
 		int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
 		if (fdsNbr == -1)
@@ -97,10 +102,11 @@ void	Server::run( void ) {
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
 				if (it->revents & POLLIN) {
 					readBuffer(it->fd);
-					std::cout << _clients[it->fd].getRecvBuffer() << std::endl;
+					std::cout << i << _clients[it->fd].getRecvBuffer() << std::endl;
 					IrcMessage msg = parseMessage(_clients[it->fd].getRecvBuffer());
 					Dispatcher dispatcher(*this);
 					dispatcher.dispatch(_clients[it->fd], msg);
+
 				}
 				if (it->revents & POLLOUT) {
 					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
@@ -115,6 +121,7 @@ void	Server::run( void ) {
 					disconnectClient(pfds, *it);
 				}
 			}
+			i++;
 		}
 	}
 }
