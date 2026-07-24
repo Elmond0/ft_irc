@@ -22,8 +22,6 @@ Dispatcher::Dispatcher(Server& server) : _server(server)
     initCommands();
 }
 
-// Nota: non copiamo _commands (puntatori posseduti) per evitare una doppia
-// delete. La copia riparte con la propria mappa di comandi.
 Dispatcher::Dispatcher(const Dispatcher& other)
     : _server(other._server), _preReg(other._preReg)
 {
@@ -37,8 +35,6 @@ Dispatcher::~Dispatcher(void)
         delete it->second;
 }
 
-// Ogni comando e' una classe concreta derivata da ACommand (come i Form
-// dell'ex02). Qui vengono istanziati una volta e associati al loro nome.
 void Dispatcher::initCommands(void)
 {
     _commands["PASS"]    = new PASS(_server);
@@ -86,9 +82,6 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
         if (it == _commands.end())
             throw UnknownCommandException();
 
-        // Chiamata polimorfica: il comando giusto viene scelto a runtime,
-        // proprio come Bureaucrat chiamava form.execute() senza sapere
-        // quale Form fosse.
         it->second->execute(client, msg);
     }
     catch (const ACommand::NumericError& e)

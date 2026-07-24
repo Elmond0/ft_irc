@@ -60,6 +60,7 @@ IrcMessage parseMessage(const std::string& raw)
     }
 
     std::string cmd = nextToken(line, pos);
+
     if (cmd.empty())
         return msg;
     msg.command = toUpper(cmd);
@@ -78,6 +79,7 @@ IrcMessage parseMessage(const std::string& raw)
         }
 
         std::string token = nextToken(line, pos);
+		
         if (!token.empty())
             msg.params.push_back(token);
     }
