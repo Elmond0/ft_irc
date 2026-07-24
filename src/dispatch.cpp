@@ -22,8 +22,6 @@ Dispatcher::Dispatcher(Server& server) : _server(server)
     initCommands();
 }
 
-// Nota: non copiamo _commands (puntatori posseduti) per evitare una doppia
-// delete. La copia riparte con la propria mappa di comandi.
 Dispatcher::Dispatcher(const Dispatcher& other)
     : _server(other._server), _preReg(other._preReg)
 {
