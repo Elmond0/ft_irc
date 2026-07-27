@@ -67,11 +67,11 @@ void	Server::disconnectClient( std::list<pollfd>& pfds, pollfd cl) {
 		}
 	}
 }
- 
+
 void	Server::run( void ) {
 	if (_password != IRCPASS )
 		throw WrongPassword();
-	
+
 	_listenSock_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_listenSock_fd == -1)
 		throw std::exception();
@@ -110,7 +110,7 @@ void	Server::run( void ) {
 
 				}
 				if (it->revents & POLLOUT) {
-					std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
 				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);
