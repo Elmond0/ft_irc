@@ -35,11 +35,12 @@ void	Server::readBuffer( int fd ) {
 		size_t pos;
 		while ((pos = buffer.find("\n")) != std::string::npos) {
 			buffer.substr(0, pos);
-			buffer.erase(0, pos + 1);
+			buffer.erase(0 , pos + 1);
 			if (!buffer.empty() && buffer[buffer.size() - 1] == '\r')
     			buffer.erase(buffer.size() - 1);
-			_clients[fd].setRecvBuffer(buffer);
 		}
+		_clients[fd].setRecvBuffer(buffer);
+		std::cout << "readBuffer:" << _clients[fd].getRecvBuffer() << std::endl;
 	}
 }
 
@@ -109,7 +110,7 @@ void	Server::run( void ) {
 
 				}
 				if (it->revents & POLLOUT) {
-					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+					std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
 				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);
