@@ -20,23 +20,31 @@ Server& Server::operator=( Server const & other ) {
 Server::~Server( void ) {}
 
 void	Server::readBuffer( int fd ) {
-	int bytes;
 	char	tmp[512];
-	while (_clients[fd].getRecvBuffer().find("\r\n") == std::string::npos) {
-		bytes = recv(fd, tmp, 512, 0);
-		if (bytes < 0) {
-			throw NetworkError();
-		}
-		else if (bytes == 0) {
-			break ;
-		}
-		else {
-			std::string buffer = _clients[fd].getRecvBuffer();
-			buffer.append(tmp, bytes);
-			_clients[fd].setRecvBuffer(buffer);
-		}
+	int		bytes = recv(fd, tmp, 512, 0);
+	if (bytes < 0) {
+		throw NetworkError();
 	}
-	// std::cout << _clients[fd].getRecvBuffer() << std::endl;
+	else if (bytes == 0) {
+		// DHN
+		return ;
+	}
+	else {
+		std::string buffer = _clients[fd].getRecvBuffer();
+		buffer.append(tmp, bytes);
+		size_t pos;
+		while ((pos = buffer.find("\n")) != std::string::npos) {
+			std::string line = buffer.substr(0, pos);
+			buffer.erase(0 , pos + 1);
+			if (!buffer.empty() && buffer[buffer.size() - 1] == '\r')
+    			line.erase(line.size() - 1);
+				IrcMessage msg = parseMessage(line);
+				std::cout << msg << std::endl;
+				Dispatcher dispatcher(*this);
+				dispatcher.dispatch(_clients[fd], msg);
+		}
+		_clients[fd].setRecvBuffer(buffer);
+	}
 }
 
 void	Server::addNewClient( std::list<pollfd>& pfds ) {
@@ -86,6 +94,7 @@ void	Server::run( void ) {
 	pfds.push_back(serverPollfd);
 	while (true)
 	{
+		int i = 0;
 		std::vector<pollfd> vfds(pfds.begin(), pfds.end());
 		int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
 		if (fdsNbr == -1)
@@ -95,15 +104,10 @@ void	Server::run( void ) {
 				addNewClient(pfds);
 			}
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
-				if (it->revents & POLLIN) {
+				if (it->revents & POLLIN)
 					readBuffer(it->fd);
-					std::cout << _clients[it->fd].getRecvBuffer() << std::endl;
-					IrcMessage msg = parseMessage(_clients[it->fd].getRecvBuffer());
-					Dispatcher dispatcher(*this);
-					dispatcher.dispatch(_clients[it->fd], msg);
-				}
 				if (it->revents & POLLOUT) {
-					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+			//		std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
 				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);
@@ -115,6 +119,7 @@ void	Server::run( void ) {
 					disconnectClient(pfds, *it);
 				}
 			}
+			i++;
 		}
 	}
 }
