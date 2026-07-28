@@ -107,12 +107,9 @@ void rejectRegistration(Client &client, Server &server, int code, const std::str
 
 void finishRegistrationAttempt(Client &client, Server &server) 
 {
-  if (client.getNickname().empty() || client.getUsername().empty())
+  if (!client.isRegistered())
     return;
-  if (client.isRegistered())
-    sendWelcome(client, server);
-  else
-    rejectRegistration(client, server, 464, ":Password incorrect");
+  sendWelcome(client, server);
 }
 
 void sendWelcome(Client &client, Server &server) 
