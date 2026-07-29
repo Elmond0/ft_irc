@@ -34,13 +34,16 @@ void	Server::readBuffer( int fd ) {
 		buffer.append(tmp, bytes);
 		size_t pos;
 		while ((pos = buffer.find("\n")) != std::string::npos) {
-			buffer.substr(0, pos);
+			std::string line = buffer.substr(0, pos);
 			buffer.erase(0 , pos + 1);
 			if (!buffer.empty() && buffer[buffer.size() - 1] == '\r')
-    			buffer.erase(buffer.size() - 1);
+    			line.erase(line.size() - 1);
+				IrcMessage msg = parseMessage(line);
+				std::cout << msg << std::endl;
+				Dispatcher dispatcher(*this);
+				dispatcher.dispatch(_clients[fd], msg);
 		}
 		_clients[fd].setRecvBuffer(buffer);
-		std::cout << "readBuffer:" << _clients[fd].getRecvBuffer() << std::endl;
 	}
 }
 
@@ -101,16 +104,10 @@ void	Server::run( void ) {
 				addNewClient(pfds);
 			}
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
-				if (it->revents & POLLIN) {
+				if (it->revents & POLLIN)
 					readBuffer(it->fd);
-					std::cout << i << _clients[it->fd].getRecvBuffer() << std::endl;
-					IrcMessage msg = parseMessage(_clients[it->fd].getRecvBuffer());
-					Dispatcher dispatcher(*this);
-					dispatcher.dispatch(_clients[it->fd], msg);
-
-				}
 				if (it->revents & POLLOUT) {
-					//std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+			//		std::cout << fds[i].fd << ": POLLOUT" << std::cout;
 				}
 				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);

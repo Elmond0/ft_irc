@@ -33,9 +33,6 @@ NICK::~NICK(void) {}
 
 void NICK::execute(Client &client, const IrcMessage &msg)
 {
-  if (!client.isPassOk())
-    throw NumericError(464, ":Password required");
-
   if (msg.params.empty())
     throw NumericError(431, ":No nickname given");
 
