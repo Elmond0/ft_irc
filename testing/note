@@ -1,0 +1,6 @@
+scrivere msg per ircserv attivato - fatto
+address sbagliato 0.0.0.0 vs 10.12.6.3 su porta 6667
+":" fase di spliting argomenti - tutto cio' dopo : e' ultimo argomento --- quindi ":" da non prendere come arg
+errore in input port passw - should be set at the beginning as arg not hardcoded within the code
+pulizia dei socket del server manuale per evitare errori in caso di chiusura  riapertura veloce del server
+invio da comandi non da pollput

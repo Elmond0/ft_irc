@@ -72,8 +72,8 @@ void	Server::disconnectClient( std::list<pollfd>& pfds, pollfd cl) {
 }
 
 void	Server::run( void ) {
-	if (_password != IRCPASS )
-		throw WrongPassword();
+	//if (_password != IRCPASS )
+	//	throw WrongPassword();
 
 	_listenSock_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_listenSock_fd == -1)
@@ -92,6 +92,7 @@ void	Server::run( void ) {
 	serverPollfd.fd = _listenSock_fd;
 	serverPollfd.events = POLLIN;
 	pfds.push_back(serverPollfd);
+	//std::cout << "Server has been deployed. 3nj0y" << std::endl;
 	while (true)
 	{
 		int i = 0;
