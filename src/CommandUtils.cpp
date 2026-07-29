@@ -7,8 +7,6 @@
 #include <unistd.h>
 #include <vector>
 
-/* Inizializzato prima di main: e' l'ora di avvio del processo, cosi' il 003
-   riporta la stessa data a tutti i client per tutta la vita del server. */
 static const std::time_t g_startTime = std::time(NULL);
 
 static const std::string &serverCreationDate(void)
