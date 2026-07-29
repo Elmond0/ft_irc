@@ -1,10 +1,32 @@
 #include "../inc/CommandUtils.hpp"
 #include <cstddef>
+#include <ctime>
 #include <map>
 #include <sstream>
 #include <string>
 #include <unistd.h>
 #include <vector>
+
+/* Inizializzato prima di main: e' l'ora di avvio del processo, cosi' il 003
+   riporta la stessa data a tutti i client per tutta la vita del server. */
+static const std::time_t g_startTime = std::time(NULL);
+
+static const std::string &serverCreationDate(void)
+{
+  static std::string date;
+
+  if (date.empty())
+  {
+    char buf[64];
+    std::tm *tm = std::localtime(&g_startTime);
+
+    if (tm && std::strftime(buf, sizeof(buf), "%a %b %d %Y at %H:%M:%S %Z", tm))
+      date = buf;
+    else
+      date = "an unknown date";
+  }
+  return date;
+}
 
 static char ircLower(char c) {
   if (c >= 'A' && c <= 'Z')
@@ -115,9 +137,10 @@ void finishRegistrationAttempt(Client &client, Server &server)
 void sendWelcome(Client &client, Server &server) 
 {
   std::string nick = client.getNickname();
+  int fd = client.getFd();
 
-  server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 001 " + nick + " :Welcome to the IRC Network " + client.getPrefix() + "\r\n");
-  server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 002 " + nick + " :Your host is " + SERVER_NAME + ", running version 1.0\r\n");
-  server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 003 " + nick + " :This server was created today\r\n");
-  server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " 004 " + nick + " " + SERVER_NAME + " 1.0 o o\r\n");
+  server.sendToClient(fd, std::string(":") + SERVER_NAME + " 001 " + nick + " :Welcome to the " + NETWORK_NAME + " IRC Network " + client.getPrefix() + "\r\n");
+  server.sendToClient(fd, std::string(":") + SERVER_NAME + " 002 " + nick + " :Your host is " + SERVER_NAME + ", running version " + SERVER_VERSION + "\r\n");
+  server.sendToClient(fd, std::string(":") + SERVER_NAME + " 003 " + nick + " :This server was created " + serverCreationDate() + "\r\n");
+  server.sendToClient(fd, std::string(":") + SERVER_NAME + " 004 " + nick + " " + SERVER_NAME + " " + SERVER_VERSION + " " + USER_MODES + " " + CHANNEL_MODES + "\r\n");
 }

@@ -1,705 +1,197 @@
 ================================================================================
-                    ft_irc - COMANDI IMPLEMENTATI
-              Documentazione completa - aggiornata 2026-07-29
+ ft_irc - LISTA COMANDI (riferimento rapido)                    agg. 2026-07-29
+================================================================================
+ AVVIO      make  &&  ./ircserv <porta> dontpanic
+            la password DEVE essere "dontpanic" -> vedi DA_CAMBIARE.txt
+ NOTAZIONE  <obbligatorio>  [opzionale]  {,ripetibile}  :testo con spazi
+ FINE RIGA  \r\n oppure \n - piu' comandi nello stesso pacchetto: ok
+ NON IMPL.  NOTICE PONG WHO WHOIS NAMES LIST AWAY OPER MOTD KILL -> 421
 ================================================================================
 
-Questo file elenca TUTTI i comandi realmente implementati nel server, come si
-usano, cosa fanno e quali errori possono restituire. Tutto quello che c'e' qui
-dentro e' stato verificato eseguendo il server e collegandosi con client reali.
-
-
-================================================================================
-1. COMPILAZIONE E AVVIO
-================================================================================
-
-  make            compila (crea l'eseguibile ./ircserv)
-  make re         ricompila da zero
-  make clean      cancella gli oggetti
-  make fclean     cancella oggetti + eseguibile
-
-Sintassi di avvio:
-
-  ./ircserv <porta> <password>
-
-Esempio:
-
-  ./ircserv 6667 dontpanic
-
->>> ATTENZIONE: in questo momento il server ACCETTA SOLO la password
->>> "dontpanic". Se ne passi un'altra si chiude subito stampando
->>> "ERROR: password incorrect. Try again." e non si mette in ascolto.
->>> La causa e' il controllo in Server::run() contro la macro IRCPASS
->>> definita in inc/Server.hpp. Vedi sezione 9 (bug noti).
-
-Per collegarsi con un client testuale:
-
-  nc 127.0.0.1 6667
-  irssi -c 127.0.0.1 -p 6667 -w dontpanic
-  hexchat            (server: localhost/6667, password: dontpanic)
-
-Il server accetta come fine riga sia "\r\n" (standard IRC) sia solo "\n"
-(comodo per test con netcat/telnet). Accetta anche piu' comandi inviati in un
-unico pacchetto TCP, quindi funziona con HexChat e irssi.
-
-
-================================================================================
-2. LA REGISTRAZIONE (da fare per prima cosa)
-================================================================================
-
-Appena un client si collega NON e' ancora registrato. Per registrarsi deve
-inviare tre comandi: PASS, NICK e USER. L'ordine consigliato e' proprio questo.
-La registrazione si completa quando tutti e tre sono andati a buon fine: in quel
-momento il server invia i messaggi di benvenuto 001, 002, 003 e 004.
-
-Prima di essere registrati sono ammessi SOLO questi comandi:
-
-  PASS   NICK   USER   PING   QUIT
-
-Qualunque altro comando inviato prima della registrazione riceve:
-
-  :ircserv 451 * :You have not registered
-
-Il comando CAP (che i client moderni come HexChat mandano automaticamente)
-viene accettato e ignorato in silenzio, senza risposta e senza errori.
-
-Sequenza minima di registrazione:
-
+REGISTRAZIONE  obbligatoria, in questo ordine
   PASS dontpanic
-  NICK alice
-  USER alice 0 * :Alice Rossi
-
-Risposta del server:
-
-  :ircserv 001 alice :Welcome to the IRC Network alice!alice@localhost
-  :ircserv 002 alice :Your host is ircserv, running version 1.0
-  :ircserv 003 alice :This server was created today
-  :ircserv 004 alice ircserv 1.0 o o
-
-L'identita' completa di un utente (il "prefix") ha la forma:
-
-  nickname!username@hostname
-
-Nota: l'hostname non viene mai ricavato dalla connessione, quindi al momento
-e' sempre "localhost" per tutti (es. alice!alice@localhost).
-
+  NICK elmo
+  USER elmondo 0 * :Elia Mondo
+  completata -> 001 002 003 004
+  prima della registrazione solo PASS NICK USER PING QUIT, gli altri -> 451
+  CAP: accettato e ignorato, nessuna risposta
+  prefix utente: nick!username@localhost
 
 ================================================================================
-3. COMANDI DI REGISTRAZIONE
+PASS <password>                                          password del server
 ================================================================================
-
---------------------------------------------------------------------------------
-PASS - fornisce la password del server
---------------------------------------------------------------------------------
-SINTASSI:   PASS <password>
-ESEMPIO:    PASS dontpanic
-
-COSA FA:
-  Confronta la password ricevuta con quella con cui e' stato avviato il server.
-  Se coincide, marca il client come "password ok", che e' uno dei tre requisiti
-  della registrazione. Va inviato prima di NICK e USER.
-
-ERRORI:
-  461 PASS :Not enough parameters      manca la password
-  462 :You may not reregister          sei gia' registrato
-  464 :Password incorrect              password sbagliata
-
-NOTA: con la password sbagliata il server risponde 464 ma NON chiude la
-connessione. Il client puo' semplicemente riprovare con un altro PASS.
-
---------------------------------------------------------------------------------
-NICK - imposta o cambia il nickname
---------------------------------------------------------------------------------
-SINTASSI:   NICK <nickname>
-ESEMPIO:    NICK alice
-
-COSA FA:
-  Imposta il nickname del client. Funziona sia durante la registrazione sia
-  dopo: se il client e' gia' registrato, il cambio di nick viene notificato
-  al client stesso e a tutti gli utenti dei canali in cui si trova (ogni
-  utente riceve la notifica una sola volta, anche se condividete piu' canali).
-
-REGOLE DI VALIDITA' DEL NICKNAME:
-  - lunghezza da 1 a 9 caratteri
-  - il primo carattere deve essere una lettera oppure uno di:  _ - [ ] \ ` ^ { } |
-  - i caratteri successivi possono essere lettere, cifre o quei simboli speciali
-  - non sono ammessi spazi, punti, virgole, ecc.
-
-Il confronto fra nickname e' case-insensitive secondo le regole IRC: "Alice" e
-"alice" sono lo stesso nick, e inoltre [ ] \ equivalgono a { } | .
-
-ERRORI:
-  431 :No nickname given                    manca il parametro
-  432 <nick> :Erroneous nickname            nickname non valido
-  433 <nick> :Nickname is already in use    nickname gia' occupato
-
-ESEMPIO DI CAMBIO NICK (da registrati):
-  NICK bobby
-  -> tutti nei tuoi canali ricevono:  :bob!bob@localhost NICK :bobby
-
---------------------------------------------------------------------------------
-USER - imposta username e nome reale
---------------------------------------------------------------------------------
-SINTASSI:   USER <username> <hostname> <servername> :<nome reale>
-ESEMPIO:    USER alice 0 * :Alice Rossi
-
-COSA FA:
-  Registra username e nome reale del client. E' il terzo e ultimo passo della
-  registrazione. I parametri <hostname> e <servername> sono richiesti dalla
-  sintassi ma vengono ignorati (come fanno tutti i server IRC reali). Il nome
-  reale va dopo i due punti e puo' contenere spazi.
-
-ERRORI:
-  461 USER :Not enough parameters    manca l'username o manca il nome reale
-  462 :You may not reregister        sei gia' registrato
-
+  PASS dontpanic
+  461  manca il parametro
+  462  sei gia' registrato
+  464  password sbagliata (connessione NON chiusa, puoi riprovare)
 
 ================================================================================
-4. COMANDI DI CANALE
+NICK <nickname>                                    imposta o cambia nickname
 ================================================================================
+  NICK elmo
+  valido: 1-9 caratteri; primo char = lettera o  _ - [ ] \ ` ^ { } |
+          dal secondo anche cifre; no spazi, punti, virgole
+  confronto case-insensitive, inoltre  [ ] \  ==  { } |
+  ok da registrato  -> :vecchio!user@host NICK :nuovo  a te e ai tuoi canali
+  431  manca il parametro
+  432  nickname non valido
+  433  nickname gia' occupato
 
---------------------------------------------------------------------------------
-JOIN - entra in uno o piu' canali
---------------------------------------------------------------------------------
-SINTASSI:   JOIN <canale>{,<canale>} [<chiave>{,<chiave>}]
-            JOIN 0
+================================================================================
+USER <username> <hostname> <servername> :<nome reale>   username + nome reale
+================================================================================
+  USER elmondo 0 * :Elia Mondo
+  <hostname> e <servername> sono richiesti dalla sintassi ma ignorati
+  461  manca username o nome reale
+  462  sei gia' registrato
 
-ESEMPI:
-  JOIN #generale                       entra in un canale
-  JOIN #uno,#due                       entra in due canali
-  JOIN #privato segreto                entra in un canale con chiave
-  JOIN #uno,#due chiave1,chiave2       due canali, ognuno con la sua chiave
-  JOIN 0                               esce da TUTTI i canali
+================================================================================
+JOIN <canale>{,<canale>} [<chiave>{,<chiave>}]                   entra in canale
+================================================================================
+  JOIN #chat                    entra (crea il canale se non esiste)
+  JOIN #uno,#due                due canali
+  JOIN #priv segreto            canale con chiave
+  JOIN #uno,#due k1,k2          chiavi abbinate per posizione
+  JOIN 0                        esce da TUTTI i canali
+  nome valido: inizia con #, minimo 2 caratteri, senza spazi ne' virgole
+  il primo che entra diventa operatore del canale
+  ok   -> JOIN a tutti i membri, poi 331 o 332 (topic), 353 (utenti), 366
+  353  gli operatori compaiono con @ davanti
+  gia' dentro -> comando ignorato, nessun errore
+  entrando con un invito, l'invito si consuma
+  461  manca il nome del canale
+  403  nome di canale non valido
+  473  canale +i e non sei invitato
+  475  chiave sbagliata o mancante (+k)
+  471  canale pieno (+l)
 
-COSA FA:
-  Fa entrare il client nei canali indicati. Se un canale non esiste viene
-  creato e il primo utente che entra ne diventa automaticamente operatore.
-  Le chiavi si abbinano ai canali per posizione: la prima chiave vale per il
-  primo canale, la seconda per il secondo e cosi' via. I canali senza chiave
-  corrispondente vengono trattati come se non fosse stata fornita alcuna chiave.
-
-  Entrando, il client riceve nell'ordine:
-    - il messaggio JOIN (inviato anche a tutti gli altri membri del canale)
-    - il topic del canale: 332 se impostato, 331 se non c'e'
-    - la lista degli utenti presenti: 353, con "@" davanti agli operatori
-    - la fine della lista: 366
-
-  La forma speciale "JOIN 0" fa uscire il client da tutti i canali in cui si
-  trova, inviando un PART a ciascuno.
-
-NOMI DI CANALE VALIDI:
-  devono iniziare con '#', essere lunghi almeno 2 caratteri e non contenere
-  spazi ne' virgole. Esempi validi: #chat, #42, #test-1
-
-ERRORI:
-  461 JOIN :Not enough parameters              manca il nome del canale
-  403 <canale> :No such channel                nome di canale non valido
-  473 <canale> :Cannot join channel (+i)       canale su invito, non sei invitato
-  475 <canale> :Cannot join channel (+k)       chiave sbagliata o mancante
-  471 <canale> :Cannot join channel (+l)       canale pieno
-
-Se sei gia' dentro al canale il comando viene ignorato senza errori.
-Quando entri usando un invito, l'invito viene consumato.
-
---------------------------------------------------------------------------------
-PART - esce da uno o piu' canali
---------------------------------------------------------------------------------
-SINTASSI:   PART <canale>{,<canale>} [:<motivo>]
-
-ESEMPI:
-  PART #generale
-  PART #generale :ci vediamo dopo
+================================================================================
+PART <canale>{,<canale>} [:<motivo>]                              esce da canale
+================================================================================
+  PART #chat
+  PART #chat :ci vediamo
   PART #uno,#due
-
-COSA FA:
-  Fa uscire il client dai canali indicati. Tutti i membri del canale (compreso
-  chi esce) ricevono il messaggio PART con l'eventuale motivo. Se il canale
-  rimane vuoto viene eliminato dal server, e con lui il suo topic e i suoi modi.
-
-ERRORI:
-  461 PART :Not enough parameters             manca il nome del canale
-  403 <canale> :No such channel               il canale non esiste
-  442 <canale> :You're not on that channel    non sei in quel canale
-
---------------------------------------------------------------------------------
-PRIVMSG - invia un messaggio
---------------------------------------------------------------------------------
-SINTASSI:   PRIVMSG <destinatario> :<testo>
-
-ESEMPI:
-  PRIVMSG #generale :ciao a tutti          messaggio a un canale
-  PRIVMSG bob :ciao come stai              messaggio privato a un utente
-
-COSA FA:
-  Invia un messaggio a un canale o a un singolo utente. Se il destinatario
-  inizia con '#' e' considerato un canale, altrimenti un nickname.
-  Per scrivere su un canale bisogna esserne membri. Il mittente NON riceve una
-  copia del proprio messaggio (comportamento corretto: e' il client che mostra
-  localmente cio' che hai scritto).
-  Il testo va sempre dopo i due punti e puo' contenere spazi.
-
-ERRORI:
-  411 :No recipient given (PRIVMSG)        manca il destinatario
-  412 :No text to send                     manca il testo
-  401 <target> :No such nick/channel       canale o utente inesistente
-  404 <canale> :Cannot send to channel     non sei membro del canale
-
-ATTENZIONE: il destinatario e' UNO SOLO. La lista separata da virgole
-(PRIVMSG #a,#b :ciao) non e' supportata: verrebbe interpretata come un unico
-nome di canale inesistente.
-
---------------------------------------------------------------------------------
-TOPIC - mostra o cambia il titolo del canale
---------------------------------------------------------------------------------
-SINTASSI:   TOPIC <canale>                    mostra il topic
-            TOPIC <canale> :<nuovo topic>     imposta il topic
-
-ESEMPI:
-  TOPIC #generale
-  TOPIC #generale :Benvenuti nel canale ufficiale
-
-COSA FA:
-  Senza secondo argomento mostra il topic corrente (332) oppure avvisa che non
-  c'e' (331). Con un secondo argomento imposta il nuovo topic e lo comunica a
-  tutti i membri del canale.
-  Se sul canale e' attivo il modo +t, solo gli operatori possono cambiarlo;
-  tutti possono comunque leggerlo.
-
-ERRORI:
-  461 TOPIC :Not enough parameters             manca il nome del canale
-  403 <canale> :No such channel                il canale non esiste
-  442 <canale> :You're not on that channel     non sei in quel canale
-  482 <canale> :You're not channel operator    modo +t attivo e non sei operatore
-
-NOTA: non e' possibile cancellare il topic inviando "TOPIC #canale :" (con
-testo vuoto): il server lo interpreta come una richiesta di lettura.
-
---------------------------------------------------------------------------------
-KICK - espelle un utente dal canale
---------------------------------------------------------------------------------
-SINTASSI:   KICK <canale> <nickname> [:<motivo>]
-
-ESEMPI:
-  KICK #generale bob
-  KICK #generale bob :comportamento scorretto
-
-COSA FA:
-  Espelle l'utente indicato dal canale. Richiede i privilegi di operatore.
-  Tutti i membri del canale (compreso l'espulso) ricevono il messaggio KICK
-  con il motivo. Se non specifichi un motivo, viene usato il nickname di chi
-  esegue il kick. Se dopo l'espulsione il canale resta vuoto, viene eliminato.
-
-ERRORI:
-  461 KICK :Not enough parameters                  mancano canale o nickname
-  403 <canale> :No such channel                    il canale non esiste
-  442 <canale> :You're not on that channel         non sei in quel canale
-  482 <canale> :You're not channel operator        non sei operatore
-  441 <nick> <canale> :They aren't on that channel il bersaglio non e' nel canale
-
-NOTA: si puo' espellere un solo utente da un solo canale per comando; le liste
-separate da virgole non sono supportate.
-
---------------------------------------------------------------------------------
-INVITE - invita un utente in un canale
---------------------------------------------------------------------------------
-SINTASSI:   INVITE <nickname> <canale>
-ESEMPIO:    INVITE bob #privato
-
-COSA FA:
-  Invita un utente in un canale. Chi invita deve essere membro del canale.
-  Se il canale e' in modalita' +i (solo su invito) bisogna anche essere
-  operatori; se il canale non e' +i qualsiasi membro puo' invitare.
-  L'invitato viene aggiunto alla lista degli invitati, il che gli permette di
-  superare la restrizione +i al successivo JOIN. L'invito si consuma quando
-  viene usato.
-
-  Chi invita riceve:   :ircserv 341 alice bob #privato
-  L'invitato riceve:   :alice!alice@localhost INVITE bob :#privato
-
-ERRORI:
-  461 INVITE :Not enough parameters              mancano nickname o canale
-  401 <nick> :No such nick/channel               l'utente non esiste
-  403 <canale> :No such channel                  il canale non esiste
-  442 <canale> :You're not on that channel       non sei in quel canale
-  482 <canale> :You're not channel operator      canale +i e non sei operatore
-  443 <nick> <canale> :is already on channel     e' gia' dentro
-
-ATTENZIONE: l'invito supera il modo +i, ma NON supera la chiave (+k) ne' il
-limite di utenti (+l). Un utente invitato a un canale con chiave deve comunque
-fornire la chiave: JOIN #privato segreto
-
---------------------------------------------------------------------------------
-MODE - mostra o cambia i modi di un canale
---------------------------------------------------------------------------------
-SINTASSI:   MODE <canale>                          mostra i modi attivi
-            MODE <canale> <+/-modi> [argomenti]    cambia i modi
-            MODE <tuo_nickname>                    mostra i tuoi modi utente
-
-COSA FA:
-  Senza argomenti oltre al canale, mostra i modi attivi con il numerico 324,
-  completo di chiave e limite se impostati:
-
-      :ircserv 324 alice #priv +ikl segreto 5
-
-  Con argomenti, applica i cambiamenti. Serve essere operatore del canale.
-  I modi applicati con successo vengono comunicati a tutti i membri:
-
-      :alice!alice@localhost MODE #priv +k segreto
-
-  Si possono combinare piu' modi in un solo comando; gli argomenti vengono
-  consumati nell'ordine in cui servono. Se un singolo modo dell'elenco
-  fallisce, viene segnalato l'errore e gli altri continuano ad essere applicati.
-
-MODI DISPONIBILI (i cinque richiesti dal subject):
-
-  +i / -i     INVITE ONLY
-              Attiva o disattiva l'accesso solo su invito. Con +i, chi non e'
-              stato invitato riceve 473 quando prova a entrare.
-              Esempio:  MODE #priv +i
-
-  +t / -t     TOPIC RESTRICTED
-              Con +t solo gli operatori possono cambiare il topic. Senza +t
-              chiunque sia nel canale puo' cambiarlo.
-              Esempio:  MODE #priv +t
-
-  +k <chiave> / -k     CHIAVE DEL CANALE (password)
-              Imposta o rimuove la password necessaria per entrare.
-              Esempio:  MODE #priv +k segreto
-                        MODE #priv -k
-              Errore 467 se provi a impostare una chiave quando ce n'e' gia'
-              una: bisogna prima rimuoverla con -k.
-
-  +o <nick> / -o <nick>     OPERATORE DI CANALE
-              Da' o toglie i privilegi di operatore a un utente del canale.
-              L'utente deve essere presente nel canale.
-              Esempio:  MODE #priv +o bob
-                        MODE #priv -o bob
-              Gli operatori compaiono con "@" davanti nella lista 353.
-
-  +l <numero> / -l     LIMITE DI UTENTI
-              Imposta o rimuove il numero massimo di utenti del canale. Il
-              numero deve essere un intero maggiore di zero. Quando il canale
-              e' pieno, chi prova a entrare riceve 471.
-              Esempio:  MODE #priv +l 10
-                        MODE #priv -l
-
-ESEMPIO COMBINATO:
-  MODE #priv +itk segreto        attiva invite-only, topic-restricted e chiave
-  MODE #priv +ol bob 20          rende bob operatore e imposta il limite a 20
-  MODE #priv -ik                 toglie invite-only e la chiave
-
-MODE SU UN UTENTE:
-  MODE <tuo_nick>          risponde  221 +   (nessun modo utente supportato)
-  MODE <altro_nick>        risponde  502 :Cannot change mode for other users
-
-ERRORI:
-  461 MODE :Not enough parameters                 manca il target o un argomento
-  403 <canale> :No such channel                   il canale non esiste
-  442 <canale> :You're not on that channel        non sei in quel canale
-  482 <canale> :You're not channel operator       non sei operatore
-  467 <canale> :Channel key already set           chiave gia' impostata
-  441 <nick> <canale> :They aren't on that channel bersaglio di +o non nel canale
-  472 <carattere> :is unknown mode char to me     modo non riconosciuto
-  401 <nick> :No such nick/channel                utente inesistente
-  502 :Cannot change mode for other users         modo utente su un altro
-
+  ok   -> PART a tutti i membri, compreso chi esce
+  canale rimasto vuoto -> eliminato (perde topic e modi)
+  461  manca il nome del canale
+  403  canale inesistente
+  442  non sei in quel canale
 
 ================================================================================
-5. ALTRI COMANDI
+PRIVMSG <destinatario> :<testo>                              invia un messaggio
 ================================================================================
-
---------------------------------------------------------------------------------
-PING - verifica che il server risponda
---------------------------------------------------------------------------------
-SINTASSI:   PING <token>
-            PING :<token>
-ESEMPI:     PING :hello
-            PING ircserv
-
-COSA FA:
-  Il server risponde immediatamente con un PONG contenente lo stesso token:
-
-      :ircserv PONG ircserv :hello
-
-  Utile per verificare che la connessione sia viva. E' uno dei pochi comandi
-  utilizzabili anche prima della registrazione.
-
-ERRORI:
-  409 :No origin specified      manca il token
-
---------------------------------------------------------------------------------
-QUIT - chiude la connessione
---------------------------------------------------------------------------------
-SINTASSI:   QUIT [:<motivo>]
-ESEMPI:     QUIT
-            QUIT :vado a dormire
-
-COSA FA:
-  Disconnette il client in modo ordinato. Tutti gli utenti che condividono un
-  canale con chi esce ricevono il messaggio QUIT con il motivo (ogni utente lo
-  riceve una sola volta, anche se condividete piu' canali). Se non specifichi
-  un motivo viene usato "Client Quit".
-  Il client viene rimosso da tutti i canali; i canali rimasti vuoti vengono
-  eliminati. Al client che esce viene inviato "ERROR :Closing Link" e poi la
-  connessione viene chiusa.
-  Utilizzabile anche prima della registrazione.
-
---------------------------------------------------------------------------------
-CAP - negoziazione delle estensioni
---------------------------------------------------------------------------------
-SINTASSI:   CAP LS / CAP REQ / CAP END
-
-COSA FA:
-  Viene accettato e ignorato senza risposta. Non e' un comando implementato: e'
-  gestito solo per non restituire un errore ai client moderni (HexChat, irssi)
-  che lo inviano automaticamente all'inizio della connessione.
-
+  PRIVMSG #chat :ciao a tutti          al canale (devi esserne membro)
+  PRIVMSG bob :ciao come stai          in privato a un utente
+  destinatario che inizia con # = canale, altrimenti nickname
+  il mittente NON riceve copia del proprio messaggio
+  UN SOLO destinatario: le liste con la virgola non sono supportate
+  411  manca il destinatario
+  412  manca il testo
+  401  canale o utente inesistente
+  404  non sei membro del canale
 
 ================================================================================
-6. COMANDI NON IMPLEMENTATI
+TOPIC <canale> [:<nuovo topic>]                          legge o cambia il topic
 ================================================================================
-
-Questi comandi NON esistono nel server. Se li invii ricevi:
-
-  :ircserv 421 <nick> <COMANDO> :Unknown command
-
-Elenco dei principali comandi assenti:
-
-  NOTICE     messaggio senza risposta automatica (usato dai bot)
-  PONG       risposta al ping (il server non invia PING, quindi non serve,
-             ma un PONG spontaneo del client riceve 421)
-  WHO        elenco utenti con dettagli
-  WHOIS      informazioni su un utente
-  NAMES      elenco utenti di un canale (viene inviato solo dopo il JOIN)
-  LIST       elenco dei canali del server
-  AWAY       stato di assenza
-  OPER       operatore di server
-  MOTD       messaggio del giorno
-  KILL       disconnessione forzata da parte di un operatore
-
-I comandi obbligatori del subject di ft_irc sono tutti presenti. NOTICE e' il
-piu' utile fra quelli mancanti: molti client e bot lo usano al posto di PRIVMSG.
-
+  TOPIC #chat                          legge  -> 332 se c'e', 331 se vuoto
+  TOPIC #chat :Progetto 42              imposta -> TOPIC broadcast a tutti
+  con modo +t attivo solo gli operatori possono cambiarlo, tutti leggerlo
+  "TOPIC #chat :" NON svuota il topic, viene letto come richiesta
+  461  manca il nome del canale
+  403  canale inesistente
+  442  non sei in quel canale
+  482  +t attivo e non sei operatore
 
 ================================================================================
-7. TABELLA COMPLETA DEI CODICI NUMERICI USATI
+KICK <canale> <nickname> [:<motivo>]                        espelle dal canale
 ================================================================================
-
-RISPOSTE DI SUCCESSO
-  001  RPL_WELCOME              benvenuto, registrazione completata
-  002  RPL_YOURHOST             informazioni sull'host
-  003  RPL_CREATED              data di creazione del server
-  004  RPL_MYINFO               nome e versione del server
-  221  RPL_UMODEIS              i tuoi modi utente (sempre "+")
-  324  RPL_CHANNELMODEIS        modi attivi del canale
-  331  RPL_NOTOPIC              il canale non ha topic
-  332  RPL_TOPIC                topic del canale
-  341  RPL_INVITING             conferma dell'invito inviato
-  353  RPL_NAMREPLY             elenco utenti del canale
-  366  RPL_ENDOFNAMES           fine dell'elenco utenti
-
-ERRORI
-  401  ERR_NOSUCHNICK           nickname o canale inesistente
-  403  ERR_NOSUCHCHANNEL        canale inesistente o nome non valido
-  404  ERR_CANNOTSENDTOCHAN     non puoi scrivere su quel canale
-  409  ERR_NOORIGIN             PING senza token
-  411  ERR_NORECIPIENT          PRIVMSG senza destinatario
-  412  ERR_NOTEXTTOSEND         PRIVMSG senza testo
-  421  ERR_UNKNOWNCOMMAND       comando non implementato
-  431  ERR_NONICKNAMEGIVEN      NICK senza parametro
-  432  ERR_ERRONEUSNICKNAME     nickname non valido
-  433  ERR_NICKNAMEINUSE        nickname gia' occupato
-  441  ERR_USERNOTINCHANNEL     l'utente non e' in quel canale
-  442  ERR_NOTONCHANNEL         non sei in quel canale
-  443  ERR_USERONCHANNEL        l'utente e' gia' nel canale
-  451  ERR_NOTREGISTERED        devi registrarti prima
-  461  ERR_NEEDMOREPARAMS       parametri insufficienti
-  462  ERR_ALREADYREGISTERED    sei gia' registrato
-  464  ERR_PASSWDMISMATCH       password sbagliata
-  467  ERR_KEYSET               chiave del canale gia' impostata
-  471  ERR_CHANNELISFULL        canale pieno (+l)
-  472  ERR_UNKNOWNMODE          carattere di modo sconosciuto
-  473  ERR_INVITEONLYCHAN       canale solo su invito (+i)
-  475  ERR_BADCHANNELKEY        chiave del canale sbagliata (+k)
-  482  ERR_CHANOPRIVSNEEDED     servono i privilegi di operatore
-  502  ERR_USERSDONTMATCH       non puoi cambiare i modi di un altro utente
-
+  KICK #chat bob
+  KICK #chat bob :comportamento scorretto
+  serve essere operatore; senza motivo viene usato il tuo nickname
+  ok   -> KICK a tutti i membri, compreso l'espulso
+  canale rimasto vuoto -> eliminato
+  un solo utente e un solo canale per comando, no liste con la virgola
+  461  mancano canale o nickname
+  403  canale inesistente
+  442  non sei in quel canale
+  482  non sei operatore
+  441  il bersaglio non e' nel canale
 
 ================================================================================
-8. SESSIONE DI ESEMPIO COMPLETA
+INVITE <nickname> <canale>                             invita in un canale
 ================================================================================
+  INVITE bob #priv
+  devi essere membro; se il canale e' +i devi essere anche operatore
+  ok   -> 341 a te,  :tu!user@host INVITE bob :#priv  all'invitato
+  l'invito supera +i ma NON la chiave +k ne' il limite +l
+  461  mancano nickname o canale
+  401  utente inesistente
+  403  canale inesistente
+  442  non sei in quel canale
+  482  canale +i e non sei operatore
+  443  e' gia' nel canale
 
-Avvia il server:
+================================================================================
+MODE                                                    modi di canale e utente
+================================================================================
+  MODE #priv                     mostra  -> 324 #priv +ikl segreto 5
+  MODE #priv <+/-modi> [arg]     cambia (serve essere operatore)
+  MODE <tuo_nick>                -> 221 +   nessun modo utente supportato
+  MODE <altro_nick>              -> 502
 
-  ./ircserv 6667 dontpanic
+  +i / -i           solo su invito              MODE #priv +i
+  +t / -t           topic solo agli operatori   MODE #priv +t
+  +k <chiave> / -k  chiave d'accesso            MODE #priv +k segreto
+  +o <nick> / -o    operatore di canale         MODE #priv +o bob
+  +l <n> / -l       limite utenti, n > 0        MODE #priv +l 10
 
-Client 1 (alice):
+  combinabili:  MODE #priv +itk segreto     MODE #priv +ol bob 20
+  ok   -> MODE broadcast con i soli modi effettivamente applicati
+  se un modo dell'elenco fallisce, gli altri vengono comunque applicati
+  -k consuma un argomento e nel broadcast mostra *
+  461  manca il target o un argomento
+  403  canale inesistente
+  442  non sei in quel canale
+  482  non sei operatore
+  467  chiave gia' impostata (serve prima -k)
+  441  bersaglio di +o non presente nel canale
+  472  carattere di modo sconosciuto
+  401  utente inesistente
+  502  modo utente su un altro utente
 
+================================================================================
+PING <token>                                              verifica connessione
+================================================================================
+  PING :hello        ->  :ircserv PONG ircserv :hello
+  usabile anche prima della registrazione
+  409  manca il token
+
+================================================================================
+QUIT [:<motivo>]                                          chiude la connessione
+================================================================================
+  QUIT
+  QUIT :vado a dormire
+  senza motivo viene usato "Client Quit"
+  ok   -> QUIT a chi condivide un canale con te (una volta sola per utente)
+          poi "ERROR :Closing Link" a te e chiusura del socket
+  rimosso da tutti i canali, i canali vuoti vengono eliminati
+  usabile anche prima della registrazione
+
+================================================================================
+ SEQUENZA DI PROVA VELOCE
+================================================================================
   PASS dontpanic
-  NICK alice
-  USER alice 0 * :Alice Rossi
-  JOIN #ft_irc
-  TOPIC #ft_irc :Progetto 42
-  MODE #ft_irc +t
-  MODE #ft_irc +l 10
-  PRIVMSG #ft_irc :ciao, c'e' nessuno?
-
-Client 2 (bob):
-
-  PASS dontpanic
-  NICK bob
-  USER bob 0 * :Bob Bianchi
-  JOIN #ft_irc
-  PRIVMSG #ft_irc :ciao alice!
-  PRIVMSG alice :ti scrivo in privato
-
-Alice promuove bob e poi lo espelle:
-
-  MODE #ft_irc +o bob
-  KICK #ft_irc bob :era solo una prova
-
-Alice rende il canale privato e invita bob:
-
-  MODE #ft_irc +i
-  MODE #ft_irc +k segreto
-  INVITE bob #ft_irc
-
-Bob rientra (serve la chiave anche se e' stato invitato):
-
-  JOIN #ft_irc segreto
-
-Uscita:
-
-  PART #ft_irc :ci vediamo
-  QUIT :buonanotte
-
-
-================================================================================
-9. BUG NOTI E LIMITI (stato al 2026-07-29)
-================================================================================
-
-Il livello dei comandi (parser, dispatcher, cmd/) e' stato provato a fondo e
-funziona correttamente in tutti i casi testati. I problemi che restano sono
-concentrati nel livello di rete (src/Server.cpp, src/main.cpp, src/Client.cpp).
-
-BLOCCANTI
-
-  1. La password e' fissata nel codice.
-     Il server parte solo se la password passata da riga di comando e'
-     esattamente "dontpanic" (macro IRCPASS in inc/Server.hpp, controllo in
-     cima a Server::run). Con qualsiasi altra password esce subito. Il subject
-     richiede che la password sia quella scelta dall'utente.
-
-  2. Un client che si disconnette male fa morire tutto il server.
-     Server::sendToClient fa "throw std::exception()" se send() fallisce.
-     L'eccezione risale fino a main, che la stampa ("ERROR: std::exception") e
-     termina il processo, buttando fuori tutti gli altri utenti. Basta un solo
-     client che chiude la connessione di colpo. Inoltre SIGPIPE non e' gestito
-     (manca signal(SIGPIPE, SIG_IGN) oppure il flag MSG_NOSIGNAL su send).
-
-  3. Il server consuma il 100% di CPU appena c'e' un client collegato.
-     I client vengono registrati in poll() con "POLLIN | POLLOUT": un socket e'
-     quasi sempre pronto in scrittura, quindi poll() ritorna immediatamente in
-     continuazione e il ciclo while(true) gira a vuoto. Verificato: 95% di CPU
-     con due client collegati, 0% senza nessun client. POLLOUT va richiesto
-     solo quando ci sono davvero dati in attesa di essere inviati.
-
-  4. I client disconnessi non vengono mai rimossi.
-     In Server::readBuffer il caso "recv() == 0" (fine della connessione) fa
-     solo "return" senza chiudere il socket ne' rimuoverlo da poll. Il
-     descrittore resta nella lista e continua a segnalare POLLIN all'infinito:
-     ciclo infinito, CPU al 100% e utente fantasma che resta nei canali. Il
-     ramo POLLHUP non copre il caso perche' una chiusura normale genera POLLIN
-     senza POLLHUP.
-
-  5. I socket non sono non-bloccanti.
-     Non c'e' nessuna chiamata a fcntl con O_NONBLOCK, ne' sul socket in
-     ascolto ne' su quelli accettati. Il subject di ft_irc lo richiede
-     esplicitamente.
-
-IMPORTANTI
-
-  6. Dopo QUIT il descrittore resta nella lista di poll.
-     QUIT chiude il socket e cancella il client dalla mappa, ma nessuno rimuove
-     il descrittore dalla lista dei pollfd del server. Da quel momento poll()
-     segnala POLLNVAL su un fd chiuso a ogni giro, e il numero di fd puo' venire
-     riassegnato a un nuovo client creando voci duplicate.
-
-  7. Voce "fantasma" ricreata nella mappa dei client.
-     Alla fine di Server::readBuffer viene eseguito
-     "_clients[fd].setRecvBuffer(buffer)". Se il comando appena eseguito era
-     QUIT, quel client e' stato cancellato dalla mappa e l'operatore [] ne
-     ricrea uno vuoto. Il costruttore di default di Client non inizializza
-     _sock_fd, quindi in mappa resta un client con un descrittore casuale.
-
-  8. POLLERR chiude il server.
-     Nel ramo POLLERR, dopo aver disconnesso il client, viene fatto
-     "throw NetworkError()", che termina il processo invece di limitarsi a
-     scartare quel client.
-
-  9. accept() senza controllo del valore di ritorno.
-     In Server::addNewClient il risultato di accept non viene verificato: se
-     fallisce, il valore -1 viene inserito nella lista di poll e nella mappa
-     dei client.
-
- 10. SO_REUSEADDR non funziona.
-     La setsockopt riceve "(void *)1" come indirizzo del valore e
-     "sizeof(SO_REUSEADDR)" come dimensione: servono un puntatore a un int
-     valorizzato a 1 e sizeof(int). Cosi' com'e' la chiamata fallisce (e il
-     valore di ritorno non viene controllato), quindi dopo un riavvio la porta
-     resta occupata in TIME_WAIT.
-
- 11. Variabile non inizializzata in main.cpp.
-     In parse_args, "char leftover;" non viene inizializzato: se dopo il numero
-     di porta non c'e' nient'altro, l'estrazione fallisce e la variabile viene
-     letta con un valore casuale. Il risultato e' che lo stesso comando puo'
-     funzionare o dare "Usage" in modo imprevedibile. Va inizializzato a 0.
-     Inoltre la porta non viene validata (intervallo 1-65535) e main restituisce
-     0 anche in caso di errore.
-
- 12. Costruttore di copia di Client incompleto.
-     Il copy constructor non copia _addr, _hostname, _sendBuffer e _recvBuffer;
-     l'operatore di assegnazione non copia _addr, _isOp e _isChanOp. Dato che i
-     client vengono inseriti nella mappa per copia, _addr resta non
-     inizializzato: l'indirizzo IP stampato all'accettazione di una connessione
-     e' un valore casuale.
-
-MINORI
-
- 13. Controllo del '\r' sbagliato in readBuffer.
-     La riga "if (!buffer.empty() && buffer[buffer.size() - 1] == '\r')"
-     controlla il buffer residuo invece della riga appena estratta, e poi
-     cancella l'ultimo carattere della riga. Nel caso in cui un client usi il
-     solo '\n' e il buffer residuo finisca per '\r', l'ultimo carattere del
-     comando viene mangiato. Va controllato "line", non "buffer".
-
- 14. Un nuovo Dispatcher per ogni riga ricevuta.
-     Server::readBuffer costruisce un Dispatcher dentro il ciclo: a ogni riga
-     vengono allocati e subito distrutti dodici oggetti comando. Conviene
-     costruirlo una volta sola (per esempio come membro del server).
-
- 15. L'hostname non viene mai ricavato.
-     Client::setHostname esiste ma non viene chiamato da nessuna parte, quindi
-     getPrefix ripiega sempre su "localhost" e tutti gli utenti risultano
-     nick!user@localhost.
-
- 16. Codice mai utilizzato.
-     - Channel::broadcast e Client::queueMessage riempiono _sendBuffer, che non
-       viene mai svuotato ne' inviato: i messaggi accodati non partono. I
-       comandi usano correttamente broadcastToChannel (invio diretto), quindi
-       Channel::broadcast e' di fatto una funzione trappola.
-     - rejectRegistration in CommandUtils.cpp non e' chiamata da nessun comando.
-     - Le eccezioni Server::PortNotValid e Server::Timeout non vengono mai
-       lanciate.
-     - I campi Client::_isOp e Client::_isChanOp non vengono mai letti (lo stato
-       di operatore e' gestito correttamente dentro Channel).
-
- 17. Limiti di conformita' minori.
-     - PRIVMSG e KICK non accettano liste di destinatari separate da virgole.
-     - Non si puo' svuotare il topic con "TOPIC #canale :".
-     - La lunghezza totale della riga non viene limitata a 512 byte.
-     - Manca NOTICE, che molti client si aspettano.
-
-
-================================================================================
-FINE DEL DOCUMENTO
+  NICK elmo
+  USER elmondo 0 * :Elia
+  JOIN #test
+  TOPIC #test :prova
+  MODE #test +t
+  MODE #test +l 5
+  PRIVMSG #test :ciao
+  MODE #test +o bob
+  KICK #test bob :prova
+  MODE #test +i
+  INVITE bob #test
+  PART #test :fine
+  QUIT :ciao
 ================================================================================
