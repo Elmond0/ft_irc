@@ -13,6 +13,5 @@ void PING::execute(Client &client, const IrcMessage &msg)
 	if (token.empty())
 		throw NumericError(409, ":No origin specified");
 
-	_server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME +
-		" PONG " + SERVER_NAME + " :" + token + "\r\n");
+	_server.sendToClient(client.getFd(), std::string(":") + SERVER_NAME + " PONG " + SERVER_NAME + " :" + token + "\r\n");
 }
