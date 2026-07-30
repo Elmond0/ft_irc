@@ -45,7 +45,6 @@ class Server
 		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
 		void	readBuffer( int fd );
 		void	sendBuffer( int fd, const std::string& msg );
-		void	broadcastToChannel(Channel &chan, Client &client);
 
 	public:
 		Server( void );

@@ -107,7 +107,15 @@ void	Server::run( void ) {
 				if (it->revents & POLLIN)
 					readBuffer(it->fd);
 				if (it->revents & POLLOUT) {
-			//		std::cout << fds[i].fd << ": POLLOUT" << std::cout;
+					Client& c = _clients[it->fd];
+					std::string& buf = c.getSendBuffer();
+					if (!buf.empty()) {
+						ssize_t n = send(it->fd, buf.c_str(), buf.size(), MSG_NOSIGNAL);
+						if (n > 0)
+							buf.erase(0, n);
+						else if (n < 0)
+							buf.clear();
+					}
 				}
 				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);
@@ -139,20 +147,12 @@ void	sendBuffer(int fd, std::string data) {
     while (bytesSent < len) {
         ssize_t n = send(fd, data.c_str() + bytesSent, len - bytesSent, 0);
         if (n < 0) {
-            throw NetworkError()
+            throw Server::NetworkError();
             break ;
         } else if (n == 0)
 			break ;
         bytesSent += n;
     }
-}
-
-void	broadcastToChannel(Channel &chan, Client &sender, std::string msg) {
-	for (std::vector<Client *>::iterator it = chan._clients.begin(); it != chan._clients.end(); ++it) {
-		if (*it == sender)
-			continue ;
-		sendBuffer(it->fd, msg);
-	}
 }
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }
