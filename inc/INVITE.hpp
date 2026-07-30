@@ -3,7 +3,7 @@
 
 #include "ACommand.hpp"
 
-class INVITE : public ACommand 
+class INVITE : public ACommand
 {
 	public:
 		INVITE(Server &server);
