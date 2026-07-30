@@ -13,7 +13,7 @@ QUIT::~QUIT(void) {}
 void QUIT::execute(Client &client, const IrcMessage &msg)
 {
 	std::string reason = msg.trailing.empty() ? "Client Quit" : msg.trailing;
-	std::string line = userPrefix(client) + " QUIT :" + reason + "\r\n";
+	std::string line = userPrefix(client) + " QUIT :" + reason;
 
 	std::set<int> notified;
 	std::map<std::string, Channel>& channels = _server.getChannels();
@@ -32,7 +32,7 @@ void QUIT::execute(Client &client, const IrcMessage &msg)
 		for (std::size_t m = 0; m < members.size(); ++m)
 		{
 			if (members[m] != &client && notified.insert(members[m]->getFd()).second)
-				_server.sendToClient(members[m]->getFd(), line);
+				members[m]->queueMessage(line);
 		}
 
 		chan.removeClient(&client);
@@ -40,5 +40,5 @@ void QUIT::execute(Client &client, const IrcMessage &msg)
 			channels.erase(current);
 	}
 
-	_server.sendToClient(client.getFd(), "ERROR :Closing Link\r\n");
+	client.queueMessage("ERROR :Closing Link");
 }

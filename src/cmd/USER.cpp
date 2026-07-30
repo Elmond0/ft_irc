@@ -17,5 +17,5 @@ void USER::execute(Client &client, const IrcMessage &msg)
 	client.setRealname(msg.trailing);
 	client.setUserOk(true);
 
-	finishRegistrationAttempt(client, _server);
+	finishRegistrationAttempt(client);
 }

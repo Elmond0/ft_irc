@@ -54,9 +54,9 @@ void NICK::execute(Client &client, const IrcMessage &msg)
 
 	if (wasRegistered)
 	{
-		std::string line = userPrefix(client) + " NICK :" + newNick + "\r\n";
+		std::string line = userPrefix(client) + " NICK :" + newNick;
 
-		_server.sendToClient(client.getFd(), line);
+		client.queueMessage(line);
 
 		std::set<int> notified;
 		std::map<std::string, Channel> &channels = _server.getChannels();
@@ -69,7 +69,7 @@ void NICK::execute(Client &client, const IrcMessage &msg)
 			for (std::size_t m = 0; m < members.size(); ++m)
 			{
 				if (members[m] != &client && notified.insert(members[m]->getFd()).second)
-					_server.sendToClient(members[m]->getFd(), line);
+					members[m]->queueMessage(line);
 			}
 		}
 	}
@@ -77,5 +77,5 @@ void NICK::execute(Client &client, const IrcMessage &msg)
 	client.setNickname(newNick);
 	client.setNickOk(true);
 	if (!wasRegistered)
-		finishRegistrationAttempt(client, _server);
+		finishRegistrationAttempt(client);
 }

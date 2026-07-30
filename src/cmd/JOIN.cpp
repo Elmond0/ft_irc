@@ -73,8 +73,7 @@ void JOIN::joinOne(Client& client, const std::string& name, const std::string& k
 	if (isNew)
 		chan.addOperator(&client);
 
-	broadcastToChannel(_server, chan,
-		userPrefix(client) + " JOIN " + name + "\r\n", -1);
+	chan.broadcast(userPrefix(client) + " JOIN " + name);
 
 	if (chan.getTopic().empty())
 		numeric(client, 331, name + " :No topic is set");
@@ -95,8 +94,7 @@ void JOIN::partAll(Client& client)
 		Channel& chan = current->second;
 		if (!chan.hasClient(&client))
 			continue;
-		broadcastToChannel(_server, chan,
-			userPrefix(client) + " PART " + chan.getName() + "\r\n", -1);
+		chan.broadcast(userPrefix(client) + " PART " + chan.getName());
 		chan.removeClient(&client);
 		if (chan.isEmpty())
 			channels.erase(current);

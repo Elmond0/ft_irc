@@ -25,9 +25,8 @@
 
 
 std::string					nickOrStar(const Client &client);
-void						sendWelcome(Client &client, Server &server);
-void						rejectRegistration(Client &client, Server &server, int code, const std::string &text);
-void						finishRegistrationAttempt(Client &client, Server &server);
+void						sendWelcome(Client &client);
+void						finishRegistrationAttempt(Client &client);
 bool						sameNick(const std::string &a, const std::string &b);
 std::string					userPrefix(const Client &client);
 Client						*findClientByNick(Server &server, const std::string &nick);

@@ -26,7 +26,7 @@ void PART::partOne(Client& client, const std::string& name, const std::string& r
 
 	if (!reason.empty())
 		line += " :" + reason;
-	broadcastToChannel(_server, *chan, line + "\r\n", -1);
+	chan->broadcast(line);
 
 	chan->removeClient(&client);
 	if (chan->isEmpty())

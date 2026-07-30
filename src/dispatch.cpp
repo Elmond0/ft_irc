@@ -90,20 +90,20 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
 	{
 		std::ostringstream oss;
 		oss << ":" << SERVER_NAME << " " << e.code() << " "
-			<< nickOrStar(client) << " " << e.text() << "\r\n";
-		_server.sendToClient(client.getFd(), oss.str());
+			<< nickOrStar(client) << " " << e.text();
+		client.queueMessage(oss.str());
 	}
 	catch (const NotRegisteredException& e)
 	{
 		std::string reply = std::string(":") + SERVER_NAME + " 451 " +
-			nickOrStar(client) + " :" + e.what() + "\r\n";
-		_server.sendToClient(client.getFd(), reply);
+			nickOrStar(client) + " :" + e.what();
+		client.queueMessage(reply);
 	}
 	catch (const UnknownCommandException& e)
 	{
 		std::string reply = std::string(":") + SERVER_NAME + " 421 " +
 			nickOrStar(client) + " " + msg.command +
-			" :" + e.what() + "\r\n";
-		_server.sendToClient(client.getFd(), reply);
+			" :" + e.what();
+		client.queueMessage(reply);
 	}
 }

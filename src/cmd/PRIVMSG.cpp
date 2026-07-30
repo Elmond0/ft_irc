@@ -13,7 +13,7 @@ void PRIVMSG::execute(Client &client, const IrcMessage &msg)
 		throw NumericError(412, ":No text to send");
 
 	const std::string& target = msg.params[0];
-	std::string line = userPrefix(client) + " PRIVMSG " + target + " :" + msg.trailing + "\r\n";
+	std::string line = userPrefix(client) + " PRIVMSG " + target + " :" + msg.trailing;
 
 	if (target[0] == '#')
 	{
@@ -22,12 +22,12 @@ void PRIVMSG::execute(Client &client, const IrcMessage &msg)
 			throw NumericError(401, target + " :No such nick/channel");
 		if (!chan->hasClient(&client))
 			throw NumericError(404, target + " :Cannot send to channel");
-		broadcastToChannel(_server, *chan, line, client.getFd());
+		chan->broadcast(line, &client);
 		return;
 	}
 
 	Client* dest = findClientByNick(_server, target);
 	if (!dest)
 		throw NumericError(401, target + " :No such nick/channel");
-	_server.sendToClient(dest->getFd(), line);
+	dest->queueMessage(line);
 }

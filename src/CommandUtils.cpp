@@ -2,7 +2,6 @@
 #include <cstddef>
 #include <ctime>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -84,17 +83,6 @@ Channel *findChannel(Server &server, const std::string &name)
 	return &it->second;
 }
 
-void broadcastToChannel(Server &server, Channel &chan, const std::string &line, int exceptFd)
-{
-	const std::vector<Client *> &members = chan.getClients();
-
-	for (std::size_t i = 0; i < members.size(); ++i)
-	{
-		if (members[i]->getFd() != exceptFd)
-			server.sendToClient(members[i]->getFd(), line);
-	}
-}
-
 std::vector<std::string> splitComma(const std::string &s)
 {
 	std::vector<std::string> out;
@@ -114,29 +102,19 @@ std::vector<std::string> splitComma(const std::string &s)
 	return out;
 }
 
-void rejectRegistration(Client &client, Server &server, int code, const std::string &text)
-{
-	std::ostringstream oss;
-
-	oss << ":" << SERVER_NAME << " " << code << " " << nickOrStar(client) << " " << text << "\r\n";
-	server.sendToClient(client.getFd(), oss.str());
-	server.sendToClient(client.getFd(), std::string("ERROR :Closing Link: ") + text + "\r\n");
-}
-
-void finishRegistrationAttempt(Client &client, Server &server)
+void finishRegistrationAttempt(Client &client)
 {
 	if (!client.isRegistered())
 		return;
-	sendWelcome(client, server);
+	sendWelcome(client);
 }
 
-void sendWelcome(Client &client, Server &server)
+void sendWelcome(Client &client)
 {
 	std::string nick = client.getNickname();
-	int fd = client.getFd();
 
-	server.sendToClient(fd, std::string(":") + SERVER_NAME + " 001 " + nick + " :Welcome to the " + NETWORK_NAME + " IRC Network " + client.getPrefix() + "\r\n");
-	server.sendToClient(fd, std::string(":") + SERVER_NAME + " 002 " + nick + " :Your host is " + SERVER_NAME + ", running version " + SERVER_VERSION + "\r\n");
-	server.sendToClient(fd, std::string(":") + SERVER_NAME + " 003 " + nick + " :This server was created " + serverCreationDate() + "\r\n");
-	server.sendToClient(fd, std::string(":") + SERVER_NAME + " 004 " + nick + " " + SERVER_NAME + " " + SERVER_VERSION + " " + USER_MODES + " " + CHANNEL_MODES + "\r\n");
+	client.queueMessage(std::string(":") + SERVER_NAME + " 001 " + nick + " :Welcome to the " + NETWORK_NAME + " IRC Network " + client.getPrefix());
+	client.queueMessage(std::string(":") + SERVER_NAME + " 002 " + nick + " :Your host is " + SERVER_NAME + ", running version " + SERVER_VERSION);
+	client.queueMessage(std::string(":") + SERVER_NAME + " 003 " + nick + " :This server was created " + serverCreationDate());
+	client.queueMessage(std::string(":") + SERVER_NAME + " 004 " + nick + " " + SERVER_NAME + " " + SERVER_VERSION + " " + USER_MODES + " " + CHANNEL_MODES);
 }

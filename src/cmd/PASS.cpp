@@ -17,5 +17,5 @@ void PASS::execute(Client &client, const IrcMessage &msg)
 		throw NumericError(464, ":Password incorrect");
 
 	client.setPassOk(true);
-	finishRegistrationAttempt(client, _server);
+	finishRegistrationAttempt(client);
 }

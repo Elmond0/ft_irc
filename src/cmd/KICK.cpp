@@ -27,7 +27,7 @@ void KICK::execute(Client &client, const IrcMessage &msg)
 
 	std::string reason = msg.trailing.empty() ? client.getNickname() : msg.trailing;
 
-	broadcastToChannel(_server, *chan, userPrefix(client) + " KICK " + chanName + " " + targetNick + " :" + reason + "\r\n", -1);
+	chan->broadcast(userPrefix(client) + " KICK " + chanName + " " + targetNick + " :" + reason);
 	chan->removeClient(target);
 	if (chan->isEmpty())
 		_server.getChannels().erase(chanName);

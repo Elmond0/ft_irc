@@ -159,7 +159,7 @@ void MODE::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
 	}
 
 	if (!appliedModes.empty())
-		broadcastToChannel(_server, chan, userPrefix(client) + " MODE " + chan.getName() + " " + appliedModes + appliedArgs + "\r\n", -1);
+		chan.broadcast(userPrefix(client) + " MODE " + chan.getName() + " " + appliedModes + appliedArgs);
 }
 
 void MODE::execute(Client& client, const IrcMessage& msg)

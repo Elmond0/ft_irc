@@ -32,5 +32,5 @@ void TOPIC::execute(Client &client, const IrcMessage &msg)
 
 	std::string newTopic = msg.trailing.empty() ? msg.params[1] : msg.trailing;
 	chan->setTopic(newTopic);
-	broadcastToChannel(_server, *chan, userPrefix(client) + " TOPIC " + chanName + " :" + newTopic + "\r\n", -1);
+	chan->broadcast(userPrefix(client) + " TOPIC " + chanName + " :" + newTopic);
 }
