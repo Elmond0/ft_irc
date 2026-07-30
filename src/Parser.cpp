@@ -4,83 +4,85 @@
 
 static std::string toUpper(const std::string& s)
 {
-    std::string result = s;
-    for (std::size_t i = 0; i < result.size(); ++i)
-        result[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(result[i])));
-    return result;
+	std::string result = s;
+	for (std::size_t i = 0; i < result.size(); ++i)
+		result[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(result[i])));
+	return result;
 }
 
 static std::string nextToken(const std::string& line, std::size_t& pos)
 {
-    while (pos < line.size() && line[pos] == ' ')
-        ++pos;
-    if (pos >= line.size())
-        return "";
-    std::size_t start = pos;
-    while (pos < line.size() && line[pos] != ' ')
-        ++pos;
-    return line.substr(start, pos - start);
+	while (pos < line.size() && line[pos] == ' ')
+		++pos;
+	if (pos >= line.size())
+		return "";
+	std::size_t start = pos;
+	while (pos < line.size() && line[pos] != ' ')
+		++pos;
+	return line.substr(start, pos - start);
 }
 
 std::ostream& operator<<(std::ostream& o, const IrcMessage& msg)
 {
-    o << "command: " << msg.command;
-    if (!msg.prefix.empty())
-        o << " | prefix: " << msg.prefix;
-    for (std::size_t i = 0; i < msg.params.size(); ++i)
-        o << " | param[" << i << "]: " << msg.params[i];
-    if (!msg.trailing.empty())
-        o << " | trailing: " << msg.trailing;
-    return o;
+	o << "command: " << msg.command;
+	if (!msg.prefix.empty())
+		o << " | prefix: " << msg.prefix;
+	for (std::size_t i = 0; i < msg.params.size(); ++i)
+		o << " | param[" << i << "]: " << msg.params[i];
+	if (!msg.trailing.empty())
+		o << " | trailing: " << msg.trailing;
+	return o;
 }
 
 IrcMessage parseMessage(const std::string& raw)
 {
-    IrcMessage msg;
+	IrcMessage msg;
 
-    std::string line = raw;
-    while (!line.empty() && (line[line.size() - 1] == '\r' || line[line.size() - 1] == '\n'))
-        line.erase(line.size() - 1);
+	std::string line = raw;
+	while (!line.empty() && (line[line.size() - 1] == '\r' || line[line.size() - 1] == '\n'))
+		line.erase(line.size() - 1);
 
-    if (line.empty())
-        return msg;
+	if (line.empty())
+		return msg;
 
-    std::size_t pos = 0;
+	std::size_t pos = 0;
 
-    if (line[0] == ':')
-    {
-        std::size_t spacePos = line.find(' ');
-        if (spacePos == std::string::npos)
-        {
-            msg.prefix = line.substr(1);
-            return msg;
-        }
-        msg.prefix = line.substr(1, spacePos - 1);
-        pos = spacePos + 1;
-    }
+	if (line[0] == ':')
+	{
+		std::size_t spacePos = line.find(' ');
+		if (spacePos == std::string::npos)
+		{
+			msg.prefix = line.substr(1);
+			return msg;
+		}
+		msg.prefix = line.substr(1, spacePos - 1);
+		pos = spacePos + 1;
+	}
 
-    std::string cmd = nextToken(line, pos);
-    if (cmd.empty())
-        return msg;
-    msg.command = toUpper(cmd);
+	std::string cmd = nextToken(line, pos);
 
-    while (pos < line.size())
-    {
-        while (pos < line.size() && line[pos] == ' ')
-            ++pos;
-        if (pos >= line.size())
-            break;
+	if (cmd.empty())
+		return msg;
+	msg.command = toUpper(cmd);
 
-        if (line[pos] == ':')
-        {
-            msg.trailing = line.substr(pos + 1);
-            break;
-        }
+	while (pos < line.size())
+	{
+		while (pos < line.size() && line[pos] == ' ')
+			++pos;
+		if (pos >= line.size())
+			break;
 
-        std::string token = nextToken(line, pos);
-        if (!token.empty())
-            msg.params.push_back(token);
-    }
+		if (line[pos] == ':')
+		{
+			msg.trailing = line.substr(pos + 1);
+			break;
+		}
 
-    return msg;
+		std::string token = nextToken(line, pos);
+
+		if (!token.empty())
+			msg.params.push_back(token);
+	}
+
+	return msg;
 }

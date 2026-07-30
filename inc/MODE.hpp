@@ -17,8 +17,7 @@ class MODE : public ACommand
 	private:
 		void sendChannelModes(Client &client, Channel &chan);
 		void applyModes(Client &client, Channel &chan, const IrcMessage &msg);
-		bool applyOneMode(Client &client, Channel &chan, char c, bool adding, const IrcMessage &msg, std::size_t &argIdx,
-						  std::string &usedArg);
+		bool applyOneMode(Client &client, Channel &chan, char c, bool adding, const IrcMessage &msg, std::size_t &argIdx, std::string &usedArg);
 		static bool nextArg(const IrcMessage &msg, std::size_t &idx, std::string &out);
 };
 
