@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: miricci <miricci@student.42firenze.it>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 15:37:53 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/07 15:37:57 by giomastr         ###   ########.fr       */
+/*   Updated: 2026/07/30 15:17:44 by miricci          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,8 @@ class Server
 		void	addNewClient( std::list<pollfd>& fds );
 		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
 		void	readBuffer( int fd );
+		void	sendBuffer( int fd, const std::string& msg );
+		void	broadcastToChannel(Channel &chan, Client &client);
 
 	public:
 		Server( void );
@@ -58,7 +60,6 @@ class Server
 		const std::string&				getPassword( void ) const;
 		std::map<int, Client>&			getClients( void );
 		std::map<std::string, Channel>&	getChannels( void );
-		void							sendToClient( int fd, const std::string& msg );
 
 		class WrongPassword : public std::exception
 		{

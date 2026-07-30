@@ -32,7 +32,6 @@ bool						sameNick(const std::string &a, const std::string &b);
 std::string					userPrefix(const Client &client);
 Client						*findClientByNick(Server &server, const std::string &nick);
 Channel						*findChannel(Server &server, const std::string &name);
-void						broadcastToChannel(Server &server, Channel &chan, const std::string &line, int exceptFd);
 std::vector<std::string>	splitComma(const std::string &s);
 
 #endif

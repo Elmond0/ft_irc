@@ -92,7 +92,6 @@ void	Server::run( void ) {
 	serverPollfd.fd = _listenSock_fd;
 	serverPollfd.events = POLLIN;
 	pfds.push_back(serverPollfd);
-	//std::cout << "Server has been deployed. 3nj0y" << std::endl;
 	while (true)
 	{
 		int i = 0;
@@ -133,9 +132,27 @@ std::map<int, Client>&	Server::getClients( void ) { return _clients; }
 
 std::map<std::string, Channel>&	Server::getChannels( void ) { return _channels; }
 
-void	Server::sendToClient( int fd, const std::string& msg ) {
-	if (send(fd, msg.c_str(), msg.size(), 0) == -1)
-		throw std::exception();
+void	sendBuffer(int fd, std::string data) {
+    size_t bytesSent = 0;
+    size_t len = data.size();
+
+    while (bytesSent < len) {
+        ssize_t n = send(fd, data.c_str() + bytesSent, len - bytesSent, 0);
+        if (n < 0) {
+            throw NetworkError()
+            break ;
+        } else if (n == 0)
+			break ;
+        bytesSent += n;
+    }
+}
+
+void	broadcastToChannel(Channel &chan, Client &sender, std::string msg) {
+	for (std::vector<Client *>::iterator it = chan._clients.begin(); it != chan._clients.end(); ++it) {
+		if (*it == sender)
+			continue ;
+		sendBuffer(it->fd, msg);
+	}
 }
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }
