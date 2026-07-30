@@ -35,6 +35,7 @@ class Client
 		bool		_passOk;
 		bool		_nickOk;
 		bool		_userOk;
+		bool 		_isQuitting;
 
 		std::string _sendBuffer;
 		std::string _recvBuffer;
@@ -50,6 +51,7 @@ class Client
 		sockaddr_in getAddr( void ) const;
 
 		int					getFd( void ) const;
+		bool				getQuitting() const;
 
 		const std::string&	getNickname( void ) const;
 		const std::string&	getUsername( void ) const;
@@ -65,6 +67,7 @@ class Client
 		void				setPassOk( bool ok );
 		void				setNickOk( bool ok );
 		void				setUserOk( bool ok );
+		void				setQuitting();
 		bool				isRegistered( void ) const;
 
 		// static message box

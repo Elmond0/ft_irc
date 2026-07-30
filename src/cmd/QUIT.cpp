@@ -39,6 +39,6 @@ void QUIT::execute(Client &client, const IrcMessage &msg)
 		if (chan.isEmpty())
 			channels.erase(current);
 	}
-
+	client.setQuitting();
 	client.queueMessage("ERROR :Closing Link");
 }

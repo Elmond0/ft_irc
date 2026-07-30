@@ -14,7 +14,7 @@
 
 Client::Client( void ) : _passOk(false), _nickOk(false), _userOk(false) {}
 
-Client::Client( int sock_fd, sockaddr_in clientAddress ) : _sock_fd(sock_fd), _addr(clientAddress), _isOp(false), _isChanOp(false), _passOk(false), _nickOk(false), _userOk(false) {}
+Client::Client( int sock_fd, sockaddr_in clientAddress ) : _sock_fd(sock_fd), _addr(clientAddress), _isOp(false), _isChanOp(false), _passOk(false), _nickOk(false), _userOk(false), _isQuitting(false) {}
 
 Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._isOp), _isChanOp(other._isChanOp), _nickname(other._nickname), _username(other._username), _realname(other._realname), _passOk(other._passOk), _nickOk(other._nickOk), _userOk(other._userOk) {}
 
@@ -69,6 +69,8 @@ void	Client::setNickOk( bool ok ) { _nickOk = ok; }
 
 void	Client::setUserOk( bool ok ) { _userOk = ok; }
 
+void	Client::setQuitting()		 { _isQuitting = true; }
+
 bool	Client::isRegistered( void ) const { return _passOk && _nickOk && _userOk; }
 
 // message handling
@@ -108,6 +110,9 @@ std::string &Client::getRecvBuffer()
 {
 	return (_recvBuffer);
 }
+
+bool	Client::getQuitting() const { return _isQuitting; }
+
 
 std::ostream& operator<<( std::ostream& o, Client const & c ) {
 	o << "CLIENT\nsocket fd: " << c.getSockFd() << "\naddress: " << inet_ntoa(c.getAddr().sin_addr) << "\n";

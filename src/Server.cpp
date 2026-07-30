@@ -19,17 +19,13 @@ Server& Server::operator=( Server const & other ) {
 
 Server::~Server( void ) {}
 
-void	Server::readBuffer( int fd ) {
+int	Server::readBuffer( int fd ) {
 	char	tmp[512];
 	int		bytes = recv(fd, tmp, 512, 0);
 	if (bytes < 0) {
 		throw NetworkError();
 	}
-	else if (bytes == 0) {
-		// DHN
-		return ;
-	}
-	else {
+	else if (bytes > 0) {
 		std::string buffer = _clients[fd].getRecvBuffer();
 		buffer.append(tmp, bytes);
 		size_t pos;
@@ -43,8 +39,11 @@ void	Server::readBuffer( int fd ) {
 				Dispatcher dispatcher(*this);
 				dispatcher.dispatch(_clients[fd], msg);
 		}
+		if (_clients[fd].getQuitting())
+			return (0);
 		_clients[fd].setRecvBuffer(buffer);
 	}
+	return (bytes);
 }
 
 void	Server::addNewClient( std::list<pollfd>& pfds ) {
@@ -82,7 +81,8 @@ void	Server::run( void ) {
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(_port);
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, (void *)1, sizeof(SO_REUSEADDR));
+	int opt = 1;
+	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(SO_REUSEADDR));
 	if (bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
 		throw NetworkError();
 	if (listen(_listenSock_fd, 5) == -1)
@@ -105,7 +105,10 @@ void	Server::run( void ) {
 			}
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
 				if (it->revents & POLLIN)
-					readBuffer(it->fd);
+					if (readBuffer(it->fd) <= 0) {
+						disconnectClient(pfds, *it);
+						break ;
+					}
 				if (it->revents & POLLOUT) {
 					Client& c = _clients[it->fd];
 					std::string& buf = c.getSendBuffer();
@@ -125,6 +128,7 @@ void	Server::run( void ) {
 				if (it->revents & POLLHUP) {
 					std::cout << "POLLHUP" << std::endl;
 					disconnectClient(pfds, *it);
+					break ;
 				}
 			}
 			i++;

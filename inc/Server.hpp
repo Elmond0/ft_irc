@@ -43,7 +43,7 @@ class Server
 
 		void	addNewClient( std::list<pollfd>& fds );
 		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
-		void	readBuffer( int fd );
+		int		readBuffer( int fd );
 		void	sendBuffer( int fd, const std::string& msg );
 
 	public:
