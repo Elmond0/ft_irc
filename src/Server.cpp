@@ -82,7 +82,7 @@ void	Server::run( void ) {
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(_port);
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, (void *)1, sizeof(SO_REUSEADDR));
+	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, NULL, sizeof(SO_REUSEADDR)); // TODO VOID*(1)
 	if (bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
 		throw NetworkError();
 	if (listen(_listenSock_fd, 5) == -1)
@@ -91,8 +91,7 @@ void	Server::run( void ) {
 	pollfd	serverPollfd;
 	serverPollfd.fd = _listenSock_fd;
 	serverPollfd.events = POLLIN;
-	pfds.push_back(serverPollfd);
-	//std::cout << "Server has been deployed. 3nj0y" << std::endl;
+	pfds.push_back(serverPollfd); // TODO orse da pulire? still reach
 	while (true)
 	{
 		int i = 0;
