@@ -102,7 +102,7 @@ USER [username] : [realname]
 Usage: Channels and messages
 
 ```
-JOIN #[channel]privmsg #[channel] : [your msg]
+JOIN #[channel]PRIVMSG #[channel] : [your msg]PRIVMSG [username] : [your msg]MODE #[channel] +[activate mode] OR -[deactivate mode] [password]
 ```
 
 ## Resources

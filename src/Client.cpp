@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: miricci <miricci@student.42firenze.it>     +#+  +:+       +#+        */
+/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 17:33:24 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/23 17:27:50 by miricci          ###   ########.fr       */
+/*   Updated: 2026/07/30 15:13:31 by giomastr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,10 @@ Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._
 Client& Client::operator=( Client const & other ) {
 	if (this != &other) {
 		_sock_fd = other._sock_fd;
+		_addr = other._addr; // added
+		_isOp = other._isOp; // added
+		_isChanOp = other._isChanOp; // added
+
 		_nickname = other._nickname;
 		_username = other._username;
 		_realname = other._realname;

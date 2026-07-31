@@ -4,3 +4,15 @@ address sbagliato 0.0.0.0 vs 10.12.6.3 su porta 6667
 errore in input port passw - should be set at the beginning as arg not hardcoded within the code
 pulizia dei socket del server manuale per evitare errori in caso di chiusura  riapertura veloce del server
 invio da comandi non da pollput
+
+Fase 1 — Registrazione (PASS/NICK/USER) [OK]
+Fase 2 — Secondo client, nickname duplicato [ok]
+Fase 3 — JOIN e creazione canale [OK]
+Fase 4 — PRIVMSG di canale [OK]
+Fase 5 — PRIVMSG privato [ok]
+Fase 6 — TOPIC [OK]
+Fase 7 — MODE (operatore) [ok]
+Fase 8 — INVITE [KO]
+Fase 9 — KICK [OK]
+Fase 10 — PART [ok?]
+Fase 11 — Disconnessione brusca [ok?]

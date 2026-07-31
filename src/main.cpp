@@ -8,7 +8,7 @@ void	parse_args(int argc, char **argv, int& port, std::string& password) {
 	iss >> port;	iss >> leftover;
 	if (leftover)
 		throw std::invalid_argument("Usage: ./ircserv <port> <password>");
-	password = argv[2];	
+	password = argv[2];
 }
 
 int main(int argc, char **argv)
