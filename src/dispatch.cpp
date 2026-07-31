@@ -79,8 +79,7 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
 		if (!client.isRegistered() && _preReg.find(msg.command) == _preReg.end())
 			throw NotRegisteredException();
 
-		std::map<std::string, ACommand*>::const_iterator it =
-			_commands.find(msg.command);
+		std::map<std::string, ACommand*>::const_iterator it = _commands.find(msg.command);
 		if (it == _commands.end())
 			throw UnknownCommandException();
 
@@ -89,21 +88,17 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
 	catch (const ACommand::NumericError& e)
 	{
 		std::ostringstream oss;
-		oss << ":" << SERVER_NAME << " " << e.code() << " "
-			<< nickOrStar(client) << " " << e.text();
+		oss << ":" << SERVER_NAME << " " << e.code() << " " << nickOrStar(client) << " " << e.text();
 		client.queueMessage(oss.str());
 	}
 	catch (const NotRegisteredException& e)
 	{
-		std::string reply = std::string(":") + SERVER_NAME + " 451 " +
-			nickOrStar(client) + " :" + e.what();
+		std::string reply = std::string(":") + SERVER_NAME + " 451 " + nickOrStar(client) + " :" + e.what();
 		client.queueMessage(reply);
 	}
 	catch (const UnknownCommandException& e)
 	{
-		std::string reply = std::string(":") + SERVER_NAME + " 421 " +
-			nickOrStar(client) + " " + msg.command +
-			" :" + e.what();
+		std::string reply = std::string(":") + SERVER_NAME + " 421 " + nickOrStar(client) + " " + msg.command + " :" + e.what();
 		client.queueMessage(reply);
 	}
 }

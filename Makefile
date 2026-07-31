@@ -16,7 +16,7 @@ CMD_DIR = $(SRC_DIR)/cmd
 
 SRCS = $(SRC_DIR)/main.cpp $(SRC_DIR)/Server.cpp $(SRC_DIR)/Client.cpp \
        $(SRC_DIR)/Channel.cpp $(SRC_DIR)/Parser.cpp $(SRC_DIR)/dispatch.cpp \
-       $(SRC_DIR)/CommandUtils.cpp
+       $(SRC_DIR)/CommandUtils.cpp $(SRC_DIR)/Bot.cpp
 
 CMDS = $(CMD_DIR)/ACommand.cpp \
        $(CMD_DIR)/PASS.cpp $(CMD_DIR)/NICK.cpp $(CMD_DIR)/USER.cpp \

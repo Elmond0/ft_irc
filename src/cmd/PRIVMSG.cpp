@@ -1,5 +1,6 @@
 #include "../../inc/PRIVMSG.hpp"
 #include "../../inc/CommandUtils.hpp"
+#include "../../inc/Bot.hpp"
 
 PRIVMSG::PRIVMSG(Server &server) : ACommand(server) {}
 
@@ -23,11 +24,16 @@ void PRIVMSG::execute(Client &client, const IrcMessage &msg)
 		if (!chan->hasClient(&client))
 			throw NumericError(404, target + " :Cannot send to channel");
 		chan->broadcast(line, &client);
+		Bot::onMessage(_server, client, chan, msg.trailing);
 		return;
 	}
 
 	Client* dest = findClientByNick(_server, target);
 	if (!dest)
+	{
+		if (Bot::isBotNick(target))
+			return Bot::onMessage(_server, client, NULL, msg.trailing);
 		throw NumericError(401, target + " :No such nick/channel");
+	}
 	dest->queueMessage(line);
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: giomastr <giomastr@student.42.fr>          +#+  +:+       +#+        */
+/*   By: miricci <miricci@student.42firenze.it>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 17:33:24 by giomastr          #+#    #+#             */
-/*   Updated: 2026/07/30 15:13:31 by giomastr         ###   ########.fr       */
+/*   Updated: 2026/07/31 15:31:19 by miricci          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@ Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._
 Client& Client::operator=( Client const & other ) {
 	if (this != &other) {
 		_sock_fd = other._sock_fd;
-		_addr = other._addr; // added
-		_isOp = other._isOp; // added
-		_isChanOp = other._isChanOp; // added
+		_addr = other._addr; // added - giorgia
+		_isOp = other._isOp; // added - giorgia
+		_isChanOp = other._isChanOp; // added - giorgia
 
 		_nickname = other._nickname;
 		_username = other._username;
@@ -32,6 +32,7 @@ Client& Client::operator=( Client const & other ) {
 		_passOk = other._passOk;
 		_nickOk = other._nickOk;
 		_userOk = other._userOk;
+		_isQuitting = other._isQuitting; // aggiunto da "Elia"
 		_sendBuffer = other._sendBuffer;
 		_recvBuffer = other._recvBuffer;
 	}
