@@ -81,8 +81,7 @@ void	Server::run( void ) {
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(_port);
 	serverAddress.sin_addr.s_addr = INADDR_ANY;
-	int opt = 1;
-	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(SO_REUSEADDR));
+	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, (void *)1, sizeof(SO_REUSEADDR));
 	if (bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
 		throw NetworkError();
 	if (listen(_listenSock_fd, 5) == -1)
@@ -110,15 +109,7 @@ void	Server::run( void ) {
 						break ;
 					}
 				if (it->revents & POLLOUT) {
-					Client& c = _clients[it->fd];
-					std::string& buf = c.getSendBuffer();
-					if (!buf.empty()) {
-						ssize_t n = send(it->fd, buf.c_str(), buf.size(), MSG_NOSIGNAL);
-						if (n > 0)
-							buf.erase(0, n);
-						else if (n < 0)
-							buf.clear();
-					}
+					sendBuffer
 				}
 				if (it->revents & POLLERR) {
 					disconnectClient(pfds, *it);
@@ -144,19 +135,21 @@ std::map<int, Client>&	Server::getClients( void ) { return _clients; }
 
 std::map<std::string, Channel>&	Server::getChannels( void ) { return _channels; }
 
-void	sendBuffer(int fd, std::string data) {
+ssize_t	sendBuffer( int fd ) {
     size_t bytesSent = 0;
-    size_t len = data.size();
-
+	std::string& buffer = _clients[fd].getSendBuffer();
+    size_t len = buffer.size();
     while (bytesSent < len) {
-        ssize_t n = send(fd, data.c_str() + bytesSent, len - bytesSent, 0);
+        ssize_t n = send(fd, buffer.c_str() + bytesSent, len - bytesSent, 0);
         if (n < 0) {
             throw Server::NetworkError();
-            break ;
         } else if (n == 0)
 			break ;
         bytesSent += n;
     }
+	if (bytesSent > 0)
+		buffer.erase(0, bytesSent);
+	return (bytesSent)
 }
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }
