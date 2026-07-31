@@ -1,0 +1,230 @@
+================================================================================
+FIX DA APPLICARE A Client.cpp - LOOP DI DISCONNESSIONE DOPO IL PRIMO QUIT
+================================================================================
+
+File da modificare: src/Client.cpp
+Nessuna modifica necessaria a inc/Client.hpp
+Verificato il 31/07/2026 riproducendo il bug dal vivo
+
+
+--------------------------------------------------------------------------------
+1. IL SINTOMO
+--------------------------------------------------------------------------------
+
+Dopo che un client fa QUIT, ogni client che si collega dopo viene buttato fuori
+subito dopo il PRIMO comando che manda, qualunque esso sia. Il client riprova a
+collegarsi, viene buttato fuori di nuovo, e va avanti all'infinito.
+
+Nel log del server si vede questo, in loop:
+
+	command: QUIT | trailing: Leaving
+	sockFd 4 closed.
+	CLIENT
+	socket fd: 4
+	command: CAP | param[0]: LS | param[1]: 302
+	sockFd 4 closed.
+	CLIENT
+	socket fd: 4
+	command: CAP | param[0]: LS | param[1]: 302
+	sockFd 4 closed.
+
+CAP compare solo perche' e' il primo comando che manda un client IRC moderno.
+Il bug non c'entra niente con CAP: succede identico con NICK, con PASS o con
+qualsiasi altra cosa.
+
+
+--------------------------------------------------------------------------------
+2. LA CAUSA
+--------------------------------------------------------------------------------
+
+Il campo _isQuitting non e' inizializzato nel costruttore di default e non viene
+copiato ne' dal costruttore di copia ne' da operator=.
+
+Situazione attuale in src/Client.cpp:
+
+	riga 15  costruttore di default   -> _isQuitting NON inizializzato (garbage)
+	riga 17  costruttore completo     -> _isQuitting(false)  OK
+	riga 19  costruttore di copia     -> _isQuitting NON copiato
+	riga 21  operator=                -> _isQuitting NON copiato
+
+Il problema esplode per come src/Server.cpp:56 registra un nuovo client:
+
+	_clients[newClient.fd] = Client(newClient.fd, clientAddress);
+
+Questa riga fa due cose in sequenza:
+
+	a) std::map::operator[] costruisce un Client con il COSTRUTTORE DI DEFAULT
+	   dentro un nodo appena allocato. _isQuitting contiene garbage.
+
+	b) operator= copia i campi dal Client temporaneo, ma SALTA _isQuitting,
+	   quindi il garbage del punto (a) sopravvive.
+
+Quando un client fa QUIT il suo _isQuitting diventa true, poi disconnectClient
+fa _clients.erase(fd) e il nodo della map viene liberato. Il client successivo
+che si collega ottiene lo stesso fd dal sistema operativo, e l'allocatore gli
+ridA' quasi sempre LO STESSO BLOCCO DI MEMORIA appena liberato: dentro c'e'
+ancora il true dell'utente che se ne era andato.
+
+A quel punto scatta src/Server.cpp:42-43:
+
+	if (_clients[fd].getQuitting())
+		return (0);
+
+readBuffer ritorna 0, il loop di run() interpreta 0 come "connessione chiusa" e
+chiama disconnectClient. Il client nuovo viene buttato fuori senza aver fatto
+niente di male.
+
+NOTA IMPORTANTE: sotto valgrind il bug SPARISCE, perche' valgrind azzera la
+memoria che restituisce. Non e' una prova che il codice sia corretto, e' solo
+valgrind che maschera il problema.
+
+
+--------------------------------------------------------------------------------
+3. FIX MINIMO - 3 RIGHE, RISOLVE IL LOOP
+--------------------------------------------------------------------------------
+
+Se si vuole toccare il meno possibile, bastano queste tre aggiunte.
+
+
+3.1) src/Client.cpp riga 15 - costruttore di default
+
+PRIMA:
+
+	Client::Client( void ) : _passOk(false), _nickOk(false), _userOk(false) {}
+
+DOPO:
+
+	Client::Client( void ) : _passOk(false), _nickOk(false), _userOk(false), _isQuitting(false) {}
+
+
+3.2) src/Client.cpp riga 19 - costruttore di copia
+
+PRIMA:
+
+	Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._isOp), _isChanOp(other._isChanOp), _nickname(other._nickname), _username(other._username), _realname(other._realname), _passOk(other._passOk), _nickOk(other._nickOk), _userOk(other._userOk) {}
+
+DOPO:
+
+	Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._isOp), _isChanOp(other._isChanOp), _nickname(other._nickname), _username(other._username), _realname(other._realname), _passOk(other._passOk), _nickOk(other._nickOk), _userOk(other._userOk), _isQuitting(other._isQuitting) {}
+
+
+3.3) src/Client.cpp operator= - aggiungere una riga dentro l'if
+
+PRIMA:
+
+		_passOk = other._passOk;
+		_nickOk = other._nickOk;
+		_userOk = other._userOk;
+		_sendBuffer = other._sendBuffer;
+
+DOPO:
+
+		_passOk = other._passOk;
+		_nickOk = other._nickOk;
+		_userOk = other._userOk;
+		_isQuitting = other._isQuitting;
+		_sendBuffer = other._sendBuffer;
+
+
+--------------------------------------------------------------------------------
+4. FIX COMPLETO - CONSIGLIATO
+--------------------------------------------------------------------------------
+
+_isQuitting non e' l'unico campo dimenticato: e' solo l'unico che al momento fa
+danni visibili. Gli altri campi mancanti causano altri problemi gia' osservati,
+in particolare l'indirizzo IP sbagliato stampato a ogni connessione
+("address: 0.0.0.0" oppure valori casuali) perche' _addr non viene mai copiato.
+
+Riepilogo di cosa manca oggi:
+
+	costruttore di default   mancano  _sock_fd, _addr, _isOp, _isChanOp, _isQuitting
+	costruttore di copia     mancano  _addr, _hostname, _isQuitting, _sendBuffer, _recvBuffer
+	operator=                mancano  _addr, _isOp, _isChanOp, _isQuitting
+
+Sostituire le righe 15-35 di src/Client.cpp con questo blocco:
+
+	Client::Client( void ) : _sock_fd(-1), _addr(), _isOp(false), _isChanOp(false), _passOk(false), _nickOk(false), _userOk(false), _isQuitting(false) {}
+
+	Client::Client( int sock_fd, sockaddr_in clientAddress ) : _sock_fd(sock_fd), _addr(clientAddress), _isOp(false), _isChanOp(false), _passOk(false), _nickOk(false), _userOk(false), _isQuitting(false) {}
+
+	Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _addr(other._addr), _isOp(other._isOp), _isChanOp(other._isChanOp), _nickname(other._nickname), _username(other._username), _hostname(other._hostname), _realname(other._realname), _passOk(other._passOk), _nickOk(other._nickOk), _userOk(other._userOk), _isQuitting(other._isQuitting), _sendBuffer(other._sendBuffer), _recvBuffer(other._recvBuffer) {}
+
+	Client& Client::operator=( Client const & other ) {
+		if (this != &other) {
+			_sock_fd = other._sock_fd;
+			_addr = other._addr;
+			_isOp = other._isOp;
+			_isChanOp = other._isChanOp;
+			_nickname = other._nickname;
+			_username = other._username;
+			_hostname = other._hostname;
+			_realname = other._realname;
+			_passOk = other._passOk;
+			_nickOk = other._nickOk;
+			_userOk = other._userOk;
+			_isQuitting = other._isQuitting;
+			_sendBuffer = other._sendBuffer;
+			_recvBuffer = other._recvBuffer;
+		}
+		return *this;
+	}
+
+Il costruttore completo (riga 17) e' gia' corretto, e' riportato solo per
+mantenere il blocco intero e non doverlo saltare.
+
+Due dettagli sul perche' e' scritto cosi':
+
+	- L'ordine dei campi nelle liste di inizializzazione segue l'ordine di
+	  DICHIARAZIONE in inc/Client.hpp. Va rispettato: si compila con -Werror e
+	  -Wall include -Wreorder, quindi un ordine diverso non compila.
+
+	- _addr() nel costruttore di default azzera la struct sockaddr_in
+	  (value-initialization, valida in C++98 su un POD). In alternativa si puo'
+	  fare memset(&_addr, 0, sizeof(_addr)); nel corpo del costruttore
+	  includendo <cstring>.
+
+
+--------------------------------------------------------------------------------
+5. COME VERIFICARE CHE IL FIX FUNZIONI
+--------------------------------------------------------------------------------
+
+Ricompilare e lanciare il server:
+
+	make re
+	./ircserv 6667 pass
+
+In un altro terminale, prima far registrare e uscire un client:
+
+	printf 'PASS pass\r\nNICK uno\r\nUSER u 0 * :U\r\nQUIT :Leaving\r\n' | nc 127.0.0.1 6667
+
+Poi collegarne un altro che manda un solo comando:
+
+	printf 'CAP LS 302\r\n' | nc -w 3 127.0.0.1 6667
+
+PRIMA DEL FIX: nel log del server compare "sockFd 4 closed." subito dopo la riga
+del comando CAP, e ripetendo il secondo comando succede ogni volta.
+
+DOPO IL FIX: il secondo client resta collegato per tutti e 3 i secondi di nc e
+il server non stampa "sockFd 4 closed." finche' non e' nc stesso a chiudere.
+
+Prova equivalente con un client vero: collegarsi con HexChat o irssi, fare
+/quit, poi ricollegarsi. Prima del fix la riconnessione entra in loop, dopo il
+fix funziona.
+
+
+--------------------------------------------------------------------------------
+6. NOTA SU UNA STRADA ALTERNATIVA CHE NON RISOLVE
+--------------------------------------------------------------------------------
+
+Si potrebbe pensare di aggirare il problema cambiando src/Server.cpp:56, per
+esempio usando insert al posto di operator[]. Non e' una buona idea:
+
+	- insert NON sovrascrive se la chiave esiste gia', quindi in caso di voce
+	  rimasta appesa il client nuovo erediterebbe l'oggetto vecchio INTERO,
+	  che e' peggio.
+
+	- il difetto vero sta nella Rule of Three di Client, non in come la si usa.
+	  Finche' copy ctor e operator= restano incompleti, lo stesso bug puo'
+	  ricomparire ovunque un Client venga copiato.
+
+Conviene sistemare Client.cpp e lasciare Server.cpp com'e'.

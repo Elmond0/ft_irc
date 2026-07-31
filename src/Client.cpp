@@ -21,6 +21,10 @@ Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._
 Client& Client::operator=( Client const & other ) {
 	if (this != &other) {
 		_sock_fd = other._sock_fd;
+		_addr = other._addr; // added - giorgia
+		_isOp = other._isOp; // added - giorgia
+		_isChanOp = other._isChanOp; // added - giorgia
+
 		_nickname = other._nickname;
 		_username = other._username;
 		_realname = other._realname;
@@ -28,11 +32,17 @@ Client& Client::operator=( Client const & other ) {
 		_passOk = other._passOk;
 		_nickOk = other._nickOk;
 		_userOk = other._userOk;
+		_isQuitting = other._isQuitting; // aggiunto da "Elia"
 		_sendBuffer = other._sendBuffer;
 		_recvBuffer = other._recvBuffer;
 	}
 	return *this;
 }
+// modifiche del 31/07/2026 a questa sola funzione:
+// _addr, _isOp, _isChanOp -> di giorgia, ripresi dal commit 6f31653 (branch origin/giorgia, mai mergiato)
+// _isQuitting -> aggiunto da "Elia"; il campo esisteva dal commit 4a3013c ma non veniva copiato,
+// cosi' ogni client che riusava l'fd di uno uscito con QUIT veniva disconnesso subito
+// i tre costruttori sopra non sono stati toccati
 
 Client::~Client( void ) {}
 
