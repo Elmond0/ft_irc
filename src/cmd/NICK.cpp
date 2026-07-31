@@ -1,5 +1,6 @@
 #include "../../inc/NICK.hpp"
 #include "../../inc/CommandUtils.hpp"
+#include "../../inc/Bot.hpp"
 #include <cstddef>
 #include <map>
 #include <set>
@@ -41,6 +42,9 @@ void NICK::execute(Client &client, const IrcMessage &msg)
 
 	if (!isValidNick(newNick))
 		throw NumericError(432, newNick + " :Erroneous nickname");
+
+	if (Bot::isBotNick(newNick))
+		throw NumericError(433, newNick + " :Nickname is already in use");
 
 	std::map<int, Client> &clients = _server.getClients();
 
