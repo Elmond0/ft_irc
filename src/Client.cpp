@@ -38,11 +38,6 @@ Client& Client::operator=( Client const & other ) {
 	}
 	return *this;
 }
-// modifiche del 31/07/2026 a questa sola funzione:
-// _addr, _isOp, _isChanOp -> di giorgia, ripresi dal commit 6f31653 (branch origin/giorgia, mai mergiato)
-// _isQuitting -> aggiunto da "Elia"; il campo esisteva dal commit 4a3013c ma non veniva copiato,
-// cosi' ogni client che riusava l'fd di uno uscito con QUIT veniva disconnesso subito
-// i tre costruttori sopra non sono stati toccati
 
 Client::~Client( void ) {}
 
