@@ -28,7 +28,6 @@ Client& Client::operator=( Client const & other ) {
 		_nickname = other._nickname;
 		_username = other._username;
 		_realname = other._realname;
-		_hostname = other._hostname;
 		_passOk = other._passOk;
 		_nickOk = other._nickOk;
 		_userOk = other._userOk;
@@ -64,8 +63,6 @@ void	Client::setUsername( const std::string& username ) { _username = username; 
 
 void	Client::setRealname( const std::string& realname ) { _realname = realname; }
 
-void	Client::setHostname( const std::string& hostname ) { _hostname = hostname; }
-
 bool	Client::isPassOk( void ) const { return _passOk; } // getter necessario
 
 void	Client::setPassOk( bool ok ) { _passOk = ok; }
@@ -80,13 +77,11 @@ bool	Client::isRegistered( void ) const { return _passOk && _nickOk && _userOk; 
 
 // message handling
 std::string Client::getPrefix() const {
-	std::string host;
-
-	if(_hostname.empty())
-		host = "localhost";
-	else
-		host = _hostname;
-	return (_nickname + "!" + _username + "@" + host);
+	std::string addr;
+	addr = inet_ntoa(_addr.sin_addr);
+	if(addr == "127.0.0.1")
+		addr = "localhost";
+	return (_nickname + "!" + _username + "@" + addr);
 }
 
 //buffer
