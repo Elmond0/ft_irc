@@ -19,9 +19,9 @@ Server& Server::operator=( Server const & other ) {
 
 Server::~Server( void ) {}
 
-int	Server::readBuffer( int fd ) {
+ssize_t	Server::readBuffer( int fd ) {
 	char	tmp[512];
-	int		bytes = recv(fd, tmp, 512, 0);
+	ssize_t		bytes = recv(fd, tmp, 512, 0);
 	if (bytes < 0) {
 		throw NetworkError();
 	}
@@ -40,40 +40,59 @@ int	Server::readBuffer( int fd ) {
 				dispatcher.dispatch(_clients[fd], msg);
 		}
 		if (_clients[fd].getQuitting())
-			return (0);
+			return (disconnectClient(fd), 0);
 		_clients[fd].setRecvBuffer(buffer);
 	}
 	return (bytes);
 }
 
-void	Server::addNewClient( std::list<pollfd>& pfds ) {
+ssize_t	Server::sendBuffer( int fd ) {
+    size_t bytesSent = 0;
+	std::string& buffer = _clients[fd].getSendBuffer();
+    size_t len = buffer.size();
+    while (bytesSent < len) {
+        ssize_t n = send(fd, buffer.c_str() + bytesSent, len - bytesSent, 0);
+        if (n < 0) {
+            return (n);
+        } else if (n == 0)
+			break ;
+        bytesSent += n;
+    }
+	if (bytesSent > 0)
+		buffer.erase(0, bytesSent);
+	return (bytesSent);
+}
+
+void	Server::addNewClient() {
 	sockaddr_in	clientAddress;
 	socklen_t len = sizeof(clientAddress);
 	pollfd newClient;
 	newClient.fd = accept(_listenSock_fd, (struct sockaddr*)&clientAddress, &len);
+	if (newClient.fd == -1)
+		throw NetworkError();
+	if (fcntl(_listenSock_fd, F_SETFL, O_NONBLOCK) == -1)
+		throw NetworkError();
 	newClient.events = POLLIN | POLLOUT;
-	pfds.push_back(newClient);
+	_pfds.push_back(newClient);
 	_clients[newClient.fd] = Client(newClient.fd, clientAddress);
 	std::cout << _clients[newClient.fd] << std::endl;
 }
 
-void	Server::disconnectClient( std::list<pollfd>& pfds, pollfd cl) {
-	std::cout << "sockFd " << cl.fd << " closed." << std::endl;
-	if (close(cl.fd) == -1)
+void	Server::disconnectClient( int fd ) {
+	std::cout << "sockFd " << fd << " closed." << std::endl;
+	if (close(fd) == -1)
 		throw NetworkError();
-	_clients.erase(cl.fd);
-	for (std::list<pollfd>::iterator it = pfds.begin(); it != pfds.end(); ++it) {
-		if ((*it).fd == cl.fd) {
-			pfds.erase(it);
+	if (_clients.erase(fd) == 0)
+		std::cout << "Client non trovato" << std::endl;
+	for (std::list<pollfd>::iterator it = _pfds.begin(); it != _pfds.end(); ++it) {
+		if ((*it).fd == fd) {
+			_pfds.erase(it);
 			return ;
 		}
 	}
 }
 
 void	Server::run( void ) {
-	//if (_password != IRCPASS )
-	//	throw WrongPassword();
-
 	_listenSock_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_listenSock_fd == -1)
 		throw std::exception();
@@ -85,44 +104,45 @@ void	Server::run( void ) {
 	setsockopt(_listenSock_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(SO_REUSEADDR));
 	if (bind(_listenSock_fd, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) == -1)
 		throw NetworkError();
+	if (fcntl(_listenSock_fd, F_SETFL, O_NONBLOCK) == -1)
+		throw NetworkError();
 	if (listen(_listenSock_fd, 5) == -1)
 		throw NetworkError();
-	std::list<pollfd> pfds;
 	pollfd	serverPollfd;
 	serverPollfd.fd = _listenSock_fd;
 	serverPollfd.events = POLLIN;
-	pfds.push_back(serverPollfd);
+	_pfds.push_back(serverPollfd);
 	while (true)
 	{
 		int i = 0;
-		std::vector<pollfd> vfds(pfds.begin(), pfds.end());
+		std::vector<pollfd> vfds(_pfds.begin(), _pfds.end());
 		int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
 		if (fdsNbr == -1)
 			throw std::exception();
 		else {
 			if (vfds[0].revents == POLLIN) {
-				addNewClient(pfds);
+				addNewClient();
 			}
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
 				if (it->revents & POLLIN)
 					if (readBuffer(it->fd) < 0) {
-						disconnectClient(pfds, *it);
-						break ;
+						disconnectClient(it->fd);
+						throw NetworkError();
 					}
 				if (it->revents & POLLOUT) {
 					if (sendBuffer(it->fd) < 0) {
-						disconnectClient(pfds, *it);
-						break ;
+						disconnectClient(it->fd);
+						throw NetworkError();
 					}
 				}
 				if (it->revents & POLLERR) {
-					disconnectClient(pfds, *it);
+					disconnectClient(it->fd);
 					std::cout << "POLLERR" << std::endl;
 					throw NetworkError();
 				}
 				if (it->revents & POLLHUP) {
 					std::cout << "POLLHUP" << std::endl;
-					disconnectClient(pfds, *it);
+					disconnectClient(it->fd);
 					break ;
 				}
 			}
@@ -138,23 +158,6 @@ const std::string&	Server::getPassword( void ) const { return _password; }
 std::map<int, Client>&	Server::getClients( void ) { return _clients; }
 
 std::map<std::string, Channel>&	Server::getChannels( void ) { return _channels; }
-
-ssize_t	Server::sendBuffer( int fd ) {
-    size_t bytesSent = 0;
-	std::string& buffer = _clients[fd].getSendBuffer();
-    size_t len = buffer.size();
-    while (bytesSent < len) {
-        ssize_t n = send(fd, buffer.c_str() + bytesSent, len - bytesSent, 0);
-        if (n < 0) {
-            throw Server::NetworkError();
-        } else if (n == 0)
-			break ;
-        bytesSent += n;
-    }
-	if (bytesSent > 0)
-		buffer.erase(0, bytesSent);
-	return (bytesSent);
-}
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }
 

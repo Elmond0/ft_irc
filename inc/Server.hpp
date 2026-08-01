@@ -25,6 +25,7 @@
 # include <poll.h>
 # include <cerrno>
 # include <unistd.h>
+# include <fcntl.h>
 
 # include "Client.hpp"
 # include "Channel.hpp"
@@ -38,13 +39,14 @@ class Server
 		sockaddr_in serverAddress;
 		int	_port;
 		std::map<int, Client> _clients;
+		std::list<pollfd>		_pfds;
 		std::map<std::string, Channel> _channels;
 		std::string _password;
 
-		void	addNewClient( std::list<pollfd>& fds );
-		void	disconnectClient( std::list<pollfd>& fds, pollfd cl );
-		int		readBuffer( int fd );
-		ssize_t	sendBuffer( int fd );
+		void	addNewClient( void );
+		void	disconnectClient( int fd );
+		ssize_t		readBuffer( int fd );
+		ssize_t		sendBuffer( int fd );
 
 	public:
 		Server( void );
