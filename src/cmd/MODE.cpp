@@ -51,10 +51,14 @@ bool MODE::applyOneMode(Client& client, Channel& chan, char c, bool adding, cons
 	switch (c)
 	{
 		case 'i':
+			if (chan.isInviteOnly() == adding)
+				return false;
 			chan.setInviteOnly(adding);
 			return true;
 
 		case 't':
+			if (chan.isTopicRestricted() == adding)
+				return false;
 			chan.setTopicRestricted(adding);
 			return true;
 
@@ -131,6 +135,14 @@ void MODE::applyModes(Client& client, Channel& chan, const IrcMessage& msg)
 	const std::string& modes = msg.params[1];
 	std::size_t argIdx = 2;
 	bool adding = true;
+
+	if (modes.empty())
+		return;
+	if (modes[0] != '+' && modes[0] != '-')
+	{
+		numeric(client, 472, std::string(1, modes[0]) + " :is unknown mode char to me");
+		return;
+	}
 
 	std::string appliedModes;
 	std::string appliedArgs;
