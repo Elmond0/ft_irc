@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+volatile sig_atomic_t g_isRunning = false;
+
 void	parse_args(int argc, char **argv, int& port, std::string& password) {
 	if (argc != 3)
 		throw std::invalid_argument("Usage: ./ircserv <port> <password>");
@@ -15,14 +17,15 @@ int main(int argc, char **argv)
 {
 	int	port;
 	std::string password;
+	parse_args(argc, argv, port, password);
+    Server server(port, password);
 	try
 	{
-		parse_args(argc, argv, port, password);
-    	Server server(port, password);
 	    server.run();
 	}
 	catch(const std::exception& e)
 	{
+		server.shutdown();
 		std::cerr << "ERROR: " << e.what() << '\n';
 	}
     return 0;

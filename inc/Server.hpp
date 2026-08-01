@@ -26,6 +26,7 @@
 # include <cerrno>
 # include <unistd.h>
 # include <fcntl.h>
+# include <signal.h>
 
 # include "Client.hpp"
 # include "Channel.hpp"
@@ -43,30 +44,26 @@ class Server
 		std::map<std::string, Channel> _channels;
 		std::string _password;
 
-		void	addNewClient( void );
-		void	disconnectClient( int fd );
+		void		addNewClient( void );
+		void		disconnectClient( int fd );
+		void		disconnectAll( void );
 		ssize_t		readBuffer( int fd );
 		ssize_t		sendBuffer( int fd );
 
 	public:
 		Server( void );
-		Server( int port, std::string );
+		Server( int port, std::string password );
 		Server( Server const & other );
 		Server& operator=( Server const & other );
 		~Server( void );
 
 		void	run( void );
+		void	shutdown( void );
 
 		// interfaccia per i comandi - @elia
 		const std::string&				getPassword( void ) const;
 		std::map<int, Client>&			getClients( void );
 		std::map<std::string, Channel>&	getChannels( void );
-
-		class WrongPassword : public std::exception
-		{
-			public:
-				const char *what() const throw();
-		};
 
 		class PortNotValid : public std::exception
 		{

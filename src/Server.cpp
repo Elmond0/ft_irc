@@ -2,6 +2,8 @@
 #include "Parser.hpp"
 #include "dispatch.hpp"
 
+extern volatile sig_atomic_t g_isRunning;
+
 Server::Server( void ) {}
 
 Server::Server( int port, std::string password ) : _port(port), _password(password) {}
@@ -92,10 +94,29 @@ void	Server::disconnectClient( int fd ) {
 	}
 }
 
+void	Server::disconnectAll( void ) {
+	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+		disconnectClient(it->second.getFd());
+}
+
+void setQuitting( int sig ) { 
+	(void)sig;
+	g_isRunning = false;
+}
+
 void	Server::run( void ) {
+	g_isRunning = true;
+	struct sigaction sa;
+    sa.sa_handler = setQuitting;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGINT, &sa, NULL) == -1)
+		throw NetworkError();
+	if (signal(SIGPIPE, SIG_IGN) != NULL)
+		throw NetworkError();
 	_listenSock_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_listenSock_fd == -1)
-		throw std::exception();
+		throw NetworkError();
 	memset(&serverAddress, 0, sizeof(serverAddress));
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_port = htons(_port);
@@ -112,9 +133,7 @@ void	Server::run( void ) {
 	serverPollfd.fd = _listenSock_fd;
 	serverPollfd.events = POLLIN;
 	_pfds.push_back(serverPollfd);
-	while (true)
-	{
-		int i = 0;
+	while (true) {
 		std::vector<pollfd> vfds(_pfds.begin(), _pfds.end());
 		int fdsNbr = poll(vfds.data(), vfds.size(), 1000);
 		if (fdsNbr == -1)
@@ -146,10 +165,18 @@ void	Server::run( void ) {
 					break ;
 				}
 			}
-			i++;
 		}
+		if (g_isRunning == false)
+			break ;
 	}
+	shutdown();
 }
+
+void	Server::shutdown( void ) {
+	disconnectAll();
+	disconnectClient(_listenSock_fd);
+}
+
 
 // interfaccia per i comandi - @elia
 
@@ -160,8 +187,6 @@ std::map<int, Client>&	Server::getClients( void ) { return _clients; }
 std::map<std::string, Channel>&	Server::getChannels( void ) { return _channels; }
 
 const char *Server::PortNotValid::what() const throw() { return "port not valid."; }
-
-const char *Server::WrongPassword::what() const throw() { return "password incorrect. Try again."; }
 
 const char *Server::Timeout::what() const throw() { return "timed out."; }
 
