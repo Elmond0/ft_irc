@@ -73,6 +73,8 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
 		return;
 	if (msg.command == "CAP")
 		return;
+	if (msg.command == "WHO")
+		return;
 
 	try
 	{

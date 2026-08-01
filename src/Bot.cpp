@@ -91,19 +91,30 @@ bool Bot::isBotNick(const std::string &nick)
 
 void Bot::onMessage(Server &server, Client &sender, Channel *chan, const std::string &text)
 {
-	if (text.empty() || text[0] != '!')
+	std::size_t start = text.find_first_not_of(" \t");
+
+	if (start == std::string::npos)
+		return;
+
+	std::string line = text.substr(start);
+
+	if (line[0] != '!')
 		return;
 	if (isBotNick(sender.getNickname()))
 		return;
 
-	std::string name = text;
+	std::string name = line;
 	std::string args;
-	std::size_t space = text.find(' ');
+	std::size_t space = line.find_first_of(" \t");
 
 	if (space != std::string::npos)
 	{
-		name = text.substr(0, space);
-		args = text.substr(space + 1);
+		name = line.substr(0, space);
+
+		std::size_t argStart = line.find_first_not_of(" \t", space);
+
+		if (argStart != std::string::npos)
+			args = line.substr(argStart);
 	}
 
 	for (std::size_t i = 0; g_commands[i].name; ++i)
