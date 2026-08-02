@@ -1,413 +1,413 @@
-==50857== Memcheck, a memory error detector
-==50857== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
-==50857== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
-==50857== Command: ./ircserv 6677 pass
-==50857== Parent PID: 50855
-==50857== 
-==50857== 
-==50857== Process terminating with default action of signal 15 (SIGTERM)
-==50857==    at 0x4C47CFB: recv (recv.c:28)
-==50857==    by 0x10D681: Server::readBuffer(int) (Server.cpp:26)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== HEAP SUMMARY:
-==50857==     in use at exit: 111,144 bytes in 176 blocks
-==50857==   total heap usage: 550,569 allocs, 550,393 frees, 45,641,640 bytes allocated
-==50857== 
-==50857== 15 bytes in 1 blocks are still reachable in loss record 1 of 30
-==50857==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x4BD045E: strdup (strdup.c:42)
-==50857==    by 0x4BFC888: tzset_internal (tzset.c:402)
-==50857==    by 0x4BFD28A: __tz_convert (tzset.c:577)
-==50857==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
-==50857==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
-==50857==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
-==50857==    by 0x120634: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 16 bytes in 1 blocks are still reachable in loss record 2 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x1157AB: std::__new_allocator<Client*>::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x115090: allocate (alloc_traits.h:140)
-==50857==    by 0x115090: std::_Vector_base<Client*, std::allocator<Client*> >::_M_allocate(unsigned long) (stl_vector.h:381)
-==50857==    by 0x114C9D: std::vector<Client*, std::allocator<Client*> >::_M_realloc_insert(__gnu_cxx::__normal_iterator<Client**, std::vector<Client*, std::allocator<Client*> > >, Client* const&) (vector.tcc:459)
-==50857==    by 0x11469B: std::vector<Client*, std::allocator<Client*> >::push_back(Client* const&) (stl_vector.h:1292)
-==50857==    by 0x113C50: Channel::addOperator(Client*) (Channel.cpp:124)
-==50857==    by 0x126C7D: MODE::applyOneMode(Client&, Channel&, char, bool, IrcMessage const&, unsigned long&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) (MODE.cpp:102)
-==50857==    by 0x127271: MODE::applyModes(Client&, Channel&, IrcMessage const&) (MODE.cpp:159)
-==50857==    by 0x127B3A: MODE::execute(Client&, IrcMessage const&) (MODE.cpp:211)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857== 
-==50857== 20 bytes in 1 blocks are still reachable in loss record 3 of 30
-==50857==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x4BFBEF8: __tzstring_len (tzset.c:98)
-==50857==    by 0x4BFDFDB: __tzfile_read (tzfile.c:413)
-==50857==    by 0x4BFC89B: tzset_internal (tzset.c:405)
-==50857==    by 0x4BFD28A: __tz_convert (tzset.c:577)
-==50857==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
-==50857==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
-==50857==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
-==50857==    by 0x120634: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857== 
-==50857== 24 bytes in 1 blocks are still reachable in loss record 4 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x111C38: std::__new_allocator<std::_List_node<pollfd> >::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x110C51: allocate (alloc_traits.h:140)
-==50857==    by 0x110C51: std::__cxx11::_List_base<pollfd, std::allocator<pollfd> >::_M_get_node() (stl_list.h:518)
-==50857==    by 0x110266: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_create_node(pollfd const&) (stl_list.h:692)
-==50857==    by 0x10FA5E: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_insert(std::_List_iterator<pollfd>, pollfd const&) (stl_list.h:1996)
-==50857==    by 0x10F0C7: std::__cxx11::list<pollfd, std::allocator<pollfd> >::push_back(pollfd const&) (stl_list.h:1306)
-==50857==    by 0x10E3E5: Server::run() (Server.cpp:135)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 31 bytes in 1 blocks are still reachable in loss record 5 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D863F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_assign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49D8B24: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112EA7: Client::setRecvBuffer(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (Client.cpp:102)
-==50857==    by 0x10D9A0: Server::readBuffer(int) (Server.cpp:46)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 31 bytes in 1 blocks are still reachable in loss record 6 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x128614: PING::execute(Client&, IrcMessage const&) (PING.cpp:16)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 33 bytes in 1 blocks are still reachable in loss record 7 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49D982A: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x11BB25: serverCreationDate() (CommandUtils.cpp:20)
-==50857==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
-==50857==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
-==50857==    by 0x120634: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 61 bytes in 3 blocks are still reachable in loss record 8 of 30
-==50857==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x4BFBE94: __tzstring_len (tzset.c:98)
-==50857==    by 0x4BFDFDB: __tzfile_read (tzfile.c:413)
-==50857==    by 0x4BFC89B: tzset_internal (tzset.c:405)
-==50857==    by 0x4BFD28A: __tz_convert (tzset.c:577)
-==50857==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
-==50857==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
-==50857==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
-==50857==    by 0x120634: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857== 
-==50857== 104 bytes in 13 blocks are still reachable in loss record 9 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x1157AB: std::__new_allocator<Client*>::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x115090: allocate (alloc_traits.h:140)
-==50857==    by 0x115090: std::_Vector_base<Client*, std::allocator<Client*> >::_M_allocate(unsigned long) (stl_vector.h:381)
-==50857==    by 0x114C9D: std::vector<Client*, std::allocator<Client*> >::_M_realloc_insert(__gnu_cxx::__normal_iterator<Client**, std::vector<Client*, std::allocator<Client*> > >, Client* const&) (vector.tcc:459)
-==50857==    by 0x11469B: std::vector<Client*, std::allocator<Client*> >::push_back(Client* const&) (stl_vector.h:1292)
-==50857==    by 0x113C50: Channel::addOperator(Client*) (Channel.cpp:124)
-==50857==    by 0x120FC9: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:74)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 160 bytes in 14 blocks are still reachable in loss record 10 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x1157AB: std::__new_allocator<Client*>::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x115090: allocate (alloc_traits.h:140)
-==50857==    by 0x115090: std::_Vector_base<Client*, std::allocator<Client*> >::_M_allocate(unsigned long) (stl_vector.h:381)
-==50857==    by 0x114C9D: std::vector<Client*, std::allocator<Client*> >::_M_realloc_insert(__gnu_cxx::__normal_iterator<Client**, std::vector<Client*, std::allocator<Client*> > >, Client* const&) (vector.tcc:459)
-==50857==    by 0x11469B: std::vector<Client*, std::allocator<Client*> >::push_back(Client* const&) (stl_vector.h:1292)
-==50857==    by 0x113B01: Channel::addClient(Client*) (Channel.cpp:96)
-==50857==    by 0x120F8E: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:71)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 264 bytes in 1 blocks are still reachable in loss record 11 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x1121F7: std::__new_allocator<std::_Rb_tree_node<std::pair<int const, Client> > >::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x111F13: allocate (alloc_traits.h:140)
-==50857==    by 0x111F13: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_get_node() (stl_tree.h:563)
-==50857==    by 0x111DF3: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_create_node(std::pair<int const, Client> const&) (stl_tree.h:585)
-==50857==    by 0x111BC5: std::_Rb_tree_node<std::pair<int const, Client> >* std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node::operator()<std::pair<int const, Client> >(std::pair<int const, Client> const&) const (stl_tree.h:531)
-==50857==    by 0x111618: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:1831)
-==50857==    by 0x110B9D: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:2284)
-==50857==    by 0x1101A5: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_tree.h:1147)
-==50857==    by 0x10F969: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::insert(std::_Rb_tree_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_map.h:914)
-==50857==    by 0x10EF72: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::operator[](int const&) (stl_map.h:517)
-==50857==    by 0x10DAC4: Server::sendBuffer(int) (Server.cpp:53)
-==50857==    by 0x10E63C: Server::run() (Server.cpp:152)
-==50857== 
-==50857== 336 bytes in 1 blocks are still reachable in loss record 12 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x111D9F: std::__new_allocator<pollfd>::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x111024: allocate (alloc_traits.h:140)
-==50857==    by 0x111024: std::_Vector_base<pollfd, std::allocator<pollfd> >::_M_allocate(unsigned long) (stl_vector.h:381)
-==50857==    by 0x110771: void std::vector<pollfd, std::allocator<pollfd> >::_M_range_initialize<std::_List_iterator<pollfd> >(std::_List_iterator<pollfd>, std::_List_iterator<pollfd>, std::forward_iterator_tag) (stl_vector.h:1692)
-==50857==    by 0x10FE1E: void std::vector<pollfd, std::allocator<pollfd> >::_M_initialize_dispatch<std::_List_iterator<pollfd> >(std::_List_iterator<pollfd>, std::_List_iterator<pollfd>, std::__false_type) (stl_vector.h:1658)
-==50857==    by 0x10F366: std::vector<pollfd, std::allocator<pollfd> >::vector<std::_List_iterator<pollfd> >(std::_List_iterator<pollfd>, std::_List_iterator<pollfd>, std::allocator<pollfd> const&) (stl_vector.h:722)
-==50857==    by 0x10E43D: Server::run() (Server.cpp:137)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 529 bytes in 1 blocks are still reachable in loss record 13 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
-==50857==    by 0x128993: PART::partOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (PART.cpp:21)
-==50857==    by 0x128D69: PART::execute(Client&, IrcMessage const&) (PART.cpp:44)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 553 bytes in 1 blocks are still reachable in loss record 14 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E1D: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:92)
-==50857==    by 0x11414B: Channel::broadcast(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Client*) const (Channel.cpp:232)
-==50857==    by 0x121040: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:76)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 561 bytes in 1 blocks are still reachable in loss record 15 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
-==50857==    by 0x120F61: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:67)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 585 bytes in 1 blocks are still reachable in loss record 16 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x1185AA: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:94)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 585 bytes in 1 blocks are still reachable in loss record 17 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
-==50857==    by 0x120E0C: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:57)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 593 bytes in 1 blocks are still reachable in loss record 18 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
-==50857==    by 0x12115A: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:81)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 601 bytes in 1 blocks are still reachable in loss record 19 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
-==50857==    by 0x120EB3: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:62)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 953 bytes in 5 blocks are still reachable in loss record 20 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E1D: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:92)
-==50857==    by 0x1185AA: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:94)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 984 bytes in 41 blocks are still reachable in loss record 21 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x111C38: std::__new_allocator<std::_List_node<pollfd> >::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x110C51: allocate (alloc_traits.h:140)
-==50857==    by 0x110C51: std::__cxx11::_List_base<pollfd, std::allocator<pollfd> >::_M_get_node() (stl_list.h:518)
-==50857==    by 0x110266: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_create_node(pollfd const&) (stl_list.h:692)
-==50857==    by 0x10FA5E: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_insert(std::_List_iterator<pollfd>, pollfd const&) (stl_list.h:1996)
-==50857==    by 0x10F0C7: std::__cxx11::list<pollfd, std::allocator<pollfd> >::push_back(pollfd const&) (stl_list.h:1306)
-==50857==    by 0x10DCB0: Server::addNewClient() (Server.cpp:78)
-==50857==    by 0x10E504: Server::run() (Server.cpp:143)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 1,024 bytes in 1 blocks are still reachable in loss record 22 of 30
-==50857==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x4BA1294: _IO_file_doallocate (filedoalloc.c:101)
-==50857==    by 0x4BB1603: _IO_doallocbuf (genops.c:347)
-==50857==    by 0x4BAF06F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
-==50857==    by 0x4BAFB8E: _IO_new_file_xsputn (fileops.c:1244)
-==50857==    by 0x4BAFB8E: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
-==50857==    by 0x4BA2AF1: fwrite (iofwrite.c:39)
-==50857==    by 0x49C6DC3: std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49C713B: std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112F2E: operator<<(std::ostream&, Client const&) (Client.cpp:118)
-==50857==    by 0x10DD46: Server::addNewClient() (Server.cpp:80)
-==50857==    by 0x10E504: Server::run() (Server.cpp:143)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 1,146 bytes in 2 blocks are still reachable in loss record 23 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x118984: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:104)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 1,638 bytes in 1 blocks are still reachable in loss record 24 of 30
-==50857==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x4BFD822: __tzfile_read (tzfile.c:280)
-==50857==    by 0x4BFC89B: tzset_internal (tzset.c:405)
-==50857==    by 0x4BFD28A: __tz_convert (tzset.c:577)
-==50857==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
-==50857==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
-==50857==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
-==50857==    by 0x120634: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 2,119 bytes in 7 blocks are still reachable in loss record 25 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11C6BD: sendWelcome(Client&) (CommandUtils.cpp:118)
-==50857==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
-==50857==    by 0x120634: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 3,472 bytes in 14 blocks are still reachable in loss record 26 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x1238AD: std::__new_allocator<std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x1234C5: allocate (alloc_traits.h:140)
-==50857==    by 0x1234C5: std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_get_node() (stl_tree.h:563)
-==50857==    by 0x122EC1: std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_create_node(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) (stl_tree.h:585)
-==50857==    by 0x122C53: std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >* std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_Alloc_node::operator()<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) const (stl_tree.h:531)
-==50857==    by 0x1228BC: std::_Rb_tree_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_insert_<std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_Alloc_node>(std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&, std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_Alloc_node&) (stl_tree.h:1831)
-==50857==    by 0x122288: std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_insert_unique(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) (stl_tree.h:2176)
-==50857==    by 0x121C92: std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, Channel, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::insert(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) (stl_map.h:836)
-==50857==    by 0x120D04: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:49)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857== 
-==50857== 3,646 bytes in 6 blocks are still reachable in loss record 27 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
-==50857==    by 0x1210D0: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:79)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 6,772 bytes in 12 blocks are still reachable in loss record 28 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
-==50857==    by 0x11414B: Channel::broadcast(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Client*) const (Channel.cpp:232)
-==50857==    by 0x121040: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:76)
-==50857==    by 0x1218CE: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
-==50857==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
-==50857==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
-==50857==    by 0x10E580: Server::run() (Server.cpp:147)
-==50857==    by 0x10D15E: main (main.cpp:24)
-==50857== 
-==50857== 10,560 bytes in 40 blocks are still reachable in loss record 29 of 30
-==50857==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x1121F7: std::__new_allocator<std::_Rb_tree_node<std::pair<int const, Client> > >::allocate(unsigned long, void const*) (new_allocator.h:151)
-==50857==    by 0x111F13: allocate (alloc_traits.h:140)
-==50857==    by 0x111F13: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_get_node() (stl_tree.h:563)
-==50857==    by 0x111DF3: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_create_node(std::pair<int const, Client> const&) (stl_tree.h:585)
-==50857==    by 0x111BC5: std::_Rb_tree_node<std::pair<int const, Client> >* std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node::operator()<std::pair<int const, Client> >(std::pair<int const, Client> const&) const (stl_tree.h:531)
-==50857==    by 0x111618: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:1831)
-==50857==    by 0x110B9D: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:2284)
-==50857==    by 0x1101A5: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_tree.h:1147)
-==50857==    by 0x10F969: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::insert(std::_Rb_tree_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_map.h:914)
-==50857==    by 0x10EF72: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::operator[](int const&) (stl_map.h:517)
-==50857==    by 0x10DCF3: Server::addNewClient() (Server.cpp:79)
-==50857==    by 0x10E504: Server::run() (Server.cpp:143)
-==50857== 
-==50857== 73,728 bytes in 1 blocks are still reachable in loss record 30 of 30
-==50857==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==50857==    by 0x492738E: ??? (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
-==50857==    by 0x400571E: call_init.part.0 (dl-init.c:74)
-==50857==    by 0x4005823: call_init (dl-init.c:120)
-==50857==    by 0x4005823: _dl_init (dl-init.c:121)
-==50857==    by 0x401F59F: ??? (in /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2)
-==50857==    by 0x2: ???
-==50857==    by 0x1FFEFFFE72: ???
-==50857==    by 0x1FFEFFFE7C: ???
-==50857==    by 0x1FFEFFFE81: ???
-==50857== 
-==50857== LEAK SUMMARY:
-==50857==    definitely lost: 0 bytes in 0 blocks
-==50857==    indirectly lost: 0 bytes in 0 blocks
-==50857==      possibly lost: 0 bytes in 0 blocks
-==50857==    still reachable: 111,144 bytes in 176 blocks
-==50857==         suppressed: 0 bytes in 0 blocks
-==50857== 
-==50857== For lists of detected and suppressed errors, rerun with: -s
-==50857== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==83830== Memcheck, a memory error detector
+==83830== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==83830== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==83830== Command: ./ircserv 6677 pass
+==83830== Parent PID: 83828
+==83830== 
+==83830== 
+==83830== Process terminating with default action of signal 15 (SIGTERM)
+==83830==    at 0x4C47CFB: recv (recv.c:28)
+==83830==    by 0x10D681: Server::readBuffer(int) (Server.cpp:26)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== HEAP SUMMARY:
+==83830==     in use at exit: 111,410 bytes in 176 blocks
+==83830==   total heap usage: 403,907 allocs, 403,731 frees, 35,801,046 bytes allocated
+==83830== 
+==83830== 15 bytes in 1 blocks are still reachable in loss record 1 of 30
+==83830==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x4BD045E: strdup (strdup.c:42)
+==83830==    by 0x4BFC888: tzset_internal (tzset.c:402)
+==83830==    by 0x4BFD28A: __tz_convert (tzset.c:577)
+==83830==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
+==83830==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
+==83830==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
+==83830==    by 0x120612: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 16 bytes in 1 blocks are still reachable in loss record 2 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x1157AB: std::__new_allocator<Client*>::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x115090: allocate (alloc_traits.h:140)
+==83830==    by 0x115090: std::_Vector_base<Client*, std::allocator<Client*> >::_M_allocate(unsigned long) (stl_vector.h:381)
+==83830==    by 0x114C9D: std::vector<Client*, std::allocator<Client*> >::_M_realloc_insert(__gnu_cxx::__normal_iterator<Client**, std::vector<Client*, std::allocator<Client*> > >, Client* const&) (vector.tcc:459)
+==83830==    by 0x11469B: std::vector<Client*, std::allocator<Client*> >::push_back(Client* const&) (stl_vector.h:1292)
+==83830==    by 0x113C50: Channel::addOperator(Client*) (Channel.cpp:124)
+==83830==    by 0x126C5B: MODE::applyOneMode(Client&, Channel&, char, bool, IrcMessage const&, unsigned long&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&) (MODE.cpp:102)
+==83830==    by 0x12724F: MODE::applyModes(Client&, Channel&, IrcMessage const&) (MODE.cpp:159)
+==83830==    by 0x127B18: MODE::execute(Client&, IrcMessage const&) (MODE.cpp:211)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830== 
+==83830== 20 bytes in 1 blocks are still reachable in loss record 3 of 30
+==83830==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x4BFBEF8: __tzstring_len (tzset.c:98)
+==83830==    by 0x4BFDFDB: __tzfile_read (tzfile.c:413)
+==83830==    by 0x4BFC89B: tzset_internal (tzset.c:405)
+==83830==    by 0x4BFD28A: __tz_convert (tzset.c:577)
+==83830==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
+==83830==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
+==83830==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
+==83830==    by 0x120612: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830== 
+==83830== 24 bytes in 1 blocks are still reachable in loss record 4 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x111C38: std::__new_allocator<std::_List_node<pollfd> >::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x110C51: allocate (alloc_traits.h:140)
+==83830==    by 0x110C51: std::__cxx11::_List_base<pollfd, std::allocator<pollfd> >::_M_get_node() (stl_list.h:518)
+==83830==    by 0x110266: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_create_node(pollfd const&) (stl_list.h:692)
+==83830==    by 0x10FA5E: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_insert(std::_List_iterator<pollfd>, pollfd const&) (stl_list.h:1996)
+==83830==    by 0x10F0C7: std::__cxx11::list<pollfd, std::allocator<pollfd> >::push_back(pollfd const&) (stl_list.h:1306)
+==83830==    by 0x10E3E5: Server::run() (Server.cpp:138)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 31 bytes in 1 blocks are still reachable in loss record 5 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D863F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_assign(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49D8B24: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::operator=(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112EA7: Client::setRecvBuffer(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >) (Client.cpp:102)
+==83830==    by 0x10D9A0: Server::readBuffer(int) (Server.cpp:49)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 31 bytes in 1 blocks are still reachable in loss record 6 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x1285F2: PING::execute(Client&, IrcMessage const&) (PING.cpp:16)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 33 bytes in 1 blocks are still reachable in loss record 7 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49D982A: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x11BB25: serverCreationDate() (CommandUtils.cpp:20)
+==83830==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
+==83830==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
+==83830==    by 0x120612: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 61 bytes in 3 blocks are still reachable in loss record 8 of 30
+==83830==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x4BFBE94: __tzstring_len (tzset.c:98)
+==83830==    by 0x4BFDFDB: __tzfile_read (tzfile.c:413)
+==83830==    by 0x4BFC89B: tzset_internal (tzset.c:405)
+==83830==    by 0x4BFD28A: __tz_convert (tzset.c:577)
+==83830==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
+==83830==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
+==83830==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
+==83830==    by 0x120612: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830== 
+==83830== 104 bytes in 13 blocks are still reachable in loss record 9 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x1157AB: std::__new_allocator<Client*>::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x115090: allocate (alloc_traits.h:140)
+==83830==    by 0x115090: std::_Vector_base<Client*, std::allocator<Client*> >::_M_allocate(unsigned long) (stl_vector.h:381)
+==83830==    by 0x114C9D: std::vector<Client*, std::allocator<Client*> >::_M_realloc_insert(__gnu_cxx::__normal_iterator<Client**, std::vector<Client*, std::allocator<Client*> > >, Client* const&) (vector.tcc:459)
+==83830==    by 0x11469B: std::vector<Client*, std::allocator<Client*> >::push_back(Client* const&) (stl_vector.h:1292)
+==83830==    by 0x113C50: Channel::addOperator(Client*) (Channel.cpp:124)
+==83830==    by 0x120FA7: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:74)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 160 bytes in 14 blocks are still reachable in loss record 10 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x1157AB: std::__new_allocator<Client*>::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x115090: allocate (alloc_traits.h:140)
+==83830==    by 0x115090: std::_Vector_base<Client*, std::allocator<Client*> >::_M_allocate(unsigned long) (stl_vector.h:381)
+==83830==    by 0x114C9D: std::vector<Client*, std::allocator<Client*> >::_M_realloc_insert(__gnu_cxx::__normal_iterator<Client**, std::vector<Client*, std::allocator<Client*> > >, Client* const&) (vector.tcc:459)
+==83830==    by 0x11469B: std::vector<Client*, std::allocator<Client*> >::push_back(Client* const&) (stl_vector.h:1292)
+==83830==    by 0x113B01: Channel::addClient(Client*) (Channel.cpp:96)
+==83830==    by 0x120F6C: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:71)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 264 bytes in 1 blocks are still reachable in loss record 11 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x1121F7: std::__new_allocator<std::_Rb_tree_node<std::pair<int const, Client> > >::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x111F13: allocate (alloc_traits.h:140)
+==83830==    by 0x111F13: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_get_node() (stl_tree.h:563)
+==83830==    by 0x111DF3: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_create_node(std::pair<int const, Client> const&) (stl_tree.h:585)
+==83830==    by 0x111BC5: std::_Rb_tree_node<std::pair<int const, Client> >* std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node::operator()<std::pair<int const, Client> >(std::pair<int const, Client> const&) const (stl_tree.h:531)
+==83830==    by 0x111618: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:1831)
+==83830==    by 0x110B9D: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:2284)
+==83830==    by 0x1101A5: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_tree.h:1147)
+==83830==    by 0x10F969: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::insert(std::_Rb_tree_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_map.h:914)
+==83830==    by 0x10EF72: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::operator[](int const&) (stl_map.h:517)
+==83830==    by 0x10DAC4: Server::sendBuffer(int) (Server.cpp:56)
+==83830==    by 0x10E63C: Server::run() (Server.cpp:155)
+==83830== 
+==83830== 336 bytes in 1 blocks are still reachable in loss record 12 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x111D9F: std::__new_allocator<pollfd>::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x111024: allocate (alloc_traits.h:140)
+==83830==    by 0x111024: std::_Vector_base<pollfd, std::allocator<pollfd> >::_M_allocate(unsigned long) (stl_vector.h:381)
+==83830==    by 0x110771: void std::vector<pollfd, std::allocator<pollfd> >::_M_range_initialize<std::_List_iterator<pollfd> >(std::_List_iterator<pollfd>, std::_List_iterator<pollfd>, std::forward_iterator_tag) (stl_vector.h:1692)
+==83830==    by 0x10FE1E: void std::vector<pollfd, std::allocator<pollfd> >::_M_initialize_dispatch<std::_List_iterator<pollfd> >(std::_List_iterator<pollfd>, std::_List_iterator<pollfd>, std::__false_type) (stl_vector.h:1658)
+==83830==    by 0x10F366: std::vector<pollfd, std::allocator<pollfd> >::vector<std::_List_iterator<pollfd> >(std::_List_iterator<pollfd>, std::_List_iterator<pollfd>, std::allocator<pollfd> const&) (stl_vector.h:722)
+==83830==    by 0x10E43D: Server::run() (Server.cpp:140)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 529 bytes in 1 blocks are still reachable in loss record 13 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
+==83830==    by 0x128971: PART::partOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (PART.cpp:21)
+==83830==    by 0x128D47: PART::execute(Client&, IrcMessage const&) (PART.cpp:44)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 553 bytes in 1 blocks are still reachable in loss record 14 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E1D: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:92)
+==83830==    by 0x11414B: Channel::broadcast(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Client*) const (Channel.cpp:232)
+==83830==    by 0x12101E: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:76)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 561 bytes in 1 blocks are still reachable in loss record 15 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
+==83830==    by 0x120F3F: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:67)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 585 bytes in 1 blocks are still reachable in loss record 16 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x1185AA: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:94)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 585 bytes in 1 blocks are still reachable in loss record 17 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
+==83830==    by 0x120DEA: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:57)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 593 bytes in 1 blocks are still reachable in loss record 18 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
+==83830==    by 0x121138: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:81)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 601 bytes in 1 blocks are still reachable in loss record 19 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
+==83830==    by 0x120E91: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:62)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 874 bytes in 4 blocks are still reachable in loss record 20 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E1D: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:92)
+==83830==    by 0x1185AA: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:94)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 984 bytes in 41 blocks are still reachable in loss record 21 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x111C38: std::__new_allocator<std::_List_node<pollfd> >::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x110C51: allocate (alloc_traits.h:140)
+==83830==    by 0x110C51: std::__cxx11::_List_base<pollfd, std::allocator<pollfd> >::_M_get_node() (stl_list.h:518)
+==83830==    by 0x110266: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_create_node(pollfd const&) (stl_list.h:692)
+==83830==    by 0x10FA5E: std::__cxx11::list<pollfd, std::allocator<pollfd> >::_M_insert(std::_List_iterator<pollfd>, pollfd const&) (stl_list.h:1996)
+==83830==    by 0x10F0C7: std::__cxx11::list<pollfd, std::allocator<pollfd> >::push_back(pollfd const&) (stl_list.h:1306)
+==83830==    by 0x10DCB0: Server::addNewClient() (Server.cpp:81)
+==83830==    by 0x10E504: Server::run() (Server.cpp:146)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 1,024 bytes in 1 blocks are still reachable in loss record 22 of 30
+==83830==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x4BA1294: _IO_file_doallocate (filedoalloc.c:101)
+==83830==    by 0x4BB1603: _IO_doallocbuf (genops.c:347)
+==83830==    by 0x4BAF06F: _IO_file_overflow@@GLIBC_2.2.5 (fileops.c:745)
+==83830==    by 0x4BAFB8E: _IO_new_file_xsputn (fileops.c:1244)
+==83830==    by 0x4BAFB8E: _IO_file_xsputn@@GLIBC_2.2.5 (fileops.c:1197)
+==83830==    by 0x4BA2AF1: fwrite (iofwrite.c:39)
+==83830==    by 0x49C6DC3: std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49C713B: std::basic_ostream<char, std::char_traits<char> >& std::operator<< <std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112F2E: operator<<(std::ostream&, Client const&) (Client.cpp:118)
+==83830==    by 0x10DD46: Server::addNewClient() (Server.cpp:83)
+==83830==    by 0x10E504: Server::run() (Server.cpp:146)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 1,146 bytes in 2 blocks are still reachable in loss record 23 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x118984: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:104)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 1,638 bytes in 1 blocks are still reachable in loss record 24 of 30
+==83830==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x4BFD822: __tzfile_read (tzfile.c:280)
+==83830==    by 0x4BFC89B: tzset_internal (tzset.c:405)
+==83830==    by 0x4BFD28A: __tz_convert (tzset.c:577)
+==83830==    by 0x11BAD0: serverCreationDate() (CommandUtils.cpp:17)
+==83830==    by 0x11C5E7: sendWelcome(Client&) (CommandUtils.cpp:118)
+==83830==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
+==83830==    by 0x120612: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 2,464 bytes in 8 blocks are still reachable in loss record 25 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11C6BD: sendWelcome(Client&) (CommandUtils.cpp:118)
+==83830==    by 0x11C23F: finishRegistrationAttempt(Client&) (CommandUtils.cpp:109)
+==83830==    by 0x120612: USER::execute(Client&, IrcMessage const&) (USER.cpp:20)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 3,472 bytes in 14 blocks are still reachable in loss record 26 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x12388B: std::__new_allocator<std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x1234A3: allocate (alloc_traits.h:140)
+==83830==    by 0x1234A3: std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_get_node() (stl_tree.h:563)
+==83830==    by 0x122E9F: std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_create_node(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) (stl_tree.h:585)
+==83830==    by 0x122C31: std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >* std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_Alloc_node::operator()<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) const (stl_tree.h:531)
+==83830==    by 0x12289A: std::_Rb_tree_iterator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_insert_<std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_Alloc_node>(std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&, std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_Alloc_node&) (stl_tree.h:1831)
+==83830==    by 0x122266: std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::_M_insert_unique(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) (stl_tree.h:2176)
+==83830==    by 0x121C70: std::map<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, Channel, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> > >::insert(std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, Channel> const&) (stl_map.h:836)
+==83830==    by 0x120CE2: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:49)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830== 
+==83830== 3,646 bytes in 6 blocks are still reachable in loss record 27 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11E41E: ACommand::numeric(Client&, int, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (ACommand.cpp:23)
+==83830==    by 0x1210AE: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:79)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 6,772 bytes in 12 blocks are still reachable in loss record 28 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x49D870E: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x49DA04F: std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x112E01: Client::queueMessage(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (Client.cpp:91)
+==83830==    by 0x11414B: Channel::broadcast(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, Client*) const (Channel.cpp:232)
+==83830==    by 0x12101E: JOIN::joinOne(Client&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&) (JOIN.cpp:76)
+==83830==    by 0x1218AC: JOIN::execute(Client&, IrcMessage const&) (JOIN.cpp:121)
+==83830==    by 0x118426: Dispatcher::dispatch(Client&, IrcMessage const&) (dispatch.cpp:88)
+==83830==    by 0x10D8A3: Server::readBuffer(int) (Server.cpp:42)
+==83830==    by 0x10E580: Server::run() (Server.cpp:150)
+==83830==    by 0x10D15E: main (main.cpp:24)
+==83830== 
+==83830== 10,560 bytes in 40 blocks are still reachable in loss record 29 of 30
+==83830==    at 0x4846FA3: operator new(unsigned long) (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x1121F7: std::__new_allocator<std::_Rb_tree_node<std::pair<int const, Client> > >::allocate(unsigned long, void const*) (new_allocator.h:151)
+==83830==    by 0x111F13: allocate (alloc_traits.h:140)
+==83830==    by 0x111F13: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_get_node() (stl_tree.h:563)
+==83830==    by 0x111DF3: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_create_node(std::pair<int const, Client> const&) (stl_tree.h:585)
+==83830==    by 0x111BC5: std::_Rb_tree_node<std::pair<int const, Client> >* std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node::operator()<std::pair<int const, Client> >(std::pair<int const, Client> const&) const (stl_tree.h:531)
+==83830==    by 0x111618: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_node_base*, std::_Rb_tree_node_base*, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:1831)
+==83830==    by 0x110B9D: std::_Rb_tree_iterator<std::pair<int const, Client> > std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_<std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node>(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&, std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_Alloc_node&) (stl_tree.h:2284)
+==83830==    by 0x1101A5: std::_Rb_tree<int, std::pair<int const, Client>, std::_Select1st<std::pair<int const, Client> >, std::less<int>, std::allocator<std::pair<int const, Client> > >::_M_insert_unique_(std::_Rb_tree_const_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_tree.h:1147)
+==83830==    by 0x10F969: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::insert(std::_Rb_tree_iterator<std::pair<int const, Client> >, std::pair<int const, Client> const&) (stl_map.h:914)
+==83830==    by 0x10EF72: std::map<int, Client, std::less<int>, std::allocator<std::pair<int const, Client> > >::operator[](int const&) (stl_map.h:517)
+==83830==    by 0x10DCF3: Server::addNewClient() (Server.cpp:82)
+==83830==    by 0x10E504: Server::run() (Server.cpp:146)
+==83830== 
+==83830== 73,728 bytes in 1 blocks are still reachable in loss record 30 of 30
+==83830==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
+==83830==    by 0x492738E: ??? (in /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33)
+==83830==    by 0x400571E: call_init.part.0 (dl-init.c:74)
+==83830==    by 0x4005823: call_init (dl-init.c:120)
+==83830==    by 0x4005823: _dl_init (dl-init.c:121)
+==83830==    by 0x401F59F: ??? (in /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2)
+==83830==    by 0x2: ???
+==83830==    by 0x1FFEFFFC22: ???
+==83830==    by 0x1FFEFFFC2C: ???
+==83830==    by 0x1FFEFFFC31: ???
+==83830== 
+==83830== LEAK SUMMARY:
+==83830==    definitely lost: 0 bytes in 0 blocks
+==83830==    indirectly lost: 0 bytes in 0 blocks
+==83830==      possibly lost: 0 bytes in 0 blocks
+==83830==    still reachable: 111,410 bytes in 176 blocks
+==83830==         suppressed: 0 bytes in 0 blocks
+==83830== 
+==83830== For lists of detected and suppressed errors, rerun with: -s
+==83830== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

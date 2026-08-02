@@ -42,7 +42,10 @@ ssize_t	Server::readBuffer( int fd ) {
 				dispatcher.dispatch(_clients[fd], msg);
 		}
 		if (_clients[fd].getQuitting())
+		{
+			sendBuffer(fd); // aggiunto da Elia
 			return (disconnectClient(fd), 0);
+		}
 		_clients[fd].setRecvBuffer(buffer);
 	}
 	return (bytes);
