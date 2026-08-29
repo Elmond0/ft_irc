@@ -9,7 +9,7 @@
 
 bool NICK::isValidNick(const std::string &nick) const
 {
-	if (nick.empty() || nick.size() > 9)
+	if (nick.empty())
 		return false;
 
 	static const std::string special = "_-[]\\`^{}|";
