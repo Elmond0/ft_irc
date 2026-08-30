@@ -44,8 +44,6 @@ int	Client::getSockFd( void ) const { return _sock_fd; }
 
 sockaddr_in Client::getAddr( void ) const { return _addr; }
 
-// interfaccia registrazione - @elia
-
 int	Client::getFd( void ) const { return _sock_fd; }
 
 const std::string&	Client::getNickname( void ) const { return _nickname; }
@@ -75,7 +73,6 @@ void	Client::setQuitting()		 { _isQuitting = true; }
 
 bool	Client::isRegistered( void ) const { return _passOk && _nickOk && _userOk; }
 
-// message handling
 std::string Client::getPrefix() const {
 	std::string addr;
 	addr = inet_ntoa(_addr.sin_addr);
@@ -83,8 +80,6 @@ std::string Client::getPrefix() const {
 		addr = "localhost";
 	return (_nickname + "!" + _username + "@" + addr);
 }
-
-//buffer
 
 void Client::queueMessage(const std::string &message)
 {

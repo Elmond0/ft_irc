@@ -1,73 +1,38 @@
-*This project has been created as part of the 42 curriculum by \[elmondo, miricci, giomastr\]*
+*This project has been created as part of the 42 curriculum by elmondo, miricci, giomastr*
 
-# ft\_irc
+# ft_irc
 
 ## Description
 
-`ft_irc` is a project from the 42 curriculum whose goal is to implement a functional **IRC (Internet Relay Chat) server** from scratch, written in C++98, without using any external IRC library.
+`ft_irc` is a C++98 IRC server built from scratch as part of the 42 curriculum.  
+It handles multiple clients simultaneously using a single non-blocking `poll()` loop — no threads, no forks.
 
-The server is designed to:
+Reference client: **HexChat**
 
--   Handle **multiple clients simultaneously**, without ever forking a new process for each connection (using a single-threaded, non-blocking I/O model with `poll()` — or `select()`/`epoll()`/`kqueue()`).
--   Accept connections from a real IRC client (such as **irssi**, **HexChat**, **WeeChat**, or a custom TCP client like `nc`) using the standard IRC protocol.
--   Implement the core mechanisms of a real IRC server: client authentication, nicknames, channels, and communication between clients.
+### Features
 
-The purpose of this project is to understand and apply key network programming concepts: non-blocking sockets, the `poll()` (or equivalent) system call, TCP communication, and the design of a text-based application-layer protocol.
-
-### Main features implemented
-
--   Client connection and authentication (`PASS`, `NICK`, `USER`)
--   Private messages between clients (`PRIVMSG`)
--   Channel management:
-    -   `JOIN` — join a channel
-    -   `PART` — leave a channel
-    -   `TOPIC` — get/set the channel topic
-    -   `KICK` — eject a client from a channel
-    -   `INVITE` — invite a client to a channel
-    -   `MODE` — channel operator privileges and modes:
-        -   `i`: invite-only channel
-        -   `t`: topic settable by operator only
-        -   `k`: channel password
-        -   `o`: operator privilege
-        -   `l`: user limit on the channel
--   Operator/regular user distinction within channels
+- Client authentication (`PASS`, `NICK`, `USER`)
+- Private messages (`PRIVMSG`)
+- Channel management with operator/regular user distinction
+- Operator commands: `KICK`, `INVITE`, `TOPIC`, `MODE`
+- Channel modes: `i` (invite-only), `t` (topic restricted), `k` (password), `o` (operator), `l` (user limit)
+- IRC bot (`!help`, `!users`, `!topic`)
 
 ## Instructions
 
-### Requirements
-
--   A Unix-like environment (Linux / macOS)
--   A C++ compiler supporting **C++98**
--   `make`
-
 ### Compilation
 
-Clone the repository and build the project with `make` at the root of the repository:
-
 ```bash
-git clone <repository_url>
-cd ft_irc
 make
 ```
 
-This generates the `ircserv` executable. Other available Makefile rules:
+Available rules: `make clean`, `make fclean`, `make re`
 
-```bash
-make clean   # remove object files
-make fclean  # remove object files and the executable
-make re      # fclean + make (full rebuild)
-```
-
-### Execution
-
-The server is launched as follows:
+### Usage
 
 ```bash
 ./ircserv <port> <password>
 ```
-
--   `<port>` — the port number on which the server will listen for incoming connections.
--   `<password>` — the connection password that clients must provide to authenticate.
 
 Example:
 
@@ -75,54 +40,81 @@ Example:
 ./ircserv 6667 mypassword
 ```
 
-### Connecting a client
+### Connect with HexChat
 
-You can connect to the server using any standard IRC client, for example:
+1. Open HexChat → Network list → Add new network
+2. Server: `localhost/6667` (or `127.0.0.1/6667`)
+3. Set the server password to `mypassword`
+4. Connect
+
+### Connect with nc (manual testing)
 
 ```bash
-irssi -c 127.0.0.1 -p 6667 -w mypassword
+nc -C localhost 6667
 ```
 
-Or, for basic manual testing, using `nc`:
+## Commands
 
-```bash
-panc 127.0.0.1 6667nc -C localhost 6667
-```
-
-and then typing IRC commands manually.
-
-Usage: Basic login
+### Registration
 
 ```
-PASS [password]
-NICK [nickname]
-USER [username] : [realname]
+PASS <password>
+NICK <nickname>
+USER <username> :<realname>
 ```
 
-Usage: Channels and messages
+### Channels
 
 ```
-JOIN #[channel]PRIVMSG #[channel] : [your msg]PRIVMSG [username] : [your msg]MODE #[channel] +[activate mode] OR -[deactivate mode] [password]
+JOIN #<channel> [password]
+PART #<channel> [reason]
+PRIVMSG #<channel> :<message>
+PRIVMSG <nickname> :<message>
+TOPIC #<channel> [new topic]
+```
+
+### Operator commands
+
+```
+KICK #<channel> <nickname> [reason]
+INVITE <nickname> #<channel>
+MODE #<channel> +i              # invite-only on
+MODE #<channel> -i              # invite-only off
+MODE #<channel> +t              # topic restricted to operators
+MODE #<channel> +k <password>   # set channel password
+MODE #<channel> +o <nickname>   # give operator privilege
+MODE #<channel> +l <limit>      # set user limit
+```
+
+### Other
+
+```
+QUIT [reason]
+PING <server>
+```
+
+### Bot commands (send in channel or DM to ircbot)
+
+```
+!help    list available commands
+!users   connected users and channel members
+!topic   show the channel topic
 ```
 
 ## Resources
 
-### Documentation and references
-
--   [RFC 1459 — Internet Relay Chat Protocol](https://datatracker.ietf.org/doc/html/rfc1459)
--   [RFC 2812 — Internet Relay Chat: Client Protocol](https://datatracker.ietf.org/doc/html/rfc2812)
--   [Modern IRC Client Protocol documentation (modern.ircdocs.horse)](https://modern.ircdocs.horse/)
--   `man poll`, `man select`, `man socket`, `man bind`, `man listen`, `man accept`, `man recv`, `man send`
--   [Beej’s Guide to Network Programming](https://beej.us/guide/bgnet/)
+- [RFC 1459 — IRC Protocol](https://datatracker.ietf.org/doc/html/rfc1459)
+- [RFC 2812 — IRC Client Protocol](https://datatracker.ietf.org/doc/html/rfc2812)
+- [Modern IRC documentation](https://modern.ircdocs.horse/)
+- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
+- `man poll`, `man socket`, `man recv`, `man send`
 
 ### AI usage
 
-AI tools (e.g. ChatGPT / Claude) were used during the development of this project for the following purposes:
+AI tools (Claude, ChatGPT) were used to:
 
--   Understanding new topics and how to optimise them within the code.
--   Creating flow diagrams and schemes to visualise the processing of messages to better design the project.
--   Clarifying ambiguous parts of the RFC 1459 / 2812 specifications regarding IRC command syntax and expected server replies.
--   Assisting in debugging socket-related issues (e.g. handling partial reads/writes and non-blocking I/O edge cases).
--   Reviewing code structure, suggesting safety fixes and checking for adherence to C++98 constraints.
+- Clarify ambiguous parts of RFC 1459/2812
+- Debug non-blocking I/O edge cases
+- Assist in reviewing code for safety and C++98 compliance
 
-AI tools were **not** used to generate core business logic (command parsing, channel/client management, protocol state machine) without review; all AI-assisted output was manually reviewed, tested, and adapted by the author(s) before being integrated into the project.
+All AI-assisted output was reviewed, tested, and adapted by the authors before integration.

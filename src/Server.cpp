@@ -132,8 +132,9 @@ void	Server::disconnectClient( Client & client, const std::string & reason ) {
 			break ;
 		}
 	}
-	if (close(fd) == -1)
-		throw ClientError();
+	if (!client.getSendBuffer().empty())
+		sendBuffer(fd);
+	close(fd);
 	std::cout << "socket " << fd << " closed" << std::endl;
 	_clients.erase(fd);
 }
@@ -144,10 +145,6 @@ void	Server::disconnectAll( void ) {
 	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 		fds.push_back(it->first);
 	for (std::vector<int>::iterator it = fds.begin(); it != fds.end(); ++it) {
-		//std::map<int, Client>::iterator entry = _clients.find(*it);
-		//if (entry == _clients.end())
-		//	throw ClientError();
-		//Client& c = entry->second;
 		disconnectClient(_clients.at(*it), "");
 	}
 }
@@ -198,12 +195,18 @@ void	Server::run( void ) {
 			for (std::vector<pollfd>::iterator it = vfds.begin() + 1; it != vfds.end(); ++it) {
 				try
 				{
-					if (it->revents & POLLIN) {
-						if (readBuffer(it->fd) < 0) {
-							throw ClientError();
-						}
+					std::map<int, Client>::iterator entry = _clients.find(it->fd);
+					if (entry == _clients.end())
+						throw ClientError();
+                    if (it->revents & POLLIN) {
+                        if (readBuffer(it->fd) < 0)
+                            throw ClientError();
 					}
-					if (!_clients[it->fd].getSendBuffer().empty()) {
+					entry = _clients.find(it->fd);
+					if (entry == _clients.end())
+    					continue;
+					Client &c = entry->second; 
+					if (!c.getSendBuffer().empty()) {
 						if (it->revents & POLLOUT) {
 							ssize_t bytes = sendBuffer(it->fd);
 							if (bytes < 0)
@@ -216,13 +219,18 @@ void	Server::run( void ) {
 						throw ClientError();
 					}
 					if (it->revents & POLLHUP) {
-						disconnectClient(_clients.at(it->fd), "");
+						disconnectClient(c, "");
 						continue ;
 					}
 				}
 				catch(const std::exception& e)
 				{
-					disconnectClient(_clients.at(it->fd), "");
+					std::map<int, Client>::iterator entry = _clients.find(it->fd);
+					if (entry != _clients.end()) {
+
+						Client &c = entry->second;
+						disconnectClient(c, "");
+					}
 					std::cerr << "ERROR: " << e.what() << '\n';
 				}
 			}
@@ -236,9 +244,6 @@ void	Server::run( void ) {
 void	Server::shutdown( void ) {
 	disconnectAll();
 }
-
-
-// interfaccia per i comandi - @elia
 
 const std::string&	Server::getPassword( void ) const { return _password; }
 

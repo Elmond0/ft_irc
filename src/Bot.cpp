@@ -32,9 +32,9 @@ static void	cmdUsers(Server &server, Client &sender, Channel *chan, const std::s
 static void	cmdTopic(Server &, Client &sender, Channel *chan, const std::string &);
 
 static const BotCommand	g_commands[] = {
-	{ "!help",  "!help   elenca i comandi disponibili",       cmdHelp },
-	{ "!users", "!users  utenti connessi e membri del canale", cmdUsers },
-	{ "!topic", "!topic  mostra il topic del canale",          cmdTopic },
+	{ "!help",  "!help   list available commands",          cmdHelp },
+	{ "!users", "!users  connected users and channel members", cmdUsers },
+	{ "!topic", "!topic  show the channel topic",           cmdTopic },
 	{ NULL, NULL, NULL }
 };
 
@@ -48,7 +48,7 @@ static void	cmdUsers(Server &server, Client &sender, Channel *chan, const std::s
 {
 	std::ostringstream total;
 
-	total << "utenti connessi al server: " << server.getClients().size();
+	total << "users connected to server: " << server.getClients().size();
 	say(sender, chan, total.str());
 
 	if (!chan)
@@ -75,11 +75,11 @@ static void	cmdTopic(Server &, Client &sender, Channel *chan, const std::string 
 {
 	if (!chan)
 	{
-		say(sender, chan, "!topic funziona solo dentro un canale");
+		say(sender, chan, "!topic only works inside a channel");
 		return;
 	}
 	if (chan->getTopic().empty())
-		say(sender, chan, chan->getName() + " non ha un topic");
+		say(sender, chan, chan->getName() + " has no topic");
 	else
 		say(sender, chan, chan->getName() + " topic: " + chan->getTopic());
 }
@@ -126,5 +126,5 @@ void Bot::onMessage(Server &server, Client &sender, Channel *chan, const std::st
 	}
 
 	if (!chan)
-		say(sender, chan, "comando sconosciuto, prova !help");
+		say(sender, chan, "unknown command, try !help");
 }
