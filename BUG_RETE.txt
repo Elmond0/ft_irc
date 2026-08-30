@@ -12,11 +12,11 @@ I problemi sono TUTTI nel layer di rete: src/Server.cpp e src/main.cpp.
 
 
 ================================================================================
- BLOCCANTI - il server muore o si pianta
+BLOCCANTI - il server muore o si pianta
 ================================================================================
 
 --------------------------------------------------------------------------------
-1. SEGFAULT: puntatori pendenti dopo disconnessione brutale   <-- IL PIU' GRAVE
+OK 1. SEGFAULT: puntatori pendenti dopo disconnessione brutale   <-- IL PIU' GRAVE
 --------------------------------------------------------------------------------
 File: src/Server.cpp, disconnectClient() righe 86-98
 
@@ -37,7 +37,7 @@ FIX: prima di _clients.erase(fd), scorrere tutti i canali, chiamare
 
 
 --------------------------------------------------------------------------------
-2. CRASH GARANTITO SU Ctrl-C (core dumped)
+OK 2. CRASH GARANTITO SU Ctrl-C (core dumped)
 --------------------------------------------------------------------------------
 File: src/Server.cpp disconnectAll() righe 100-103, src/main.cpp riga 28
 
@@ -65,7 +65,7 @@ FIX: in disconnectAll() copiare prima la lista degli fd, poi chiudere;
 
 
 --------------------------------------------------------------------------------
-3. 100% CPU SEMPRE (busy loop)
+OK 3. 100% CPU SEMPRE (busy loop)
 --------------------------------------------------------------------------------
 File: src/Server.cpp riga 80 -> newClient.events = POLLIN | POLLOUT;
 
@@ -83,7 +83,7 @@ FIX: mettere solo POLLIN di default e aggiungere POLLOUT dinamicamente
 
 
 --------------------------------------------------------------------------------
-4. recv() == 0 (EOF) NON GESTITO
+OK 4. recv() == 0 (EOF) NON GESTITO
 --------------------------------------------------------------------------------
 File: src/Server.cpp readBuffer() righe 24-52
 
@@ -108,7 +108,7 @@ FIX: else if (bytes == 0) { disconnectClient(fd); return 0; }
 
 
 --------------------------------------------------------------------------------
-5. UN ERRORE SU UN CLIENT UCCIDE TUTTI
+OK 5. UN ERRORE SU UN CLIENT UCCIDE TUTTI
 --------------------------------------------------------------------------------
 File: src/Server.cpp righe 150-164, src/main.cpp righe 22-30
 
@@ -126,7 +126,7 @@ FIX: un errore su un singolo fd deve disconnettere SOLO quel client e
 
 
 --------------------------------------------------------------------------------
-6. SOCKET CLIENT BLOCCANTI - viola il subject
+OK 6. SOCKET CLIENT BLOCCANTI - viola il subject
 --------------------------------------------------------------------------------
 File: src/Server.cpp riga 78
 
@@ -155,7 +155,7 @@ FIX: fcntl(newClient.fd, F_SETFL, O_NONBLOCK);
 ================================================================================
 
 --------------------------------------------------------------------------------
-7. CLIENT FANTASMA - std::map::operator[] crea entry
+OK 7. CLIENT FANTASMA - std::map::operator[] crea entry
 --------------------------------------------------------------------------------
 File: src/Server.cpp righe 31, 42, 44, 49, 56
 
@@ -177,7 +177,7 @@ FIX: usare _clients.find(fd) e controllare != _clients.end() prima di usarlo.
 
 
 --------------------------------------------------------------------------------
-8. BUG DEL '\r' - mangia un carattere buono
+OK 8. BUG DEL '\r' - mangia un carattere buono
 --------------------------------------------------------------------------------
 File: src/Server.cpp riga 37
 
@@ -207,7 +207,7 @@ Funziona ma si legge malissimo, meglio mettere le graffe.
 
 
 --------------------------------------------------------------------------------
-9. CONTROLLO SBAGLIATO SU signal()
+ok 9. CONTROLLO SBAGLIATO SU signal()
 --------------------------------------------------------------------------------
 File: src/Server.cpp riga 118
 
@@ -222,7 +222,7 @@ FIX: if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 
 
 --------------------------------------------------------------------------------
-10. == INVECE DI & SUI revents
+OK 10. == INVECE DI & SUI revents
 --------------------------------------------------------------------------------
 File: src/Server.cpp riga 145
 

@@ -27,6 +27,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <signal.h>
+# include <algorithm>
 
 # include "Client.hpp"
 # include "Channel.hpp"
@@ -39,13 +40,13 @@ class Server
 		int	_listenSock_fd;
 		sockaddr_in serverAddress;
 		int	_port;
-		std::map<int, Client> _clients;
-		std::list<pollfd>		_pfds;
+		std::map<int, Client> 			_clients;
+		std::list<pollfd>					_pfds;
 		std::map<std::string, Channel> _channels;
 		std::string _password;
 
 		void		addNewClient( void );
-		void		disconnectClient( int fd );
+		void		disconnectClient( Client c );
 		void		disconnectAll( void );
 		ssize_t		readBuffer( int fd );
 		ssize_t		sendBuffer( int fd );
@@ -76,6 +77,11 @@ class Server
 				const char *what() const throw();
 		};
 		class NetworkError : public std::exception
+		{
+			public:
+				const char *what() const throw();
+		};
+		class ClientError : public std::exception
 		{
 			public:
 				const char *what() const throw();
