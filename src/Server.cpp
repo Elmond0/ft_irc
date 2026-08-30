@@ -22,7 +22,7 @@ Server& Server::operator=( Server const & other ) {
 Server::~Server( void ) {}
 
 ssize_t	Server::readBuffer( int fd ) {
-	std::map<int, Client>::iterator entry = find(fd);
+	std::map<int, Client>::iterator entry = _clients.find(fd);
 	if (entry == _clients.end())
 		throw ClientError();
 	Client& c = entry->second;
@@ -34,7 +34,7 @@ ssize_t	Server::readBuffer( int fd ) {
 	if (bytes == 0)
 	{
 		c.setQuitting();
-		return (disconnectClient(c, 0);
+		return (disconnectClient(c), c);
 	}
 	else if (bytes > 0) {
 		std::string buffer = c.getRecvBuffer();
@@ -59,7 +59,7 @@ ssize_t	Server::readBuffer( int fd ) {
 }
 
 ssize_t	Server::sendBuffer( int fd ) {
-	std::map<int, Client>::iterator entry = find(fd);
+	std::map<int, Client>::iterator entry = _clients.find(fd);
 	if (entry == _clients.end())
 		throw ClientError();
 	Client& c = entry->second;
@@ -100,7 +100,7 @@ void	Server::disconnectClient( Client c ) {
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		Channel chan = it->second;
-		std::vector<Client *>::const_iterator itt = find(chan.getClients().begin(), chan.getClients().end(), c);
+		std::vector<Client *>::const_iterator itt = chan.getClients().find(c);
 		if (itt != chan.getClients().end())
 		{
 			chan.removeClient(&c);
@@ -124,11 +124,16 @@ void	Server::disconnectAll( void ) {
 	std::vector<int> fds;
 	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 		fds.push_back(it->first);
-	for (std::vector<int>::iterator it = fds.begin(); it != fds.end(); ++it)
-		disconnectClient(_clients[it]);
+	for (std::vector<int>::iterator it = fds.begin(); it != fds.end(); ++it) {
+		std::map<int, Client>::iterator entry = _clients.find(it);
+		if (entry == _clients.end())
+			throw ClientError();
+		Client& c = entry->second;
+		disconnectClient(_clients.at(*it));
+	}
 }
 
-void Server::setQuitting( int sig ) { 
+void setQuitting( int sig ) { 
 	(void)sig;
 	g_isRunning = false;
 }
@@ -179,7 +184,7 @@ void	Server::run( void ) {
 							throw ClientError();
 						}
 					}
-					if (!_clients[it->fd]._sendBuffer.empty()) {
+					if (!_clients[it->fd].getSendBuffer().empty()) {
 						if (it->revents & POLLOUT) {
 							ssize_t bytes = sendBuffer(it->fd);
 							if (bytes < 0)
@@ -218,7 +223,7 @@ void	Server::shutdown( void ) {
 
 const std::string&	Server::getPassword( void ) const { return _password; }
 
-std::map<int, Client*>&	Server::getClients( void ) { return _clients; }
+std::map<int, Client>&	Server::getClients( void ) { return _clients; }
 
 std::map<std::string, Channel>&	Server::getChannels( void ) { return _channels; }
 
