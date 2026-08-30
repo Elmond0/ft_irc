@@ -98,24 +98,32 @@ void	Server::addNewClient() {
 }
 
 void	Server::disconnectClient( Client & c ) {
-	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end();)
 	{
-		Channel chan = it->second;
-		std::vector<Client *>::const_iterator itt = std::find(chan.getClients().begin(), chan.getClients().end(), &c);
-		if (itt != chan.getClients().end())
+		Channel & chan = it->second;
+		if (chan.hasClient(&c))
 		{
+			std::cout << "CUCU " << std::endl;
 			chan.removeClient(&c);
 			if (chan.getClients().empty())
-				_channels.erase(it);
+			{
+				_channels.erase(it++);
+				continue ;
+			}
+			
 		}
+		std::cout << "CUCU " << std::endl;
+		++it;
 	}
+	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+    	std::cout << it->first << " ha " << it->second.getClients().size() << " membri" << std::endl;
 	std::cout << "sockFd " << c.getFd() << " closed." << std::endl;
 	if (close(c.getFd()) == -1)
 		throw ClientError();
 	for (std::list<pollfd>::iterator it = _pfds.begin(); it != _pfds.end(); ++it) {
-		if ((*it).fd == c.getFd()) {
+		if (it->fd == c.getFd()) {
 			_pfds.erase(it);
-			return ;
+			break ;
 		}
 	}
 	_clients.erase(c.getFd());
