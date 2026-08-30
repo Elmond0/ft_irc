@@ -13,6 +13,7 @@
 
 #include "Channel.hpp"
 #include "Client.hpp"
+#include "CommandUtils.hpp"
 #include <algorithm>
 
 Channel::Channel()
@@ -99,7 +100,7 @@ void Channel::addClient(Client *client)
 void Channel::removeClient(Client *client)
 {
 	removeOperator(client);
-	removeInvited(_invited, client);
+	removeInvited(client);
 	remove(_clients, client);
 }
 
@@ -127,6 +128,17 @@ void Channel::addOperator(Client *client)
 void Channel::removeOperator(Client *client)
 {
 	remove(_operators, client);
+	if (!_operators.empty())
+		return ;
+	for (size_t i = 0; i < _clients.size(); ++i)
+	{
+		if (_clients[i] != client)
+		{
+			_operators.push_back(_clients[i]);
+			broadcast(std::string(":") + SERVER_NAME + " MODE " + _name + " +o " + _clients[i]->getNickname());
+			return ;
+		}
+	}
 }
 
 bool Channel::isOperator(Client *client) const
