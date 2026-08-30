@@ -72,18 +72,9 @@ void Dispatcher::dispatch(Client& client, const IrcMessage& msg)
 	if (msg.command.empty())
 		return;
 	if (msg.command == "CAP")
-	{
-		if (!msg.params.empty() && msg.params[0] == "LS")
-			client.queueMessage(std::string(":") + SERVER_NAME + " CAP " + nickOrStar(client) + " LS :");
 		return;
-	}
 	if (msg.command == "WHO")
-	{
-		std::string mask = msg.params.empty() ? "*" : msg.params[0];
-		client.queueMessage(std::string(":") + SERVER_NAME + " 315 " + nickOrStar(client) + " " + mask + " :End of /WHO list");
 		return;
-	}
-
 	try
 	{
 		if (!client.isRegistered() && _preReg.find(msg.command) == _preReg.end())
