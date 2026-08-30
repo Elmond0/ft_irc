@@ -98,9 +98,9 @@ void Channel::addClient(Client *client)
 
 void Channel::removeClient(Client *client)
 {
+	removeOperator(client);
+	removeInvited(_invited, client);
 	remove(_clients, client);
-	remove(_operators, client);
-	remove(_invited, client);
 }
 
 bool Channel::hasClient(Client *client) const

@@ -28,33 +28,29 @@ ssize_t	Server::readBuffer( int fd ) {
 	Client& c = entry->second;
 	char	tmp[512];
 	ssize_t		bytes = recv(fd, tmp, 512, 0);
-	if (bytes < 0) {
+	if (bytes < 0)
 		throw ClientError();
-	}
 	if (bytes == 0)
 	{
-		c.setQuitting();
-		disconnectClient(c);
+		disconnectClient(c, "");
 		return 0;
 	}
-	else if (bytes > 0) {
-		std::string buffer = c.getRecvBuffer();
-		buffer.append(tmp, bytes);
-		size_t pos;
-		while ((pos = buffer.find("\n")) != std::string::npos) {
-			std::string line = buffer.substr(0, pos);
-			buffer.erase(0 , pos + 1);
-			IrcMessage msg = parseMessage(line);
-			std::cout << msg << std::endl;
-			Dispatcher dispatcher(*this);
-				dispatcher.dispatch(c, msg);
-		}
-		if (c.getQuitting())
-		{
-			sendBuffer(fd);
-			return disconnectClient(c), 0;
-		}
-		c.setRecvBuffer(buffer);
+	std::string buffer = c.getRecvBuffer();
+	buffer.append(tmp, bytes);
+	std::vector<std::string> messages;
+	size_t pos;
+	while ((pos = buffer.find("\n")) != std::string::npos) {
+		messages.push_back(buffer.substr(0, pos));
+    	buffer.erase(0, pos + 1);
+	}
+	c.setRecvBuffer(buffer);
+	for (std::size_t i = 0; i < messages.size(); ++i) {
+    	if (_clients.find(fd) == _clients.end())
+        	return 0;
+    	IrcMessage msg = parseMessage(messages[i]);
+    	std::cout << msg << std::endl;
+    	Dispatcher dispatcher(*this);
+    	dispatcher.dispatch(_clients.at(fd), msg);
 	}
 	return (bytes);
 }
@@ -97,37 +93,51 @@ void	Server::addNewClient() {
 	std::cout << _clients[newClient.fd] << std::endl;
 }
 
-void	Server::disconnectClient( Client & c ) {
-	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end();)
+void	Server::disconnectClient( Client & client, const std::string & reason ) {
+	
+	std::string line;
+	if (reason != "")
+		line = ":" + client.getPrefix() + " QUIT :" + reason;
+	else
+		line = ":" + client.getPrefix() + " QUIT";
+	std::set<int> notified;
+	std::map<std::string, Channel>::iterator it = _channels.begin();
+
+	while (it != _channels.end())
 	{
-		Channel & chan = it->second;
-		if (chan.hasClient(&c))
+		std::map<std::string, Channel>::iterator current = it++;
+		Channel& chan = current->second;
+
+		if (!chan.hasClient(&client))
+			continue;
+
+		const std::vector<Client*>& members = chan.getClients();
+
+		for (std::size_t m = 0; m < members.size(); ++m)
 		{
-			std::cout << "CUCU " << std::endl;
-			chan.removeClient(&c);
-			if (chan.getClients().empty())
-			{
-				_channels.erase(it++);
-				continue ;
-			}
-			
+			if (members[m] != &client && notified.insert(members[m]->getFd()).second)
+				members[m]->queueMessage(line);
 		}
-		std::cout << "CUCU " << std::endl;
-		++it;
+
+		chan.removeClient(&client);
+		if (chan.isEmpty())
+			_channels.erase(current);
 	}
-	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
-    	std::cout << it->first << " ha " << it->second.getClients().size() << " membri" << std::endl;
-	std::cout << "sockFd " << c.getFd() << " closed." << std::endl;
-	if (close(c.getFd()) == -1)
-		throw ClientError();
+	client.queueMessage("ERROR :Closing Link");
+	client.setQuitting();
+	int fd = client.getFd();
 	for (std::list<pollfd>::iterator it = _pfds.begin(); it != _pfds.end(); ++it) {
-		if (it->fd == c.getFd()) {
+		if (it->fd == fd) {
 			_pfds.erase(it);
 			break ;
 		}
 	}
-	_clients.erase(c.getFd());
+	if (close(fd) == -1)
+		throw ClientError();
+	std::cout << "socket " << fd << " closed" << std::endl;
+	_clients.erase(fd);
 }
+
 
 void	Server::disconnectAll( void ) {
 	std::vector<int> fds;
@@ -138,7 +148,7 @@ void	Server::disconnectAll( void ) {
 		//if (entry == _clients.end())
 		//	throw ClientError();
 		//Client& c = entry->second;
-		disconnectClient(_clients.at(*it));
+		disconnectClient(_clients.at(*it), "");
 	}
 }
 
@@ -206,13 +216,13 @@ void	Server::run( void ) {
 						throw ClientError();
 					}
 					if (it->revents & POLLHUP) {
-						disconnectClient(_clients.at(it->fd));
+						disconnectClient(_clients.at(it->fd), "");
 						continue ;
 					}
 				}
 				catch(const std::exception& e)
 				{
-					disconnectClient(_clients.at(it->fd));
+					disconnectClient(_clients.at(it->fd), "");
 					std::cerr << "ERROR: " << e.what() << '\n';
 				}
 			}

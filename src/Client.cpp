@@ -12,11 +12,11 @@
 
 #include "Client.hpp"
 
-Client::Client( void ) : _passOk(false), _nickOk(false), _userOk(false) {}
+Client::Client( void ) : _sock_fd(-1), _addr(), _isOp(false), _isChanOp(false), _passOk(false), _nickOk(false), _userOk(false), _isQuitting(false) {}
 
 Client::Client( int sock_fd, sockaddr_in clientAddress ) : _sock_fd(sock_fd), _addr(clientAddress), _isOp(false), _isChanOp(false), _passOk(false), _nickOk(false), _userOk(false), _isQuitting(false) {}
 
-Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _isOp(other._isOp), _isChanOp(other._isChanOp), _nickname(other._nickname), _username(other._username), _realname(other._realname), _passOk(other._passOk), _nickOk(other._nickOk), _userOk(other._userOk) {}
+Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _addr(other._addr), _isOp(other._isOp), _isChanOp(other._isChanOp), _nickname(other._nickname), _username(other._username), _realname(other._realname), _passOk(other._passOk), _nickOk(other._nickOk), _userOk(other._userOk), _isQuitting(other._isQuitting) {}
 
 Client& Client::operator=( Client const & other ) {
 	if (this != &other) {
