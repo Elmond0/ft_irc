@@ -46,7 +46,7 @@ class Server
 		std::string _password;
 
 		void		addNewClient( void );
-		void		disconnectClient( Client c );
+		void		disconnectClient( Client & c );
 		void		disconnectAll( void );
 		ssize_t		readBuffer( int fd );
 		ssize_t		sendBuffer( int fd );

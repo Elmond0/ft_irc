@@ -34,7 +34,8 @@ ssize_t	Server::readBuffer( int fd ) {
 	if (bytes == 0)
 	{
 		c.setQuitting();
-		return (disconnectClient(c), c);
+		disconnectClient(c);
+		return 0;
 	}
 	else if (bytes > 0) {
 		std::string buffer = c.getRecvBuffer();
@@ -51,7 +52,7 @@ ssize_t	Server::readBuffer( int fd ) {
 		if (c.getQuitting())
 		{
 			sendBuffer(fd);
-			return (disconnectClient(c, 0);
+			return disconnectClient(c), 0;
 		}
 		c.setRecvBuffer(buffer);
 	}
@@ -96,11 +97,11 @@ void	Server::addNewClient() {
 	std::cout << _clients[newClient.fd] << std::endl;
 }
 
-void	Server::disconnectClient( Client c ) {
+void	Server::disconnectClient( Client & c ) {
 	for (std::map<std::string, Channel>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 	{
 		Channel chan = it->second;
-		std::vector<Client *>::const_iterator itt = chan.getClients().find(c);
+		std::vector<Client *>::const_iterator itt = std::find(chan.getClients().begin(), chan.getClients().end(), &c);
 		if (itt != chan.getClients().end())
 		{
 			chan.removeClient(&c);
@@ -125,10 +126,10 @@ void	Server::disconnectAll( void ) {
 	for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 		fds.push_back(it->first);
 	for (std::vector<int>::iterator it = fds.begin(); it != fds.end(); ++it) {
-		std::map<int, Client>::iterator entry = _clients.find(it);
-		if (entry == _clients.end())
-			throw ClientError();
-		Client& c = entry->second;
+		//std::map<int, Client>::iterator entry = _clients.find(*it);
+		//if (entry == _clients.end())
+		//	throw ClientError();
+		//Client& c = entry->second;
 		disconnectClient(_clients.at(*it));
 	}
 }
