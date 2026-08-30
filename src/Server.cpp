@@ -198,13 +198,13 @@ void	Server::run( void ) {
 						throw ClientError();
 					}
 					if (it->revents & POLLHUP) {
-						disconnectClient(_clients[it->fd]);
+						disconnectClient(_clients.at(it->fd));
 						continue ;
 					}
 				}
 				catch(const std::exception& e)
 				{
-					disconnectClient(_clients[it->fd]);
+					disconnectClient(_clients.at(it->fd));
 					std::cerr << "ERROR: " << e.what() << '\n';
 				}
 			}
