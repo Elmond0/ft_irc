@@ -90,7 +90,7 @@ MODE #<channel> +l <limit>      # set user limit
 
 ```
 QUIT [reason]
-PING <server>
+PING <token>
 ```
 
 ### Bot commands (send in channel or DM to ircbot)
