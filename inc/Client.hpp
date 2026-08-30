@@ -35,7 +35,7 @@ class Client
 		bool		_passOk;
 		bool		_nickOk;
 		bool		_userOk;
-		bool 		_isQuitting;
+		bool		_isQuitting;
 
 		std::string _sendBuffer;
 		std::string _recvBuffer;

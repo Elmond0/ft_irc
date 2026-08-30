@@ -10,35 +10,14 @@ QUIT::QUIT(Server &server) : ACommand(server) {}
 
 QUIT::~QUIT(void) {}
 
-void QUIT::execute(Client &client, const IrcMessage &msg)
-{
-	std::string reason = msg.trailing.empty() ? "Client Quit" : msg.trailing;
-	std::string line = userPrefix(client) + " QUIT :" + reason;
-
-	std::set<int> notified;
-	std::map<std::string, Channel>& channels = _server.getChannels();
-	std::map<std::string, Channel>::iterator it = channels.begin();
-
-	while (it != channels.end())
-	{
-		std::map<std::string, Channel>::iterator current = it++;
-		Channel& chan = current->second;
-
-		if (!chan.hasClient(&client))
-			continue;
-
-		const std::vector<Client*>& members = chan.getClients();
-
-		for (std::size_t m = 0; m < members.size(); ++m)
-		{
-			if (members[m] != &client && notified.insert(members[m]->getFd()).second)
-				members[m]->queueMessage(line);
-		}
-
-		chan.removeClient(&client);
-		if (chan.isEmpty())
-			channels.erase(current);
-	}
-	client.queueMessage("ERROR :Closing Link");
-	client.setQuitting();
+void QUIT::execute(Client &client, const IrcMessage &msg) {
+	std::string reason = "";
+    
+    if (!msg.trailing.empty())
+        reason = msg.trailing;
+    else if (!msg.params.empty())
+        reason = msg.params[0];
+	else
+		reason = "Client quit";
+	_server.disconnectClient(client, reason);
 }
