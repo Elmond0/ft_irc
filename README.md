@@ -114,7 +114,6 @@ PING <token>
 AI tools (Claude, ChatGPT) were used to:
 
 - Clarify ambiguous parts of RFC 1459/2812
-- Debug non-blocking I/O edge cases
-- Assist in reviewing code for safety and C++98 compliance
+- Clarify non-blocking I/O edge cases
 
 All AI-assisted output was reviewed, tested, and adapted by the authors before integration.

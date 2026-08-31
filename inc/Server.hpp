@@ -62,7 +62,6 @@ class Server
 		void	shutdown( void );
 		void	disconnectClient( Client & client, const std::string & reason );
 
-		// interfaccia per i comandi - @elia
 		const std::string&				getPassword( void ) const;
 		std::map<int, Client>&			getClients( void );
 		std::map<std::string, Channel>&	getChannels( void );

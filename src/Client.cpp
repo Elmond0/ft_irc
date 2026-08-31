@@ -21,9 +21,9 @@ Client::Client( Client const & other ) : _sock_fd(other._sock_fd), _addr(other._
 Client& Client::operator=( Client const & other ) {
 	if (this != &other) {
 		_sock_fd = other._sock_fd;
-		_addr = other._addr; // added - giorgia
-		_isOp = other._isOp; // added - giorgia
-		_isChanOp = other._isChanOp; // added - giorgia
+		_addr = other._addr;
+		_isOp = other._isOp;
+		_isChanOp = other._isChanOp;
 
 		_nickname = other._nickname;
 		_username = other._username;
@@ -31,7 +31,7 @@ Client& Client::operator=( Client const & other ) {
 		_passOk = other._passOk;
 		_nickOk = other._nickOk;
 		_userOk = other._userOk;
-		_isQuitting = other._isQuitting; // aggiunto da "Elia"
+		_isQuitting = other._isQuitting;
 		_sendBuffer = other._sendBuffer;
 		_recvBuffer = other._recvBuffer;
 	}

@@ -19,7 +19,6 @@
 #define SERVER_VERSION "1.0"
 #endif
 
-/* campi del 004: nessun modo utente supportato, modi di canale i t k o l */
 #define USER_MODES "-"
 #define CHANNEL_MODES "itkol"
 
