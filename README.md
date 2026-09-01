@@ -43,8 +43,8 @@ Example:
 ### Connect with HexChat
 
 1. Open HexChat → Network list → Add new network
-2. Server: `localhost/6667` (or `127.0.0.1/6667`)
-3. Set the server password to `mypassword`
+2. Server: Ip server / port number (`127.0.0.1/6667`)
+3. Set the server password
 4. Connect
 
 ### Connect with nc (manual testing)
