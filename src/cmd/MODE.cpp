@@ -17,7 +17,7 @@ void MODE::sendChannelModes(Client& client, Channel& chan)
 		modes = "+";
 	std::string rest = chan.getName() + " " + modes;
 	if (!chan.getKey().empty())
-		rest += " " + chan.getKey();
+		rest += " " + (chan.isOperator(&client) ? chan.getKey() : std::string("*"));
 	if (chan.getUserLimit() > 0)
 	{
 		std::ostringstream oss;

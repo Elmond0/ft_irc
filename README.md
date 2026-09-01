@@ -4,7 +4,7 @@
 
 ## Description
 
-`ft_irc` is a C++98 IRC server built from scratch as part of the 42 curriculum.  
+`ft_irc` is a C++98 IRC server built from scratch as part of the 42 curriculum.
 It handles multiple clients simultaneously using a single non-blocking `poll()` loop — no threads, no forks.
 
 Reference client: **HexChat**
