@@ -43,7 +43,7 @@ Example:
 ### Connect with HexChat
 
 1. Open HexChat → Network list → Add new network
-2. Server: Ip server / port number (`127.0.0.1/6667`)
+2. Server: ip-server / port number (`127.0.0.1/6667`)
 3. Set the server password
 4. Connect
 
