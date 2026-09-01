@@ -1,4 +1,3 @@
-
 #include "../inc/Parser.hpp"
 #include <cctype>
 
