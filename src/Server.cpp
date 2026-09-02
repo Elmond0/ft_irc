@@ -55,27 +55,19 @@ ssize_t	Server::readBuffer( int fd ) {
 	return (bytes);
 }
 
-ssize_t	Server::sendBuffer( int fd ) {
+ssize_t Server::sendBuffer(int fd) {
 	std::map<int, Client>::iterator entry = _clients.find(fd);
 	if (entry == _clients.end())
 		throw ClientError();
-	Client& c = entry->second;
-    size_t bytesSent = 0;
-	std::string& buffer = c.getSendBuffer();
-    size_t len = buffer.size();
-    while (bytesSent < len) {
-        ssize_t n = send(fd, buffer.c_str() + bytesSent, len - bytesSent, 0);
-        if (n < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK)
-				return 0;
-			return n;
-        } else if (n == 0)
-			break ;
-        bytesSent += n;
-    }
-	if (bytesSent > 0)
-		buffer.erase(0, bytesSent);
-	return (bytesSent);
+	Client &c = entry->second;
+	std::string &buffer = c.getSendBuffer();
+	if (buffer.empty())
+		return 0;
+	ssize_t n = send(fd, buffer.c_str(), buffer.size(), 0);
+	if (n <= 0)
+		return -1;
+	buffer.erase(0, n);
+	return (n);
 }
 
 void	Server::addNewClient() {
@@ -123,7 +115,6 @@ void	Server::disconnectClient( Client & client, const std::string & reason ) {
 		if (chan.isEmpty())
 			_channels.erase(current);
 	}
-	client.queueMessage("ERROR :Closing Link");
 	client.setQuitting();
 	int fd = client.getFd();
 	for (std::list<pollfd>::iterator it = _pfds.begin(); it != _pfds.end(); ++it) {
@@ -132,8 +123,6 @@ void	Server::disconnectClient( Client & client, const std::string & reason ) {
 			break ;
 		}
 	}
-	if (!client.getSendBuffer().empty())
-		sendBuffer(fd);
 	close(fd);
 	std::cout << "socket " << fd << " closed" << std::endl;
 	_clients.erase(fd);
